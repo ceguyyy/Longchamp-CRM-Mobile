@@ -82,3 +82,17 @@ src/
   data/components.js            Components per party + tech stack
   i18n.js                       EN / ID strings
 ```
+
+## Knowledge graph (graphify)
+
+The repo ships a [graphify](https://github.com/Graphify-Labs/graphify) knowledge graph in `graphify-out/` (`graph.json`, `graph.html`, `GRAPH_REPORT.md`) and a project-scoped Claude Code setup (`.claude/skills/graphify`, hooks in `.claude/settings.json`, rules in `CLAUDE.md`).
+
+```bash
+uv tool install graphifyy          # or: pipx install graphifyy  (package has a double "y")
+graphify update .                  # rebuild after code changes (AST only, no API cost)
+graphify query "which screens call the wishlist endpoints?"
+graphify explain "useApp"
+graphify hook install              # optional: auto-rebuild on commit/checkout (local .git/hooks)
+```
+
+In Claude Code, `/graphify . --update` also extracts the Markdown docs semantically.

@@ -1,0 +1,5 @@
+# build output and deps (also in .gitignore)
+node_modules/
+dist/
+# graph output itself
+graphify-out/
