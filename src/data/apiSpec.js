@@ -110,9 +110,9 @@ export const ENDPOINTS = [
     errors: ["400 otp_invalid", "429 otp_attempts_exceeded"],
   },
   {
-    id: "A-06", group: "auth", method: "POST", path: "/devices", title: "Daftarkan token push", roles: ALL, uc: ["UC-10"], cp: [],
-    upstream: ["Redis/Cekat: simpan device token per user (field app_user.push_tokens)"],
-    logic: ["Upsert token FCM per (user_id, device_id).", "Token lama untuk device sama diganti."],
+    id: "A-06", group: "auth", method: "POST", path: "/devices", title: "Daftarkan token push", roles: ALL, uc: ["UC-10"], cp: ["CP-03"],
+    upstream: ["Cekat Product: PATCH user push_tokens (CP-03)"],
+    logic: ["Upsert token FCM per (user_id, device_id) di data user Cekat (CP-03); tidak disimpan di Redis.", "Token lama untuk device sama diganti."],
     body: [V("device_id", "string", true, "Device.", "a1b2-c3d4"), V("platform", "enum", true, "ios | android.", "ios"), V("fcm_token", "string", true, "Token FCM.", "fcm_…")],
     response: { ok: true },
     errors: [],
@@ -519,7 +519,7 @@ export const ENDPOINTS = [
       V("footer", "string(60)", false, "Footer.", "Longchamp Plaza Indonesia"),
       V("buttons", "object[]", false, "{type: quick_reply|url|phone, text, value}.", [{ type: "quick_reply", text: "Saya hadir" }]),
     ],
-    response: { template_id: 61, wa_template_name: "lc_undangan_preview_koleksi_id", meta_status: "pending", submitted_at: "2026-11-16T23:40:00+07:00" },
+    response: { template_id: 61, cekat_template_id: "tpl_8812…", wa_template_name: "lc_undangan_preview_koleksi_id", meta_status: "pending", submitted_at: "2026-11-16T23:40:00+07:00" },
     errors: ["403 forbidden", "409 name_taken", "400 invalid_variables", "400 too_many_buttons"],
   },
   {
@@ -587,10 +587,10 @@ export const ENDPOINTS = [
       "Pelanggan harus dalam scope user (CP-02).",
       "SKU divalidasi ke Shopify; snapshot product_name dan price_idr disimpan.",
       "Duplikat SKU dengan status saved/sent → 409 already_in_wishlist.",
-      "source: catalog | product_page | scan | profile.",
+      "Tulis item ke Cekat CRM Board Wishlist (POST board item, status saved); wishlist_item_id di response = ID item dari Cekat. source: catalog | product_page | scan | profile.",
     ],
     body: [V("sku", "string", true, "SKU.", "L10165HFP"), V("source", "enum", false, "Asal penambahan.", "product_page"), V("note", "string(200)", false, "Catatan.", "Warna cognac")],
-    response: { wishlist_item_id: 2251, status: "saved", added_at: "2026-11-16T10:58:00+07:00" },
+    response: { wishlist_item_id: 2251, cekat_board_id: "wishlist", status: "saved", added_at: "2026-11-16T10:58:00+07:00" },
     errors: ["409 already_in_wishlist", "404 sku_not_found"],
   },
   {
@@ -699,4 +699,54 @@ export const JOBS = [
   { id: "J-05", name: "Status template Meta", schedule: "Tiap 15 menit", logic: "Template pending → cek status → approved/rejected + rejection_reason → FCM ke pembuat." },
   { id: "J-06", name: "Reminder agenda", schedule: "Tiap 5 menit", logic: "Appointment/task mulai dalam 30 menit → FCM." },
   { id: "J-07", name: "Data quality report", schedule: "Mingguan Senin 07:00", logic: "Duplikat telepon/email, nomor invalid, transaksi tanpa pelanggan, dead-letter > 0 → email ke IT Delivery & CRM Longchamp." },
+];
+
+/*
+ * WRITE RULE: every insert / update / delete from the app is written to Cekat CRM / Cekat API
+ * synchronously by the Clienteling API. Nothing is kept only in the app or in Redis.
+ * The API answers 2xx only after Cekat confirms, and returns the Cekat ids.
+ * Paths marked verify must be checked against docs.cekat.ai before build.
+ */
+export const WRITE_RULES = [
+  "Setiap insert, update, dan delete dari app ditulis ke Cekat CRM / Cekat API oleh Clienteling API. Tidak ada data yang hanya disimpan di app atau Redis.",
+  "Penulisan sinkron: API membalas 2xx hanya setelah Cekat mengonfirmasi, dan response memuat ID dari Cekat (contact id, board item id, template id).",
+  "Token user diteruskan ke Cekat pada setiap tulis, sehingga RBAC Cekat (CP-02) ikut memeriksa; API tidak memakai api_key workspace untuk aksi user.",
+  "Bila satu request menulis lebih dari satu objek di Cekat, urutannya tetap (objek utama dulu). Bila langkah berikutnya gagal, API mengulang 3 kali dengan Idempotency-Key yang sama; bila tetap gagal, objek utama dikembalikan dengan warnings dan n8n menyelesaikan sisanya dari dead-letter.",
+  "Gagal di langkah pertama = tidak ada yang tersimpan; API membalas 502 upstream_error dan app menampilkan pesan coba lagi.",
+  "Setelah tulis, cache Redis yang terkait (mis. hitungan wishlist, daftar template) dihapus agar pembacaan berikutnya mengambil dari Cekat.",
+];
+
+const W = (endpoint, title, steps, highlight = false) => ({ endpoint, title, steps, highlight });
+const S = (target, call, payload, verify = true) => ({ target, call, payload, verify });
+export const WRITES = [
+  W("C-03", "Pelanggan baru", [
+    S("Cekat CRM · Contacts", "POST /api/contacts", { name: "Laura Santoso", phone: "+6281298765432", email: "laura@mail.com", owner_id: 87, additional_fields: { birthdate: "1994-03-08", gender: "F", city: "Jakarta Pusat", boutique_id: 3, consent_wa: true, consent_email: false, consent_at: "2026-11-17T10:05:00+07:00", source_primary: "app" } }),
+    S("Cekat CRM · Board List Members", "POST /api/crm/boards/{listMembersBoardId}/items", { list_id: 510, customer_id: "<contact id dari langkah 1>", added_by_user_id: 87, follow_up_status: "welcome_pending" }),
+    S("Cekat CRM · Board Love Tags (opsional)", "POST /api/crm/boards/{loveTagsBoardId}/items", { customer_id: "<contact id>", tag_code: "fashion", added_by_user_id: 87 }),
+  ], true),
+  W("C-04", "Ubah data pelanggan", [S("Cekat CRM · Contacts", "PATCH /api/contacts/{id}", { email: "laura.s@mail.com", additional_fields: { consent_email: true, consent_at: "2026-11-17T10:20:00+07:00" } })]),
+  W("C-05", "Reassign pelanggan", [S("Cekat CRM · Contacts (RBAC CP-02)", "PATCH /api/contacts/{id}", { owner_id: 91 })]),
+  W("C-07", "Love Tags", [S("Cekat CRM · Board Love Tags", "POST / DELETE /api/crm/boards/{loveTagsBoardId}/items", { customer_id: 100245, tag_code: "gift", added_by_user_id: 87 })]),
+  W("C-08", "Komentar", [S("Cekat CRM · Board Comments", "POST / PATCH /api/crm/boards/{commentsBoardId}/items", { customer_id: 100245, text: "Suka warna netral", author_user_id: 87 })]),
+  W("C-11", "Tiket servis", [S("Cekat Chat · Tickets API", "POST Tickets API (create)", { contact_id: 100245, type: "repair", sku: "L1899089P59", description: "Jahitan tali longgar", boutique_id: 3 })]),
+  W("L-02 · L-04", "List pelanggan", [S("Cekat CRM · Board Customer Lists", "POST / PATCH / DELETE /api/crm/boards/{listsBoardId}/items", { name: "VIC December", list_type: "dynamic", owner_user_id: 87, boutique_id: 3, filter_json: "{\"tier\":[\"FAN\"]}", sort_by: "last_contact", shared_with_boutique: true })]),
+  W("L-05 · L-06", "Member list", [S("Cekat CRM · Board List Members", "POST / PATCH / DELETE /api/crm/boards/{listMembersBoardId}/items", { list_id: 512, customer_id: 100245, added_by_user_id: 87, follow_up_status: "welcomed" })]),
+  W("E-01 · E-02", "Event & tamu", [S("Cekat CRM · Board Events, Customer Lists, Event Guests", "POST / PATCH /api/crm/boards/{eventsBoardId|eventGuestsBoardId}/items", { event_id: 41, customer_id: 100245, rsvp_status: "accepted", attended: true })]),
+  W("E-03", "Undangan event", [S("Cekat Chat · Broadcast API", "POST Broadcast API (template)", { template: "lc_event_invite_id", contacts: [100245] }), S("Cekat CRM · Board Event Guests", "PATCH /api/crm/boards/{eventGuestsBoardId}/items/{id}", { rsvp_status: "invited", invited_at: "2026-11-17T11:00:00+07:00" })]),
+  W("P-02", "Push selesai / batal", [S("Cekat CRM · Board Pushes + Agenda", "PATCH /api/crm/boards/{pushesBoardId}/items/{id}", { status: "cancelled", cancel_reason: "client_unreachable" })]),
+  W("R-01", "Kirim WhatsApp", [S("Cekat Chat · Message API", "POST Message API (send)", { inbox_id: "ibx_pi_wa", phone: "+6281234567890", template: "lc_birthday_id", language: "id", variables: ["Sari"] })]),
+  W("R-02", "Catat reach out", [S("Cekat CRM · Board Reach Out", "POST /api/crm/boards/{reachOutBoardId}/items", { customer_id: 100245, user_id: 87, channel: "whatsapp", reason: "birthday", occurred_at: "2026-11-17T11:03:00+07:00", message_id: "msg_91c0…" }), S("Cekat CRM · Contacts", "PATCH /api/contacts/{id}", { additional_fields: { last_reach_out_at: "2026-11-17T11:03:00+07:00" } })]),
+  W("G-03 · G-04", "Agenda", [S("Cekat CRM · Board Agenda", "POST / PATCH /api/crm/boards/{agendaBoardId}/items", { item_type: "appointment", subtype: "one_to_one", title: "One-to-one · Michelle Tan", start_at: "2026-11-23T15:30:00+07:00", end_at: "2026-11-23T16:30:00+07:00", customer_id: 100311, assigned_user_id: 87 })]),
+  W("T-02", "Template WhatsApp baru", [
+    S("Cekat Chat · Open API template (dikirim ke Meta)", "POST Open API — create template message", { name: "lc_undangan_preview_koleksi_id", category: "MARKETING", language: "id", components: [{ type: "HEADER", format: "TEXT", text: "Le Pliage Re-Play" }, { type: "BODY", text: "Halo {{1}}, Anda diundang ke preview pada {{2}}.", example: { body_text: [["Sari", "5 Desember"]] } }, { type: "FOOTER", text: "Longchamp Plaza Indonesia" }, { type: "BUTTONS", buttons: [{ type: "QUICK_REPLY", text: "Saya hadir" }] }] }),
+    S("Cekat CRM · Board Template Library", "POST /api/crm/boards/{templateLibraryBoardId}/items", { cekat_template_id: "<id dari langkah 1>", wa_template_name: "lc_undangan_preview_koleksi_id", title: "Undangan preview koleksi", moment: "event", scope: "boutique", boutique_id: 3, created_by_user_id: 12, meta_status: "pending", submitted_at: "2026-11-17T10:40:00+07:00" }),
+  ], true),
+  W("T-03 · T-04", "Ubah / arsipkan template", [S("Cekat Chat · Open API + Board Template Library", "PATCH Open API template · PATCH /api/crm/boards/{templateLibraryBoardId}/items/{id}", { meta_status: "pending", rejection_reason: null, archived: false })]),
+  W("W-02", "Tambah wishlist", [
+    S("Cekat CRM · Board Wishlist", "POST /api/crm/boards/{wishlistBoardId}/items", { customer_id: 100245, created_by_user_id: 87, boutique_id: 3, sku: "L10165HFP", product_name: "Roseau Shoulder Bag", price_idr: 9900000, product_url: "https://longchamp.co.id/products/roseau", status: "saved", source: "product_page", added_at: "2026-11-17T10:58:00+07:00" }),
+  ], true),
+  W("W-03", "Hapus wishlist", [S("Cekat CRM · Board Wishlist", "DELETE /api/crm/boards/{wishlistBoardId}/items/{id}", { status_check: "saved" })]),
+  W("W-04", "Kirim wishlist", [S("Cekat Chat · Message API", "POST Message API (send)", { inbox_id: "ibx_pi_wa", phone: "+6281234567890", template: "lc_wishlist_id", variables: ["Sari", "Roseau Shoulder Bag, Le Pliage Original M"] }), S("Cekat CRM · Board Wishlist", "PATCH /api/crm/boards/{wishlistBoardId}/items/{id}", { status: "sent", wishlist_ref: "WL-20261117-0087-01", sent_at: "2026-11-17T11:02:00+07:00", cekat_message_id: "msg_91c0…", price_idr_at_send: 9900000 }), S("Cekat CRM · Board Reach Out", "POST /api/crm/boards/{reachOutBoardId}/items", { customer_id: 100245, channel: "whatsapp", reason: "wishlist" })]),
+  W("X-03", "Aturan push", [S("Cekat CRM · Board Push Rules", "POST / PATCH /api/crm/boards/{pushRulesBoardId}/items", { push_type: "vip_birthday", min_tier: "FAN", days_before: 14, due_in_days: 14, active: true })]),
+  W("A-06", "Token push device", [S("Cekat Product · Users (CP-03)", "PATCH user push_tokens", { device_id: "a1b2-c3d4", platform: "ios", fcm_token: "fcm_…" }, false)]),
 ];

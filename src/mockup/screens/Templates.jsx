@@ -320,7 +320,7 @@ export function TemplateNew({ from }) {
         <button
           className="mt-5 h-12 w-full bg-[var(--lc-olive)] text-[10.5px] font-semibold uppercase tracking-[0.18em] text-white"
           onClick={() => {
-            notify(tx("Submitted to Meta. Status: pending review.", "Diajukan ke Meta. Status: menunggu review."));
+            notify(tx("Saved in Cekat and submitted to Meta. Status: pending.", "Tersimpan di Cekat dan diajukan ke Meta. Status: pending."));
             back();
           }}
         >

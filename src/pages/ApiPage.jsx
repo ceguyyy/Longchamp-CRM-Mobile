@@ -1,7 +1,9 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Chip, Table } from "@heroui/react";
-import { API_GROUPS, ENDPOINTS, CONVENTIONS, WEBHOOKS, JOBS } from "../data/apiSpec";
+import { API_GROUPS, ENDPOINTS, CONVENTIONS, WEBHOOKS, JOBS, WRITES, WRITE_RULES } from "../data/apiSpec";
+
+const writesFor = (id) => WRITES.filter((w) => w.endpoint.split(" · ").includes(id));
 import { COMPONENTS, PARTIES, TECH_STACK } from "../data/components";
 
 const ROLE_SHORT = { sales_agent: "SA", supervisor: "SPV", super_admin: "SAdm" };
@@ -88,6 +90,20 @@ function EndpointDetail({ e }) {
           <li key={l}>{l}</li>
         ))}
       </ol>
+      {writesFor(e.id).map((w) => (
+        <div key={w.endpoint} className="mt-4 rounded-xl border border-[var(--lc-lime,#8dc63f)] bg-[#f6fbef] p-3">
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--lc-forest)]">Ditulis ke Cekat</p>
+          <ol className="mt-1.5 list-decimal space-y-2 pl-5 text-[13px]">
+            {w.steps.map((st) => (
+              <li key={st.call + st.target}>
+                <span className="font-semibold">{st.target}</span> · <code className="text-[12px]">{st.call}</code>
+                {st.verify && <span className="ml-1 text-[11px] text-[var(--lc-muted)]">(path diverifikasi ke docs.cekat.ai)</span>}
+                <pre className="mt-1 overflow-auto rounded-lg bg-white p-2 text-[11.5px]">{JSON.stringify(st.payload, null, 2)}</pre>
+              </li>
+            ))}
+          </ol>
+        </div>
+      ))}
       <VarTable rows={e.query} label="Filter / query" />
       <VarTable rows={e.body} label="Request body" />
       <p className="mt-4 mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-[var(--lc-muted)]">Response</p>
@@ -234,6 +250,38 @@ export default function ApiPage() {
           <div className="rounded-2xl border border-[var(--lc-line)] bg-white p-5 xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] xl:overflow-auto">
             <EndpointDetail e={selected} />
           </div>
+        </div>
+      </Section>
+
+      <Section title="Semua penulisan masuk ke Cekat CRM / Cekat API" desc="Pelanggan baru, wishlist, template WhatsApp, dan setiap tulis lain dari app disimpan di Cekat. App dan Redis tidak menyimpan data bisnis.">
+        <ol className="mb-4 list-decimal space-y-1 pl-5 text-sm">
+          {WRITE_RULES.map((r) => (
+            <li key={r}>{r}</li>
+          ))}
+        </ol>
+        <div className="overflow-x-auto rounded-2xl border border-[var(--lc-line)] bg-white">
+          <table className="w-full min-w-[900px] text-left text-[12.5px]">
+            <thead className="bg-[#f4f4ef] text-[11px] text-[var(--lc-muted)]">
+              <tr>{["Endpoint", "Aksi di app", "Urutan tulis ke Cekat"].map((h) => <th key={h} className="px-3 py-2 font-semibold">{h}</th>)}</tr>
+            </thead>
+            <tbody>
+              {WRITES.map((w) => (
+                <tr key={w.endpoint} onClick={() => { setGroup("all"); setSel(w.endpoint.split(" · ")[0]); }} className={`cursor-pointer border-t border-[var(--lc-line)] align-top hover:bg-[#f7f9f2] ${w.highlight ? "bg-[#f6fbef]" : ""}`}>
+                  <td className="whitespace-nowrap px-3 py-2 font-semibold text-[var(--lc-forest)]">{w.endpoint}</td>
+                  <td className="px-3 py-2">{w.title}</td>
+                  <td className="px-3 py-2">
+                    <ol className="list-decimal pl-4">
+                      {w.steps.map((st) => (
+                        <li key={st.call + st.target}>
+                          {st.target}: <code className="text-[11.5px]">{st.call}</code>
+                        </li>
+                      ))}
+                    </ol>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       </Section>
 

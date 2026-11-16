@@ -217,7 +217,7 @@ export function AgendaNew({ customer_id, kind }) {
             fullWidth
             className="mt-2 h-12 rounded-xl bg-[var(--lc-forest)] text-white"
             onPress={() => {
-              notify(tx("Saved to Agenda", "Tersimpan di Agenda"));
+              notify(tx("Saved to Agenda in Cekat CRM", "Tersimpan di Agenda (Cekat CRM)"));
               back();
             }}
           >
@@ -376,7 +376,7 @@ function PickClientSheet({ sku }) {
               onClick={() => {
                 const ok = addToClientWishlist(app, c.customer_id, sku);
                 setSheet(null);
-                notify(ok ? tx(`Saved to ${c.full_name}'s wishlist`, `Tersimpan di wishlist ${c.full_name}`) : tx("Already in this client's wishlist", "Sudah ada di wishlist klien ini"));
+                notify(ok ? tx(`Saved to ${c.full_name}'s wishlist in Cekat CRM`, `Tersimpan di wishlist ${c.full_name} (Cekat CRM)`) : tx("Already in this client's wishlist", "Sudah ada di wishlist klien ini"));
                 nav("client_wishlist", { customer_id: c.customer_id });
               }}
               className="flex w-full items-center gap-2 border-b border-[var(--lc-line)] py-2.5 text-left"
@@ -436,7 +436,7 @@ export function Product({ sku, customer_id }) {
               <LcButton
                 onClick={() => {
                   const ok = addToClientWishlist(app, fc.customer_id, sku);
-                  notify(ok ? tx(`Saved to ${fc.full_name}'s wishlist`, `Tersimpan di wishlist ${fc.full_name}`) : tx("Already in this client's wishlist", "Sudah ada di wishlist klien ini"));
+                  notify(ok ? tx(`Saved to ${fc.full_name}'s wishlist in Cekat CRM`, `Tersimpan di wishlist ${fc.full_name} (Cekat CRM)`) : tx("Already in this client's wishlist", "Sudah ada di wishlist klien ini"));
                 }}
               >
                 ♥ {tx(`Add to ${fc.full_name.split(" ")[0]}'s wishlist`, `Tambah ke wishlist ${fc.full_name.split(" ")[0]}`)}
@@ -483,7 +483,7 @@ export function ClientWishlist({ customer_id }) {
   const saved = items.filter((w) => w.status === "saved");
   const remove = (sku) => {
     setClientWishlist({ ...clientWishlist, [customer_id]: (clientWishlist[customer_id] || []).filter((w) => !(w.sku === sku && w.status === "saved")) });
-    notify(tx("Removed from wishlist", "Dihapus dari wishlist"));
+    notify(tx("Removed from wishlist in Cekat CRM", "Dihapus dari wishlist di Cekat CRM"));
   };
   return (
     <>
