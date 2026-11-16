@@ -55,15 +55,9 @@ const ArchitectureSvg = forwardRef(function ArchitectureSvg({ arch, lang, select
 
       {/* Actors above the app */}
       <g>
-        {["SA", "SM", "CX Admin"].map((a, i) => (
-          <g key={a} transform={`translate(${60 + i * 78},86)`}>
-            <circle cx="10" cy="-8" r="6" fill="none" stroke="var(--lc-forest)" strokeWidth="1.6" />
-            <path d="M0,10 Q10,-4 20,10" fill="none" stroke="var(--lc-forest)" strokeWidth="1.6" />
-            <text x="26" y="4" fontSize="11.5" fontWeight="600" fill="var(--lc-ink)">
-              {a}
-            </text>
-          </g>
-        ))}
+        <text x={157} y={92} textAnchor="middle" fontSize="11.5" fontWeight="600" fill="var(--lc-ink)">
+          Sales Agent · Supervisor · Super Admin
+        </text>
         <line x1="157" y1="104" x2="157" y2="146" stroke="var(--lc-forest)" strokeWidth="1.3" markerEnd="url(#archArrow)" />
       </g>
 

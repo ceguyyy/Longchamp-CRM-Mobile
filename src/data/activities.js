@@ -10,7 +10,7 @@
 const L = (en, id = en) => ({ en, id });
 
 export const LANES = {
-  user: { name: L("Actor", "Aktor"), sub: L("SA · SM · CX Admin"), owner: "user" },
+  user: { name: L("Actor", "Aktor"), sub: L("Sales Agent · Supervisor · Super Admin"), owner: "user" },
   app: { name: L("Mobile App", "Aplikasi Mobile"), sub: L("Frontend · HeroUI"), owner: "itdev" },
   bff: { name: L("Backend API · n8n", "Backend API · n8n"), sub: L("BFF proxy · workflows"), owner: "itdev" },
   cekat: { name: L("Cekat CRM (existing)", "Cekat CRM (sudah ada)"), sub: L("API in docs · database"), owner: "itdev" },
@@ -247,8 +247,8 @@ const activities = {
       id: "AD-05",
       title: L("Roles setup & client reassignment", "Setup role & reassignment klien"),
       desc: L(
-        "Admin defines users and the Role Hierarchy in Cekat; Cekat Product exposes it and enforces it, so a Store Manager can only reassign clients inside their own boutique.",
-        "Admin mendefinisikan user dan Role Hierarchy di Cekat; Cekat Product menyediakan dan menegakkannya, sehingga Store Manager hanya bisa memindahkan klien di dalam boutique-nya."
+        "Admin defines users and the Role Hierarchy in Cekat; Cekat Product exposes it and enforces it, so a Supervisor can only reassign clients inside their own boutique.",
+        "Admin mendefinisikan user dan Role Hierarchy di Cekat; Cekat Product menyediakan dan menegakkannya, sehingga Supervisor hanya bisa memindahkan klien di dalam boutique-nya."
       ),
       ucs: ["UC-22", "UC-21", "UC-08"],
       lanes: ["user", "app", "bff", "cekat", "product"],
@@ -258,7 +258,7 @@ const activities = {
         { id: "a2", lane: "cekat", row: 1, type: "action", label: L("CRM User Settings: roles, reports-to, authority", "CRM User Settings: role, reports-to, authority"), ref: "Settings → CRM User Settings (UI)" },
         { id: "a3", lane: "product", row: 2, type: "action", label: L("Expose Users & Role Hierarchy API", "Sediakan API Users & Role Hierarchy"), cp: "CP-03" },
         { id: "a4", lane: "product", row: 3, type: "action", label: L("Apply hierarchy to every API call (RBAC)", "Terapkan hierarki di setiap panggilan API (RBAC)"), cp: "CP-02" },
-        { id: "a5", lane: "user", row: 4, type: "action", label: L("SM: reassign client to another SA", "SM: pindahkan klien ke SA lain") },
+        { id: "a5", lane: "user", row: 4, type: "action", label: L("Supervisor: reassign client to another Sales Agent", "Supervisor: pindahkan klien ke Sales Agent lain") },
         { id: "a6", lane: "app", row: 4, type: "action", label: L("Pick client & new SA", "Pilih klien & SA baru"), ref: "PATCH /clients/{id}/assignee (BFF)" },
         { id: "fw", lane: "bff", row: 5, type: "action", label: L("Forward with user token", "Teruskan dengan token user") },
         { id: "d1", lane: "product", row: 6, type: "decision", label: L("Allowed by RBAC?", "Diizinkan RBAC?") },

@@ -32,8 +32,8 @@ const arch = {
         L("Role-aware navigation (RBAC)", "Navigasi sesuai role (RBAC)"),
       ],
       desc: L(
-        "Frontend for SA, SM and CX Admin. Holds no API keys and no business data beyond an offline cache; every call goes to the Backend API with the Cekat user token issued by Cekat Product.",
-        "Frontend untuk SA, SM, dan CX Admin. Tidak menyimpan API key maupun data bisnis selain cache offline; semua panggilan ke Backend API dengan token user Cekat yang diterbitkan Cekat Product."
+        "Frontend for Sales Agent, Supervisor and Super Admin. Holds no API keys and no business data beyond an offline cache; every call goes to the Backend API with the Cekat user token issued by Cekat Product.",
+        "Frontend untuk Sales Agent, Supervisor, dan Super Admin. Tidak menyimpan API key maupun data bisnis selain cache offline; semua panggilan ke Backend API dengan token user Cekat yang diterbitkan Cekat Product."
       ),
     },
     {
@@ -192,9 +192,9 @@ const arch = {
     { entity: L("Wishlist"), store: "Wishlist board", writers: "App via BFF", readers: "n8n (attribution) · App" },
     { entity: L("Agenda tasks & appointments", "Task & appointment Agenda"), store: "Agenda board", writers: "n8n (pushes), App via BFF", readers: "App via BFF" },
     { entity: L("Events & guest lists", "Event & guest list"), store: "Events board", writers: "App via BFF (SM)", readers: "App via BFF" },
-    { entity: L("Templates & push rules", "Template & aturan push"), store: "Templates · Push Rules boards", writers: "CX Admin (App / Cekat UI)", readers: "App · n8n" },
+    { entity: L("Templates & push rules", "Template & aturan push"), store: "Templates · Push Rules boards", writers: "Super Admin (App / Cekat UI)", readers: "App · n8n" },
     { entity: L("KPI snapshot"), store: "KPI board", writers: "n8n (scheduled)", readers: "App via BFF" },
-    { entity: L("Users, roles, hierarchy", "User, role, hierarki"), store: "Cekat CRM User Settings", writers: "CX Admin (Cekat UI)", readers: "Cekat Product (CP-01/02/03) — app reads role via BFF" },
+    { entity: L("Users, roles, hierarchy", "User, role, hierarki"), store: "Cekat CRM User Settings", writers: "Super Admin (Cekat UI)", readers: "Cekat Product (CP-01/02/03) — app reads role via BFF" },
     { entity: L("Product catalog & stock", "Katalog produk & stok"), store: "Not stored — Shopify / Odoo are the source", writers: "—", readers: "BFF (cache)" },
     { entity: L("Catalog cache"), store: "BFF cache (Redis) — not business data", writers: "BFF", readers: "BFF" },
   ],

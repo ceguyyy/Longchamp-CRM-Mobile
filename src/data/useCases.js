@@ -19,18 +19,18 @@ const model = {
   actors: [
     {
       id: "sa",
-      name: { en: "Sales Associate", id: "Sales Associate" },
+      name: { en: "Sales Agent", id: "Sales Agent" },
       note: { en: "Boutique staff (5 boutiques)", id: "Staf boutique (5 boutique)" },
     },
     {
       id: "sm",
-      name: { en: "Store Manager", id: "Store Manager" },
-      note: { en: "Inherits all SA use cases", id: "Mewarisi semua use case SA" },
+      name: { en: "Supervisor", id: "Supervisor" },
+      note: { en: "Inherits all Sales Agent use cases", id: "Mewarisi semua use case Sales Agent" },
       generalizes: "sa",
     },
     {
       id: "hq",
-      name: { en: "CRM / CX Admin", id: "Admin CRM / CX" },
+      name: { en: "Super Admin", id: "Super Admin" },
       note: { en: "Longchamp HQ Indonesia", id: "HQ Longchamp Indonesia" },
     },
   ],
@@ -39,9 +39,9 @@ const model = {
   roles: [
     {
       id: "sa",
-      name: { en: "Sales Associate", id: "Sales Associate" },
-      cekatRole: "SA – {Boutique}",
-      reportsTo: "SM – {Boutique}",
+      name: { en: "Sales Agent", id: "Sales Agent" },
+      cekatRole: "Sales Agent – {Boutique}",
+      reportsTo: "Supervisor – {Boutique}",
       authority: "Basic User",
       peers: false,
       scope: {
@@ -51,9 +51,9 @@ const model = {
     },
     {
       id: "sm",
-      name: { en: "Store Manager", id: "Store Manager" },
-      cekatRole: "SM – {Boutique}",
-      reportsTo: "CX Admin",
+      name: { en: "Supervisor", id: "Supervisor" },
+      cekatRole: "Supervisor – {Boutique}",
+      reportsTo: "Super Admin",
       authority: "Basic User",
       peers: false,
       scope: {
@@ -63,8 +63,8 @@ const model = {
     },
     {
       id: "hq",
-      name: { en: "CRM / CX Admin", id: "Admin CRM / CX" },
-      cekatRole: "CX Admin",
+      name: { en: "Super Admin", id: "Super Admin" },
+      cekatRole: "Super Admin",
       reportsTo: "—",
       authority: "Administrator",
       peers: true,
@@ -417,8 +417,8 @@ const model = {
       id: "Dua implementor di sisi Cekat: IT Dev membangun dengan yang ada di dokumentasi API Cekat (plus n8n, BFF, dan aplikasi mobile); Cekat Product membangun yang belum ada di docs (CP-01 … CP-06).",
     },
     {
-      en: "Login, users and RBAC are owned by Cekat Product (CP-01, CP-02, CP-03), based on the Cekat CRM Role Hierarchy (SA reports to SM reports to CX Admin, peer sharing off for SA). IT Dev does not build any auth or scope filtering — the BFF only forwards the user token.",
-      id: "Login, user, dan RBAC dimiliki Cekat Product (CP-01, CP-02, CP-03), berbasis Role Hierarchy Cekat CRM (SA lapor ke SM lapor ke CX Admin, peer sharing mati untuk SA). IT Dev tidak membangun auth maupun filter scope — BFF hanya meneruskan token user."
+      en: "Login, users and RBAC are owned by Cekat Product (CP-01, CP-02, CP-03), based on the Cekat CRM Role Hierarchy (Sales Agent reports to Supervisor reports to Super Admin, peer sharing off for Sales Agent). IT Dev does not build any auth or scope filtering — the BFF only forwards the user token.",
+      id: "Login, user, dan RBAC dimiliki Cekat Product (CP-01, CP-02, CP-03), berbasis Role Hierarchy Cekat CRM (Sales Agent lapor ke Supervisor lapor ke Super Admin, peer sharing mati untuk Sales Agent). IT Dev tidak membangun auth maupun filter scope — BFF hanya meneruskan token user."
     },
     {
       en: "The mobile app never holds the Cekat api_key. User requests go through the BFF with the Cekat user token; only n8n uses the workspace api_key for system jobs.",

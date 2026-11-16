@@ -31,13 +31,13 @@ const entities = [
   /* ======================================================= REFERENCE & ACCESS */
   {
     id: "boutique", domain: "ref", status: "existing", cekat: "Board: Boutiques",
-    desc: "The 5 Longchamp boutiques in Indonesia. Scope unit for Store Managers.",
+    desc: "The 5 Longchamp boutiques in Indonesia. Scope unit for Supervisors.",
     fields: [
       F("boutique_id", "BIGINT", "Number", "PK", true, "Boutique id (= Odoo pos.config / stock location).", 3, "admin"),
       F("boutique_name", "VARCHAR(120)", "Text", "UQ", true, "Display name; also used as `shop` value in survey links.", "Plaza Indonesia", "admin"),
       F("odoo_location_id", "BIGINT", "Number", "UQ", true, "Odoo stock.location id for stock.quant queries.", 41, "admin"),
       F("city", "VARCHAR(80)", "Text", "", true, "City.", "Jakarta", "admin"),
-      F("store_manager_user_id", "BIGINT", "Agents", "FK", false, "Current Store Manager.", 12, "admin"),
+      F("supervisor_user_id", "BIGINT", "Agents", "FK", false, "Current Supervisor.", 12, "admin"),
       F("is_active", "BOOLEAN", "Checkbox", "", true, "Boutique open.", true, "admin", "true"),
     ],
   },
@@ -49,10 +49,10 @@ const entities = [
       F("cekat_agent", "REF", "User (native)", "UQ", true, "Cekat CRM user id.", "agt_5521", "cekat"),
       F("full_name", "VARCHAR(120)", "Text", "", true, "Display name.", "Andi Pratama", "cekat"),
       F("email", "VARCHAR(160)", "Email", "UQ", true, "Login email (= Cekat user email).", "andi@longchamp.co.id", "cekat"),
-      F("role", "ENUM", "Select", "IDX", true, "sa | sm | admin — drives RBAC.", "sa", "cekat"),
+      F("role", "ENUM", "Select", "IDX", true, "sales_agent | supervisor | super_admin — drives RBAC.", "sales_agent", "cekat"),
       F("cekat_role_name", "VARCHAR(50)", "Text", "", true, "Role name in Cekat Role Hierarchy.", "SA – Plaza Indonesia", "cekat"),
-      F("reports_to_user_id", "BIGINT", "Agents", "FK", false, "Manager in the hierarchy (SA → SM → CX Admin).", 12, "cekat"),
-      F("boutique_id", "BIGINT", "References", "FK", false, "Home boutique; null for CX Admin.", 3, "cekat"),
+      F("reports_to_user_id", "BIGINT", "Agents", "FK", false, "Manager in the hierarchy (Sales Agent → Supervisor → Super Admin).", 12, "cekat"),
+      F("boutique_id", "BIGINT", "References", "FK", false, "Home boutique; null for Super Admin.", 3, "cekat"),
       F("boutique_name", "VARCHAR(120)", "Text", "", false, "Denormalised from boutique.", "Plaza Indonesia", "cekat"),
       F("odoo_salesperson_id", "BIGINT", "Number", "UQ", false, "Odoo res.users id — links POS sales to the SA.", 87, "cekat"),
       F("is_active", "BOOLEAN", "Checkbox", "", true, "Can sign in.", true, "admin", "true"),
@@ -371,7 +371,7 @@ const entities = [
       F("capacity", "INT", "Number", "", false, "Max guests.", 40, "app"),
       F("guest_list_id", "BIGINT", "References", "FK", true, "customer_list (event_guests).", 502, "app"),
       F("invite_template_id", "BIGINT", "References", "FK", false, "WA invitation template.", 21, "app"),
-      F("created_by_user_id", "BIGINT", "Agents", "FK", true, "Store Manager.", 12, "app"),
+      F("created_by_user_id", "BIGINT", "Agents", "FK", true, "Supervisor.", 12, "app"),
     ],
   },
   {
@@ -417,7 +417,7 @@ const entities = [
 const relations = [
   ["app_user", "boutique_id", "boutique", "N:1"],
   ["app_user", "reports_to_user_id", "app_user", "N:1"],
-  ["boutique", "store_manager_user_id", "app_user", "N:1"],
+  ["boutique", "supervisor_user_id", "app_user", "N:1"],
   ["app_device", "user_id", "app_user", "N:1"],
   ["customer", "assigned_user_id", "app_user", "N:1"],
   ["customer", "current_tier_id", "segment_tier", "N:1"],

@@ -12,7 +12,7 @@ const L = (en, id = en) => ({ en, id });
 const M = (from, to, kind, label, ref = "", payload = null, opts = {}) => ({ from, to, kind, label, ref, payload, ...opts });
 
 export const PARTICIPANTS = {
-  user: { name: L("Actor", "Aktor"), sub: "SA · SM", owner: "user" },
+  user: { name: L("Actor", "Aktor"), sub: "Agent · Supervisor", owner: "user" },
   app: { name: L("Mobile App", "Aplikasi Mobile"), sub: "HeroUI", owner: "itdev" },
   bff: { name: L("Backend API"), sub: "BFF · proxy", owner: "itdev" },
   n8n: { name: L("n8n"), sub: "workflows", owner: "itdev" },
@@ -54,8 +54,8 @@ const sequences = [
       }, { cp: "CP-01" }),
       M("bff", "cp", "sync", L("Get me: role & scope", "Ambil me: role & scope"), "GET /users/me (new)", { headers: UTOKEN }, { cp: "CP-03" }),
       M("cp", "bff", "reply", L("Role & scope", "Role & scope"), "200", {
-        cekat_user_id: "agt_5521", full_name: "Andi Pratama", cekat_role_name: "SA – Plaza Indonesia", app_role: "sa",
-        reports_to: "SM – Plaza Indonesia", authority: "Basic User", share_with_peers: false,
+        cekat_user_id: "agt_5521", full_name: "Andi Pratama", cekat_role_name: "Sales Agent – Plaza Indonesia", app_role: "sales_agent",
+        reports_to: "Supervisor – Plaza Indonesia", authority: "Basic User", share_with_peers: false,
         scope: { boutique_ids: [3], visible_owner_ids: ["agt_5521"], include_unassigned: true },
       }, { cp: "CP-03" }),
       M("bff", "crm", "async", L("Upsert App Devices item", "Upsert item App Devices"), "POST /api/crm/boards/{appDevicesBoardId}/items", {
@@ -63,7 +63,7 @@ const sequences = [
       }, { verify: true, note: "System write with workspace api_key — device tokens are for push (IT Dev)." }),
       M("bff", "app", "reply", L("Session", "Sesi"), "200", {
         access_token: "ck_usr_…", refresh_token: "ck_ref_…", expires_in: 3600,
-        user: { cekat_user_id: "agt_5521", full_name: "Andi Pratama", app_role: "sa", boutique_id: 3 },
+        user: { cekat_user_id: "agt_5521", full_name: "Andi Pratama", app_role: "sales_agent", boutique_id: 3 },
         modules: ["search", "lists", "actions", "catalog", "performance"],
       }),
       M("app", "user", "reply", L("Home with modules for the role", "Home dengan modul sesuai role")),
@@ -269,7 +269,7 @@ const sequences = [
   /* ================================================================ SD-06 */
   {
     id: "SD-06",
-    title: L("Store Manager reassigns a client", "Store Manager memindahkan klien"),
+    title: L("Supervisor reassigns a client", "Supervisor memindahkan klien"),
     desc: L(
       "The permission check is done by Cekat Product on the user token (an SM may only reassign inside their boutique). The documented Contact updated webhook lets n8n notify the new SA — also when the change is made in the Cekat UI.",
       "Pengecekan izin dilakukan Cekat Product lewat token user (SM hanya boleh memindahkan di dalam boutique-nya). Webhook Contact updated yang terdokumentasi membuat n8n bisa memberi tahu SA baru — juga saat perubahan dilakukan di UI Cekat."

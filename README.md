@@ -21,7 +21,17 @@ npm run build    # static build in dist/ (relative paths, works on GitHub Pages)
 | Solution architecture (Cekat CRM as database) | ✅ v0.2 |
 | ERD + field-level data dictionary (CSV export, JSON samples) | ✅ v0.2 |
 | Sequence diagrams (6 flows, request/response variables, endpoint inventory) | ✅ v0.2 |
-| App mockup (HeroUI) | planned |
+| App mockup (HeroUI) — login, account activation, 3 roles, prototype + gallery | ✅ v0.2 |
+
+### Roles
+
+| Role | Cekat CRM role | Scope |
+|---|---|---|
+| Super Admin | Super Admin (Administrator) | All boutiques, read-only on clients; templates, push rules, users |
+| Supervisor | Supervisor – {Boutique} | All clients of the boutique team; team KPI; reassign clients |
+| Sales Agent | Sales Agent – {Boutique} | Own + unassigned clients |
+
+Registration is invitation-based: the Super Admin invites staff in Cekat CRM, staff activate the account in the app (Cekat Product, CP-01).
 
 ### Implementors (Cekat side)
 
@@ -64,5 +74,6 @@ src/
   components/DetailPanel.jsx    HeroUI Card / Chip
   components/DataSourceMatrix.jsx  HeroUI Table
   pages/UseCasePage.jsx
+  mockup/                       HeroUI app mockup (data, screens, MockApp shell)
   i18n.js                       EN / ID strings
 ```
