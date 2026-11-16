@@ -84,3 +84,57 @@ body {
 .ucd .system {
   cursor: pointer;
 }
+
+/* ---------- Mockup: Longchamp "Belong" app look (from the APAC CX deck) ---------- */
+.lc-app {
+  --lc-forest: #000000;          /* primary blocks & buttons are pure black in the app */
+  --lc-olive: #2e3a1f;           /* VALIDATE bar / login */
+  --lc-cream: #ffffff;
+  --lc-line: #e4e4e4;
+  --lc-muted: #8a8a8a;
+  --lc-lime: #8dc63f;
+  --lc-lime-soft: #f1f8e6;
+  font-family: "Cabin", "Gill Sans", "Gill Sans MT", ui-sans-serif, sans-serif;
+  color: #000;
+  background: #fff;
+}
+.lc-app [class*="rounded"]:not(.rounded-full) {
+  border-radius: 0 !important;
+}
+.lc-app .font-display {
+  font-family: "Cabin", "Gill Sans", "Gill Sans MT", sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.lc-app .caps {
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+.lc-app .script {
+  font-family: "Allura", "Snell Roundhand", cursive;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.lc-app button:focus-visible,
+.lc-app a:focus-visible {
+  outline: 2px solid var(--lc-lime);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .lc-drawer {
+    transition: transform 220ms ease;
+  }
+  .lc-scrim {
+    transition: opacity 220ms ease;
+  }
+}
+.lc-app {
+  --radius: 0px;
+  --field-radius: 0px;
+}
+.lc-app input,
+.lc-app [data-slot="button"],
+.lc-app .button {
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}

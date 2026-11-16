@@ -35,7 +35,7 @@ export default function MockApp({ role, screen = "login", lang, onScreen, scale 
   return (
     <Ctx.Provider value={app}>
       <Phone scale={scale} darkStatus={app.current.id === "login"}>
-        <div className={`absolute inset-0 ${interactive ? "" : "pointer-events-none"}`}>
+        <div className={`lc-app absolute inset-0 flex flex-col ${interactive ? "" : "pointer-events-none"}`}>
           <C {...app.current.params} demoRole={loginRole} />
           {!cur.auth && <TabBar />}
           <Sheet />

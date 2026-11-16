@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Button, Chip, Input, Label, SearchField, Switch, Tabs, TextField } from "@heroui/react";
-import { useApp, AppBar, Body, SectionTitle, Tile, TierBadge, Initials, Pill } from "../core";
+import { useApp, AppBar, Body, SectionTitle, Tile, TierBadge, Initials, Pill, Row, ContactBar } from "../core";
 import { CLIENTS, LISTS, LOVE_TAGS, PUSHES, PUSH_LABEL, TEAM, TEMPLATES, REACH_REASONS, BOUTIQUES, idr, tag } from "../data";
 
 /* RBAC as returned by Cekat Product (CP-02) — the app only renders what comes back */
@@ -19,21 +19,21 @@ function useClient(id) {
 function ClientRow({ c, onClick }) {
   const { tx } = useApp();
   return (
-    <Tile onClick={onClick} className="flex items-center gap-3 p-3">
-      <Initials name={c.full_name} />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <p className="truncate text-[14px] font-semibold">{c.full_name}</p>
+    <button onClick={onClick} className="flex w-full items-center gap-3 border-b border-[var(--lc-line)] py-2.5 text-left">
+      <svg width="12" height="16" viewBox="0 0 12 16" aria-hidden className="shrink-0"><path d="M1 1h10v14l-5-4-5 4z" fill="#000" /></svg>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-2">
+          <span className="truncate text-[12.5px] font-bold uppercase tracking-[0.05em]">{c.full_name}</span>
           <TierBadge tier={c.current_tier_name} small />
-        </div>
-        <p className="text-[11.5px] text-[var(--lc-muted)]">{c.phone_e164.replace(/(\+\d{5})\d+(\d{4})/, "$1•••$2")}</p>
-        <p className="text-[11px] text-[var(--lc-muted)]">
-          {c.assigned_user_name ? c.assigned_user_name : <span className="font-semibold text-[#b4441c]">{tx("Unassigned", "Tanpa assignee")}</span>}
-          {c.days_since_last_contact !== null && ` · ${c.days_since_last_contact}d`}
-        </p>
-      </div>
-      <svg width="8" height="14" viewBox="0 0 8 14" className="text-[#c0c4b4]"><path d="M1 1 L7 7 L1 13" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
-    </Tile>
+        </span>
+        <span className="block truncate text-[11px] text-[var(--lc-muted)]">{c.email || c.phone_e164.replace(/(\+\d{5})\d+(\d{4})/, "$1•••$2")}</span>
+        <span className="block text-[10.5px] text-[var(--lc-muted)]">
+          {c.assigned_user_name ? c.assigned_user_name : <b className="text-black">{tx("Unassigned", "Tanpa assignee")}</b>}
+          {c.days_since_last_contact !== null && `, ${tx("contacted", "dihubungi")} ${c.days_since_last_contact}${tx("d ago", " hr lalu")}`}
+        </span>
+      </span>
+      <svg width="8" height="14" viewBox="0 0 8 14" className="text-[#b0b0b0]" aria-hidden><path d="M1 1 L7 7 L1 13" fill="none" stroke="currentColor" strokeWidth="1.5" /></svg>
+    </button>
   );
 }
 
@@ -65,9 +65,9 @@ export function ClientSearch() {
       />
       <Body>
         <SearchField aria-label="Search" value={q} onChange={setQ} className="w-full">
-          <SearchField.Group className="flex h-11 items-center gap-2 rounded-xl border border-[var(--lc-line)] bg-white px-3">
+          <SearchField.Group className="mt-3 flex h-10 items-center gap-2 border-b border-[#bdbdbd]">
             <SearchField.SearchIcon />
-            <SearchField.Input placeholder={tx("Phone, name or email", "HP, nama, atau email")} className="flex-1 bg-transparent text-[14px] outline-none" />
+            <SearchField.Input placeholder={tx("Phone, name or email", "HP, nama, atau email")} className="flex-1 bg-transparent text-[13px] outline-none placeholder:uppercase placeholder:tracking-[0.12em] placeholder:text-[10.5px]" />
             <SearchField.ClearButton />
           </SearchField.Group>
         </SearchField>
@@ -86,7 +86,7 @@ export function ClientSearch() {
         <p className="mb-2 mt-3 text-[11.5px] text-[var(--lc-muted)]">
           {list.length} {tx("clients", "klien")} · {tx("filtered by Cekat RBAC", "difilter oleh RBAC Cekat")}
         </p>
-        <div className="flex flex-col gap-2">
+        <div>
           {list.map((c) => (
             <ClientRow key={c.customer_id} c={c} onClick={() => nav("client", { customer_id: c.customer_id })} />
           ))}
@@ -176,136 +176,121 @@ export function ClientProfile({ customer_id, push_id }) {
   const role = session.role;
   const canAct = role !== "super_admin";
   const push = push_id && PUSHES.find((p) => p.push_id === push_id);
-  const [tab, setTab] = useState("overview");
+  const [open, setOpen] = useState(null);
+  const toggle = (k) => setOpen(open === k ? null : k);
+  const avg = Math.round(c.total_spent_idr / Math.max(1, c.purchase_count));
+  const reach = (channel) => nav("reach_out", { customer_id: c.customer_id, push_id, channel });
 
   return (
     <>
-      <AppBar title="" onBack={back} right={<span className="text-[11px] text-[var(--lc-muted)]">#{c.customer_id}</span>} />
-      <Body>
-        <div className="flex items-center gap-3">
-          <Initials name={c.full_name} size={56} dark />
-          <div className="min-w-0">
-            <p className="font-display truncate text-[26px] font-semibold leading-tight">{c.full_name}</p>
-            <div className="mt-0.5 flex items-center gap-2">
-              <TierBadge tier={c.current_tier_name} />
-              {c.is_promoter && <span className="text-[11px] font-semibold text-[var(--lc-forest)]">★ Promoter</span>}
-            </div>
+      <AppBar onBack={back} />
+      <Body pad={false}>
+        <div className="bg-black px-4 py-3 text-white">
+          <div className="flex items-center justify-between">
+            <p className="text-[16px] font-bold uppercase tracking-[0.06em]">{c.full_name}</p>
+            <TierBadge tier={c.current_tier_name} small />
           </div>
-        </div>
-
-        {push && (
-          <div className="mt-3 rounded-2xl bg-[var(--lc-lime-soft)] p-3 text-[12.5px]">
-            <b>{PUSH_LABEL[push.push_type].en}</b> · {push.detail}. {tx("Reach out before", "Hubungi sebelum")} {push.due_date.slice(5).split("-").reverse().join("/")}.
-          </div>
-        )}
-
-        <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-          {[
-            [tx("Spent", "Belanja"), `${(c.total_spent_idr / 1e6).toFixed(1)} jt`],
-            [tx("Orders", "Order"), c.purchase_count],
-            [tx("Last contact", "Kontak terakhir"), c.days_since_last_contact === null ? "—" : `${c.days_since_last_contact}d`],
-          ].map(([k, v]) => (
-            <div key={k} className="rounded-xl border border-[var(--lc-line)] bg-white py-2">
-              <p className="font-display text-[20px]">{v}</p>
-              <p className="text-[10.5px] text-[var(--lc-muted)]">{k}</p>
-            </div>
-          ))}
-        </div>
-
-        {canAct && (
-          <div className="mt-3 grid grid-cols-4 gap-2">
-            {[
-              [tx("Reach Out", "Reach Out"), () => nav("reach_out", { customer_id: c.customer_id, push_id }), true],
-              [tx("Wishlist", "Wishlist"), () => nav("catalog_pick", { customer_id: c.customer_id }), true],
-              [tx("Agenda", "Agenda"), () => nav("agenda_new", { customer_id: c.customer_id }), true],
-              [tx("Ticket", "Tiket"), () => nav("ticket_new", { customer_id: c.customer_id }), true],
-            ].map(([l, go]) => (
-              <button key={l} onClick={go} className="rounded-xl bg-[var(--lc-forest)] py-2.5 text-[11.5px] font-semibold text-white">
-                {l}
-              </button>
-            ))}
-          </div>
-        )}
-        {!canAct && (
-          <p className="mt-3 rounded-xl bg-white p-2.5 text-[11.5px] text-[var(--lc-muted)]">
-            {tx("View only — Super Admin does not reach out to clients (RBAC).", "Hanya lihat — Super Admin tidak menghubungi klien (RBAC).")}
+          <p className="text-[11.5px] text-white/60">
+            {c.city}
+            {c.is_promoter ? ` · Promoter` : ""}
           </p>
-        )}
+        </div>
 
-        <Tabs className="mt-4" selectedKey={tab} onSelectionChange={(k) => setTab(String(k))}>
-          <Tabs.ListContainer>
-            <Tabs.List aria-label="Client tabs" className="w-full">
-              {[
-                ["overview", tx("Profile", "Profil")],
-                ["love", "Love Tags"],
-                ["history", tx("Purchases", "Pembelian")],
-              ].map(([k, l]) => (
-                <Tabs.Tab key={k} id={k} className="flex-1 text-[12.5px]">
-                  {l}
-                  <Tabs.Indicator />
-                </Tabs.Tab>
-              ))}
-            </Tabs.List>
-          </Tabs.ListContainer>
-        </Tabs>
+        <div className="px-4">
+          {canAct ? (
+            <ContactBar
+              items={[
+                { label: tx("Call", "Telepon"), icon: "call", onClick: () => reach("call") },
+                { label: "E-mail", icon: "mail", disabled: !c.consent_email, onClick: () => reach("email") },
+                { label: "SMS", icon: "sms", onClick: () => reach("sms") },
+                { label: "WhatsApp", icon: "whatsapp", disabled: !c.consent_wa, active: !!push, onClick: () => reach("whatsapp") },
+                { label: "Wishlist", icon: "heart", onClick: () => nav("catalog_pick", { customer_id: c.customer_id }) },
+                { label: "Agenda", icon: "calendar", onClick: () => nav("agenda_new", { customer_id: c.customer_id }) },
+                { label: tx("Ticket", "Tiket"), icon: "ticket", onClick: () => nav("ticket_new", { customer_id: c.customer_id }) },
+              ]}
+            />
+          ) : (
+            <p className="py-3 text-[11.5px] text-[var(--lc-muted)]">{tx("View only. Super Admin does not contact clients.", "Hanya lihat. Super Admin tidak menghubungi klien.")}</p>
+          )}
 
-        {tab === "overview" && (
-          <>
-            <Tile className="mt-3 divide-y divide-[var(--lc-line)]">
+          {push && (
+            <div className="mb-3 border-l-4 px-3 py-2 text-[12px]" style={{ borderColor: "#8dc63f", background: "#f1f8e6" }}>
+              <b>{tx("Push", "Push")}: {push.detail}.</b> {tx("Contact before", "Hubungi sebelum")} {push.due_date.slice(5).split("-").reverse().join("/")}.
+            </div>
+          )}
+
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-2.5 border-y border-[var(--lc-line)] py-3">
+            {[
+              [tx("Creation", "Dibuat"), "2021-03-14"],
+              [tx("Birth date", "Tanggal lahir"), c.birthdate],
+              [tx("Average basket", "Rata-rata belanja"), `IDR ${avg.toLocaleString("id-ID")}`],
+              [tx("Last purchase", "Pembelian terakhir"), c.last_purchase_date],
+              [tx("Purchases", "Jumlah order"), c.purchase_count],
+              [tx("Last contact", "Kontak terakhir"), c.days_since_last_contact === null ? tx("Never", "Belum pernah") : `${c.days_since_last_contact} ${tx("days ago", "hari lalu")}`],
+            ].map(([k, v]) => (
+              <div key={k}>
+                <dt className="caps text-[8.5px] font-semibold">{k}</dt>
+                <dd className="text-[12.5px] text-[#444]">{v}</dd>
+              </div>
+            ))}
+          </dl>
+
+          <Row label={tx("Personal details", "Data pribadi")} onClick={() => toggle("details")} open={open === "details"} />
+          {open === "details" && (
+            <div className="border-b border-[var(--lc-line)] pb-2 text-[12.5px]">
               {[
                 [tx("Phone", "HP"), c.phone_e164],
                 ["Email", c.email || "—"],
-                [tx("Birthday", "Ulang tahun"), c.birthdate.slice(5).split("-").reverse().join("/")],
-                [tx("City", "Kota"), c.city],
                 [tx("Assigned to", "Ditangani"), c.assigned_user_name || tx("Unassigned", "Tanpa assignee")],
-                ["WhatsApp consent", c.consent_wa ? tx("Yes", "Ya") : tx("No — WA blocked", "Tidak — WA diblokir")],
-                ["Email consent", c.consent_email ? tx("Yes", "Ya") : tx("No", "Tidak")],
+                [tx("WhatsApp consent", "Consent WhatsApp"), c.consent_wa ? tx("Yes", "Ya") : tx("No", "Tidak")],
+                [tx("Email consent", "Consent email"), c.consent_email ? tx("Yes", "Ya") : tx("No", "Tidak")],
               ].map(([k, v]) => (
-                <div key={k} className="flex justify-between gap-3 px-4 py-2.5 text-[13px]">
+                <div key={k} className="flex justify-between py-1">
                   <span className="text-[var(--lc-muted)]">{k}</span>
-                  <span className={`text-right font-medium ${String(v).startsWith("No") || String(v).startsWith("Tidak") ? "text-[#b4441c]" : ""}`}>{v}</span>
+                  <span>{v}</span>
                 </div>
               ))}
-            </Tile>
-            {role === "supervisor" && (
-              <button onClick={() => setSheet(<ReassignSheet c={c} />)} className="mt-3 w-full rounded-2xl border border-[var(--lc-forest)] py-2.5 text-[13px] font-semibold text-[var(--lc-forest)]">
-                {tx("Reassign to another Sales Agent", "Pindahkan ke Sales Agent lain")}
-              </button>
-            )}
-            <SectionTitle>{tx("Comment", "Komentar")}</SectionTitle>
-            <Tile className="p-3 text-[13px] leading-relaxed">{c.client_note || <span className="text-[var(--lc-muted)]">{tx("No comment yet", "Belum ada komentar")}</span>}</Tile>
-          </>
-        )}
-        {tab === "love" && (
-          <div className="mt-3">
-            {canAct ? (
-              <LoveTagsEditor c={c} />
-            ) : (
-              <div className="flex flex-wrap gap-1.5">
-                {c.love_tags.map((t) => (
-                  <Chip key={t} size="sm">
-                    ♥ {tag(t)}
-                  </Chip>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-        {tab === "history" && (
-          <div className="mt-3 flex flex-col gap-2">
-            {c.purchases.map((p) => (
-              <Tile key={p.receipt_number} className="p-3">
-                <div className="flex justify-between text-[13px]">
+              {role === "supervisor" && (
+                <button onClick={() => setSheet(<ReassignSheet c={c} />)} className="mt-2 w-full border border-black py-2.5 text-[10.5px] font-semibold uppercase tracking-[0.14em]">
+                  {tx("Reassign to another Sales Agent", "Pindahkan ke Sales Agent lain")}
+                </button>
+              )}
+            </div>
+          )}
+          <Row label={tx("Purchase history", "Riwayat pembelian")} count={c.purchases.length} onClick={() => toggle("history")} open={open === "history"} />
+          {open === "history" &&
+            c.purchases.map((p) => (
+              <div key={p.receipt_number} className="border-b border-[var(--lc-line)] py-2 text-[12.5px]">
+                <div className="flex justify-between">
                   <span className="font-semibold">{p.item}</span>
                   <span>{idr(p.amount_net_idr)}</span>
                 </div>
-                <p className="mt-0.5 text-[11px] text-[var(--lc-muted)]">
-                  {p.date} · {p.receipt_number} · {p.channel === "online" ? "Shopify" : "Odoo POS"}
+                <p className="text-[11px] text-[var(--lc-muted)]">
+                  {p.date}, {p.receipt_number}, {p.channel === "online" ? "Shopify" : "Odoo POS"}
                 </p>
-              </Tile>
+              </div>
             ))}
-          </div>
-        )}
+          <Row label={tx("Wishlist", "Wishlist")} count={1} onClick={() => toggle("wishlist")} open={open === "wishlist"} />
+          {open === "wishlist" && <p className="border-b border-[var(--lc-line)] py-2 text-[12.5px]">Roseau Shoulder Bag · {tx("sent 20/10, read", "terkirim 20/10, dibaca")}</p>}
+          <Row label="Love tags" count={c.love_tags.length} onClick={() => toggle("love")} open={open === "love"} />
+          {open === "love" && <div className="border-b border-[var(--lc-line)] py-3">{canAct ? <LoveTagsEditor c={c} /> : <p className="text-[12.5px]">{c.love_tags.map(tag).join(", ")}</p>}</div>}
+          <Row label={tx("Customer commentaries", "Komentar pelanggan")} onClick={() => toggle("note")} open={open === "note"} />
+          {open === "note" && <p className="border-b border-[var(--lc-line)] py-2 text-[12.5px] leading-relaxed">{c.client_note || tx("No comment yet.", "Belum ada komentar.")}</p>}
+          <Row label={tx("Timeline", "Timeline")} onClick={() => toggle("timeline")} open={open === "timeline"} />
+          {open === "timeline" && (
+            <div className="border-b border-[var(--lc-line)] py-2 text-[12px]">
+              {[
+                [tx("Future", "Mendatang"), push ? `${push.detail}, ${tx("push due", "push jatuh tempo")} ${push.due_date}` : tx("No future interactions", "Tidak ada interaksi mendatang")],
+                [tx("Past", "Lalu"), c.last_reach_out_at ? `${c.last_reach_out_at}, WhatsApp, ${tx("customer invitation", "undangan pelanggan")}` : tx("No past interactions", "Belum ada interaksi")],
+              ].map(([k, v]) => (
+                <div key={k} className="py-1">
+                  <p className="caps text-[8.5px] font-semibold">{k}</p>
+                  <p className="text-[var(--lc-muted)]">{v}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </Body>
     </>
   );
@@ -368,14 +353,47 @@ export function ClientNew() {
   );
 }
 
-export function ReachOut({ customer_id, push_id }) {
+const MOTIVES = [
+  ["push", "Clienteling push", "Clienteling push"],
+  ["birthday", "Birthday", "Ulang tahun"],
+  ["event_invite", "Customer invitation", "Undangan pelanggan"],
+  ["tlf_program", "TLF customer invitation", "Undangan TLF"],
+  ["clienteling_kit", "Collection presentation", "Presentasi koleksi"],
+  ["after_sales", "After sales appointment", "Janji after sales"],
+  ["wishlist", "Wishlist", "Wishlist"],
+  ["other", "Other", "Lainnya"],
+];
+const CHANNELS = [
+  ["whatsapp", "WhatsApp"],
+  ["call", "Call"],
+  ["sms", "SMS"],
+  ["email", "E-mail"],
+];
+
+function Dropdown({ label, value, open, onToggle, children }) {
+  return (
+    <div className="border-b border-[var(--lc-line)]">
+      <button onClick={onToggle} aria-expanded={open} className="flex w-full items-center justify-between py-3 text-left">
+        <span className="caps text-[10px] text-[var(--lc-muted)]">{label}</span>
+        <span className="flex items-center gap-2 text-[12.5px]">
+          {value}
+          <svg width="12" height="8" viewBox="0 0 12 8" className={open ? "rotate-180" : ""}><path d="M1 1l5 5 5-5" fill="none" stroke="currentColor" strokeWidth="1.4" /></svg>
+        </span>
+      </button>
+      {open && <div className="pb-2">{children}</div>}
+    </div>
+  );
+}
+
+export function ReachOut({ customer_id, push_id, channel: startChannel }) {
   const { tx, back, notify, session } = useApp();
   const c = useClient(customer_id);
   const eligible = c.days_since_last_contact === null || c.days_since_last_contact >= 30;
-  const [step, setStep] = useState(eligible ? "channel" : "blocked");
-  const [channel, setChannel] = useState("whatsapp");
+  const [step, setStep] = useState(eligible ? "contact" : "blocked");
+  const [channel, setChannel] = useState(startChannel || (c.consent_wa ? "whatsapp" : "call"));
   const [tpl, setTpl] = useState(TEMPLATES[0]);
-  const [reason, setReason] = useState(push_id ? "push" : "clienteling_kit");
+  const [motive, setMotive] = useState(push_id ? "push" : null);
+  const [dd, setDd] = useState("motive");
   const first = c.full_name.split(" ")[0];
   const body = tpl.body
     .replace("{{first_name}}", first)
@@ -383,107 +401,103 @@ export function ReachOut({ customer_id, push_id }) {
     .replace("{{sa_name}}", session.user.full_name.split(" ")[0])
     .replace("{{boutique_name}}", "Plaza Indonesia")
     .replace("{{links}}", "longchamp.co.id/…");
+  const motiveLabel = (k) => {
+    const m = MOTIVES.find((x) => x[0] === k);
+    return m ? tx(m[1], m[2]) : tx("Motive", "Alasan");
+  };
 
   return (
     <>
-      <AppBar title="Reach Out" sub={c.full_name} onBack={back} />
-      <Body>
-        {step === "blocked" && (
-          <div className="mt-6 text-center">
-            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[#fbe9e2] text-[28px] text-[#b4441c]">!</div>
-            <p className="font-display mt-4 text-[22px] font-semibold">{tx("Contacted recently", "Baru saja dihubungi")}</p>
-            <p className="mt-1 text-[13px] text-[var(--lc-muted)]">
-              {tx(`${first} was contacted ${c.days_since_last_contact} days ago. Reach Out opens after 30 days.`, `${first} dihubungi ${c.days_since_last_contact} hari lalu. Reach Out terbuka setelah 30 hari.`)}
-            </p>
-            <Button className="mt-6 rounded-xl" variant="outline" onPress={back}>
-              {tx("Back to profile", "Kembali ke profil")}
-            </Button>
-          </div>
-        )}
+      <AppBar title="Reach out" onBack={back} />
+      <Body pad={false}>
+        <div className="bg-black px-4 pb-3 text-white">
+          <p className="text-[15px] font-bold uppercase tracking-[0.06em]">{c.full_name}</p>
+          <p className="text-[11.5px] text-white/60">{c.city}</p>
+        </div>
+        <div className="px-4">
+          {step === "blocked" && (
+            <div className="py-8 text-center">
+              <p className="text-[15px] font-bold uppercase tracking-[0.08em]">{tx("Contacted recently", "Baru saja dihubungi")}</p>
+              <p className="mt-2 text-[12.5px] text-[var(--lc-muted)]">
+                {tx(`${first} was contacted ${c.days_since_last_contact} days ago. Reach out again after 30 days.`, `${first} dihubungi ${c.days_since_last_contact} hari lalu. Hubungi lagi setelah 30 hari.`)}
+              </p>
+              <button className="mt-6 border border-black px-6 py-2.5 text-[10.5px] font-semibold uppercase tracking-[0.14em]" onClick={back}>
+                {tx("Back to profile", "Kembali ke profil")}
+              </button>
+            </div>
+          )}
 
-        {step === "channel" && (
-          <>
-            <div className="rounded-2xl bg-[var(--lc-lime-soft)] p-3 text-[12.5px]">
-              ✓ {tx(`Not contacted for ${c.days_since_last_contact ?? "90+"} days — eligible.`, `Belum dihubungi ${c.days_since_last_contact ?? "90+"} hari — boleh dihubungi.`)}
-            </div>
-            <SectionTitle>{tx("1 · Channel", "1 · Channel")}</SectionTitle>
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                ["whatsapp", "WhatsApp", c.consent_wa],
-                ["call", tx("Phone call", "Telepon"), true],
-              ].map(([k, l, ok]) => (
-                <button
-                  key={k}
-                  disabled={!ok}
-                  onClick={() => setChannel(k)}
-                  className={`rounded-2xl border p-4 text-left ${channel === k ? "border-[var(--lc-forest)] bg-white ring-2 ring-[var(--lc-lime)]" : "border-[var(--lc-line)] bg-white"} ${!ok ? "opacity-40" : ""}`}
-                >
-                  <p className="text-[15px] font-semibold">{l}</p>
-                  <p className="text-[11px] text-[var(--lc-muted)]">{k === "whatsapp" ? (ok ? tx("via Cekat", "via Cekat") : tx("No consent", "Tanpa consent")) : tx("Native dialer", "Dialer HP")}</p>
-                </button>
-              ))}
-            </div>
-            {channel === "whatsapp" && (
-              <>
-                <SectionTitle>{tx("2 · Template Library", "2 · Template Library")}</SectionTitle>
-                <div className="flex flex-col gap-2">
+          {step === "contact" && (
+            <>
+              <p className="mt-3 border-l-4 border-[var(--lc-lime)] bg-[var(--lc-lime-soft)] px-3 py-2 text-[12px]">
+                {c.days_since_last_contact === null
+                  ? tx("Never contacted. You can reach out.", "Belum pernah dihubungi. Boleh dihubungi.")
+                  : tx(`Last contact ${c.days_since_last_contact} days ago. You can reach out.`, `Kontak terakhir ${c.days_since_last_contact} hari lalu. Boleh dihubungi.`)}
+              </p>
+              <ContactBar
+                items={CHANNELS.map(([k, l]) => ({
+                  label: l,
+                  icon: { whatsapp: "whatsapp", call: "call", sms: "sms", email: "mail" }[k],
+                  active: channel === k,
+                  disabled: (k === "whatsapp" && !c.consent_wa) || (k === "email" && !c.consent_email),
+                  onClick: () => setChannel(k),
+                }))}
+              />
+              {channel === "whatsapp" && (
+                <>
+                  <SectionTitle>{tx("Template library", "Template library")}</SectionTitle>
                   {TEMPLATES.filter((t) => t.wa_template_name).map((t) => (
-                    <button key={t.template_id} onClick={() => setTpl(t)} className={`rounded-2xl border p-3 text-left ${tpl.template_id === t.template_id ? "border-[var(--lc-forest)] bg-white" : "border-[var(--lc-line)] bg-white"}`}>
-                      <p className="text-[13.5px] font-semibold">{t.title}</p>
-                      <p className="text-[11px] text-[var(--lc-muted)]">Meta: {t.wa_template_name}</p>
+                    <button key={t.template_id} onClick={() => setTpl(t)} className="flex w-full items-center justify-between border-b border-[var(--lc-line)] py-2.5 text-left">
+                      <span className={`text-[12.5px] ${tpl.template_id === t.template_id ? "font-bold" : ""}`}>{t.title}</span>
+                      {tpl.template_id === t.template_id && <span className="h-2.5 w-2.5 bg-[var(--lc-lime)]" />}
                     </button>
                   ))}
-                </div>
-                <SectionTitle>{tx("3 · Preview", "3 · Pratinjau")}</SectionTitle>
-                <div className="rounded-2xl bg-[#e6f2d6] p-3 text-[13px] leading-relaxed">{body}</div>
-                <p className="mt-1 text-[11px] text-[var(--lc-muted)]">{tx("Outside the 24h window → sent as Meta-approved template.", "Di luar jendela 24 jam → dikirim sebagai template approved Meta.")}</p>
-              </>
-            )}
-            <Button
-              fullWidth
-              className="mt-5 h-12 rounded-xl bg-[var(--lc-forest)] text-white"
-              onPress={() => {
-                notify(channel === "whatsapp" ? tx("Message sent via Cekat", "Pesan terkirim via Cekat") : tx("Calling…", "Menelepon…"));
-                setStep("log");
-              }}
-            >
-              {channel === "whatsapp" ? tx("Send on WhatsApp", "Kirim via WhatsApp") : tx("Call now", "Telepon sekarang")}
-            </Button>
-          </>
-        )}
+                  <p className="mt-3 bg-[#e7f3d9] p-3 text-[12.5px] leading-relaxed">{body}</p>
+                  <p className="mt-1 text-[10.5px] text-[var(--lc-muted)]">{tx("Personalise before sending.", "Personalisasi sebelum mengirim.")}</p>
+                </>
+              )}
+              <button
+                className="mt-5 h-12 w-full bg-black text-[11px] font-semibold uppercase tracking-[0.16em] text-white"
+                onClick={() => {
+                  notify(channel === "whatsapp" ? tx("Sent on WhatsApp", "Terkirim via WhatsApp") : tx("Calling…", "Menelepon…"));
+                  setStep("log");
+                }}
+              >
+                {channel === "whatsapp" ? tx("Send on WhatsApp", "Kirim via WhatsApp") : channel === "call" ? tx("Call", "Telepon") : tx("Send", "Kirim")}
+              </button>
+            </>
+          )}
 
-        {step === "log" && (
-          <>
-            <p className="font-display mt-2 text-[22px] font-semibold">{tx("Back in the app — log it", "Kembali ke app — catat")}</p>
-            <p className="text-[12.5px] text-[var(--lc-muted)]">{tx("Select the reason and the channel used, then validate.", "Pilih alasan dan channel yang dipakai, lalu validasi.")}</p>
-            <SectionTitle>{tx("Contact reason", "Alasan kontak")}</SectionTitle>
-            <div className="flex flex-wrap gap-1.5">
-              {REACH_REASONS.map((r) => (
-                <Pill key={r} active={reason === r} onClick={() => setReason(r)}>
-                  {tag(r)}
-                </Pill>
-              ))}
-            </div>
-            <SectionTitle>{tx("Channel used", "Channel dipakai")}</SectionTitle>
-            <div className="flex flex-wrap gap-1.5">
-              {["whatsapp", "call", "sms", "email"].map((r) => (
-                <Pill key={r} active={channel === r} onClick={() => setChannel(r)}>
-                  {r}
-                </Pill>
-              ))}
-            </div>
-            <Button
-              fullWidth
-              className="mt-6 h-12 rounded-xl bg-[var(--lc-forest)] text-white"
-              onPress={() => {
-                notify(tx("Reach Out logged · 30-day attribution started", "Reach Out tercatat · atribusi 30 hari dimulai"));
-                back();
-              }}
-            >
-              {tx("Validate", "Validasi")}
-            </Button>
-          </>
-        )}
+          {step === "log" && (
+            <>
+              <p className="mt-3 text-[12px] text-[var(--lc-muted)]">{tx("Select the reason and the channel used, then validate.", "Pilih alasan dan channel yang dipakai, lalu validasi.")}</p>
+              <Dropdown label={tx("Channel", "Channel")} value={CHANNELS.find((x) => x[0] === channel)[1]} open={dd === "channel"} onToggle={() => setDd(dd === "channel" ? null : "channel")}>
+                {CHANNELS.map(([k, l]) => (
+                  <button key={k} onClick={() => { setChannel(k); setDd("motive"); }} className={`block w-full px-3 py-2 text-left text-[12.5px] ${channel === k ? "outline outline-2 outline-[var(--lc-lime)]" : ""}`}>
+                    {l}
+                  </button>
+                ))}
+              </Dropdown>
+              <Dropdown label={tx("Motive", "Alasan")} value={motive ? motiveLabel(motive) : "—"} open={dd === "motive"} onToggle={() => setDd(dd === "motive" ? null : "motive")}>
+                {MOTIVES.map(([k]) => (
+                  <button key={k} onClick={() => { setMotive(k); setDd(null); }} className={`block w-full border-b border-[#f0f0f0] px-3 py-2.5 text-left text-[12.5px] ${motive === k ? "outline outline-2 -outline-offset-2 outline-[var(--lc-lime)]" : ""}`}>
+                    {motiveLabel(k)}
+                  </button>
+                ))}
+              </Dropdown>
+              <button
+                disabled={!motive}
+                className="mt-6 h-11 w-full bg-[var(--lc-olive)] text-[10.5px] font-semibold uppercase tracking-[0.18em] text-white disabled:opacity-40"
+                onClick={() => {
+                  notify(tx("Validated. Conversion tracked for 30 days.", "Tervalidasi. Konversi dilacak 30 hari."));
+                  back();
+                }}
+              >
+                {tx("Validate", "Validasi")}
+              </button>
+            </>
+          )}
+        </div>
       </Body>
     </>
   );

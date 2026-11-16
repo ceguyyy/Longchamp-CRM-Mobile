@@ -181,7 +181,7 @@ function WishlistBar() {
   const { wishlist, tx, nav } = useApp();
   if (!wishlist.length) return null;
   return (
-    <button onClick={() => nav("wishlist_send", {})} className="absolute inset-x-4 bottom-[96px] z-20 flex items-center justify-between rounded-2xl bg-[var(--lc-forest)] px-4 py-3 text-white shadow-lg">
+    <button onClick={() => nav("wishlist_send", {})} className="absolute inset-x-4 bottom-8 z-20 flex items-center justify-between rounded-2xl bg-[var(--lc-forest)] px-4 py-3 text-white shadow-lg">
       <span className="text-[13px]">
         ♥ {wishlist.length} {tx("in wishlist", "di wishlist")}
       </span>

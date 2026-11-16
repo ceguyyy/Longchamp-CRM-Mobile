@@ -28,13 +28,14 @@ export const TEAM = [
 ];
 
 export const TIERS = ["LIKER", "LOVER", "COLLECTOR", "FAN", "FRIEND", "FAMILY"];
+/* Monochrome ramp like the app, lime reserved for the top tiers */
 export const TIER_STYLE = {
-  LIKER: { bg: "#eef0e8", fg: "#5b6250" },
-  LOVER: { bg: "#e9f3d8", fg: "#3d5a17" },
-  COLLECTOR: { bg: "#dff0e9", fg: "#1f5c45" },
-  FAN: { bg: "#2e3a1f", fg: "#d9f0b4" },
-  FRIEND: { bg: "#1f2a14", fg: "#c7e88d" },
-  FAMILY: { bg: "#8dc63f", fg: "#1d2610" },
+  LIKER: { bg: "#f2f2f2", fg: "#000000" },
+  LOVER: { bg: "#e2e2e2", fg: "#000000" },
+  COLLECTOR: { bg: "#bdbdbd", fg: "#000000" },
+  FAN: { bg: "#000000", fg: "#ffffff" },
+  FRIEND: { bg: "#000000", fg: "#8dc63f" },
+  FAMILY: { bg: "#8dc63f", fg: "#000000" },
 };
 
 export const CLIENTS = [
@@ -110,10 +111,11 @@ export const PUSHES = [
 ];
 
 export const PUSH_LABEL = {
-  vip_birthday: { en: "VIP Birthday", id: "VIP Birthday", color: "#8dc63f" },
-  vip_downgrade: { en: "VIP Downgrade", id: "VIP Downgrade", color: "#c2410c" },
-  high_value_upgrade: { en: "High Value Upgrade", id: "High Value Upgrade", color: "#2e3a1f" },
-  beginner_plus_upgrade: { en: "Beginner+ Upgrade", id: "Beginner+ Upgrade", color: "#0e6e8c" },
+  /* colour ramp from the "Clienteling Pushes" slide */
+  vip_birthday: { en: "VIP Birthday", id: "VIP Birthday", color: "#2f4a12", fg: "#ffffff" },
+  vip_downgrade: { en: "VIP Downgrade", id: "VIP Downgrade", color: "#6d6e66", fg: "#ffffff" },
+  high_value_upgrade: { en: "High Value Upgrade", id: "High Value Upgrade", color: "#4f8a2b", fg: "#ffffff" },
+  beginner_plus_upgrade: { en: "Beginner+ Upgrade", id: "Beginner+ Upgrade", color: "#b5d68f", fg: "#1f2a12" },
 };
 
 export const AGENDA = [
