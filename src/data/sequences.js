@@ -232,7 +232,7 @@ const sequences = [
       "Catalog from Shopify (cached), live stock from Odoo, wishlist stored in Cekat CRM and sent on WhatsApp; delivery status needs CP-06, conversion checked daily for 30 days.",
       "Katalog dari Shopify (cache), stok live dari Odoo, wishlist disimpan di Cekat CRM dan dikirim lewat WhatsApp; status terkirim butuh CP-06, konversi dicek harian selama 30 hari."
     ),
-    refs: ["UC-15", "UC-16", "UC-17", "AD-04"],
+    refs: ["UC-15", "UC-16", "UC-28", "UC-17", "UC-24", "AD-04"],
     participants: ["user", "app", "bff", "shopify", "odoo", "crm", "chat", "cp", "n8n"],
     messages: [
       M("user", "app", "sync", L("Browse catalog", "Lihat katalog")),
@@ -240,6 +240,9 @@ const sequences = [
       M("bff", "shopify", "sync", L("Products (cache miss)", "Produk (cache miss)"), "GET /admin/api/{version}/products.json?collection_id=…", { headers: "X-Shopify-Access-Token" }),
       M("shopify", "bff", "reply", L("Products", "Produk"), "200", { products: [{ id: 8812, title: "Roseau Shoulder Bag", variants: [{ sku: "L10165HFP", price: "9900000.00" }], handle: "roseau" }] }),
       M("bff", "app", "reply", L("Catalog", "Katalog"), "200", { items: [{ sku: "L10165HFP", product_name: "Roseau Shoulder Bag", price_idr: 9900000, product_url: "https://longchamp.co.id/products/roseau", image_url: "…" }] }),
+      M("user", "app", "sync", L("Scan barcode (camera)", "Pindai barcode (kamera)")),
+      M("app", "bff", "sync", L("Lookup by barcode", "Cari via barcode"), "GET /v1/products?barcode=3597922187360", { headers: UTOKEN }),
+      M("bff", "shopify", "sync", L("Variant by barcode", "Varian via barcode"), "POST /admin/api/{version}/graphql.json", { query: "productVariants(first:1, query:\"barcode:3597922187360\"){ nodes { sku product { title } } }" }),
       M("user", "app", "sync", L("Check stock", "Cek stok")),
       M("app", "bff", "sync", L("Stock by boutique", "Stok per boutique"), "GET /v1/stock?sku=L10165HFP", { headers: UTOKEN }),
       M("bff", "odoo", "sync", L("stock.quant search_read", "stock.quant search_read"), "Odoo JSON-RPC · stock.quant.search_read", {
@@ -247,23 +250,28 @@ const sequences = [
       }),
       M("odoo", "bff", "reply", L("Quants", "Quant"), "200", { result: [{ location_id: [41, "PI/Stock"], quantity: 2, reserved_quantity: 0 }] }),
       M("bff", "app", "reply", L("Stock", "Stok"), "200", { sku: "L10165HFP", stock: [{ boutique_id: 3, boutique_name: "Plaza Indonesia", qty: 2 }, { boutique_id: 4, boutique_name: "Pondok Indah Mall 3", qty: 0 }] }),
-      M("user", "app", "sync", L("Add to wishlist & send", "Tambah ke wishlist & kirim")),
-      M("app", "bff", "sync", L("Create wishlist", "Buat wishlist"), "POST /v1/wishlists", {
-        customer_id: 100245, items: [{ sku: "L10165HFP", product_name: "Roseau Shoulder Bag", price_idr: 9900000, product_url: "https://longchamp.co.id/products/roseau", stock_boutique_qty: 2 }],
-      }),
-      M("bff", "crm", "sync", L("Create Wishlist items", "Buat item Wishlist"), "POST /api/crm/boards/{wishlistBoardId}/items", {
-        wishlist_ref: "WL-20261116-0087-01", customer_id: 100245, created_by_user_id: 87, boutique_id: 3, sku: "L10165HFP", product_name: "Roseau Shoulder Bag", price_idr: 9900000, product_url: "https://longchamp.co.id/products/roseau",
+      M("user", "app", "sync", L("Pick customer, save to wishlist", "Pilih pelanggan, simpan ke wishlist")),
+      M("app", "bff", "sync", L("Save wishlist item", "Simpan item wishlist"), "POST /v1/customers/100245/wishlist", { headers: UTOKEN, sku: "L10165HFP", source: "product_page" }),
+      M("bff", "cp", "sync", L("Scope check on customer", "Cek scope pelanggan"), "RBAC check (user token)", { customer_id: 100245 }, { cp: "CP-02" }),
+      M("bff", "crm", "sync", L("Create Wishlist item (saved)", "Buat item Wishlist (saved)"), "POST /api/crm/boards/{wishlistBoardId}/items", {
+        customer_id: 100245, created_by_user_id: 87, boutique_id: 3, sku: "L10165HFP", product_name: "Roseau Shoulder Bag", price_idr: 9900000, status: "saved", source: "product_page", added_at: "2026-11-16T10:58:00+07:00",
       }, { verify: true }),
+      M("bff", "app", "reply", L("Client wishlist", "Wishlist klien"), "201", { customer_id: 100245, items: [{ sku: "L10165HFP", status: "saved" }, { sku: "L1899089P59", status: "saved" }] }),
+      M("user", "app", "sync", L("Send saved items", "Kirim item tersimpan")),
+      M("app", "bff", "sync", L("Send wishlist", "Kirim wishlist"), "POST /v1/customers/100245/wishlist/send", { skus: ["L10165HFP", "L1899089P59"] }),
       M("bff", "chat", "sync", L("Send WA with links", "Kirim WA dengan link"), "POST Message API (send)", { inbox_id: "<id>", phone: "+6281234567890", text: "Halo Sari, ini pilihan dari Andi: …" }, { verify: true }),
       M("chat", "bff", "reply", L("Message id", "Id pesan"), "200", { message_id: "msg_91c0…" }),
+      M("bff", "crm", "sync", L("Items → sent", "Item → sent"), "PATCH Wishlist items", { wishlist_ref: "WL-20261116-0087-01", status: "sent", sent_at: "2026-11-16T11:02:00+07:00" }, { verify: true }),
       M("bff", "app", "reply", L("Wishlist sent", "Wishlist terkirim"), "201", { wishlist_ref: "WL-20261116-0087-01", sent_at: "2026-11-16T11:02:00+07:00" }),
       M("cp", "n8n", "async", L("Webhook: message status", "Webhook: status pesan"), "POST /webhook/cekat/message-status (new)", { message_id: "msg_91c0…", contact_id: 100245, status: "read", at: "2026-11-16T11:20:00+07:00" }, { cp: "CP-06" }),
       M("n8n", "crm", "sync", L("Update delivery_status", "Update delivery_status"), "PATCH Wishlist items", { wishlist_ref: "WL-20261116-0087-01", delivery_status: "read" }, { verify: true }),
       M("n8n", "crm", "sync", L("Find purchases of wishlist SKUs", "Cari pembelian SKU wishlist"), "GET Transaction Lines + Transactions", { filter: { customer_id: 100245, sku: ["L10165HFP"], since: "2026-11-16" } }),
-      M("n8n", "crm", "sync", L("Set converted_transaction_id", "Set converted_transaction_id"), "PATCH Wishlist items", { converted_transaction_id: 7802 }, { verify: true }),
+      M("n8n", "crm", "sync", L("Set purchased", "Set purchased"), "PATCH Wishlist items", { status: "purchased", converted_transaction_id: 7802 }, { verify: true }),
     ],
     fragments: [
-      { type: "loop", from: 18, to: 19, label: L("daily, 30 days", "harian, 30 hari") },
+      { type: "opt", from: 5, to: 7, label: L("scan instead of browse", "pindai, bukan telusuri") },
+      { type: "opt", from: 18, to: 23, label: L("send now (or later from the client wishlist)", "kirim sekarang (atau nanti dari wishlist klien)") },
+      { type: "loop", from: 26, to: 27, label: L("daily, 30 days", "harian, 30 hari") },
     ],
   },
 

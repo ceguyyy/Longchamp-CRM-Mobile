@@ -1,5 +1,5 @@
 import { ProgressBar } from "@heroui/react";
-import { useApp, AppBar, Body, SectionTitle, Tile, TierBadge, Initials, Stat, Icon, BlackTile, BoutiqueArt, Row } from "../core";
+import { useApp, AppBar, Body, SectionTitle, Tile, TierBadge, Initials, Stat, Icon, BlackTile, Hero, Announcement, LcButton, Row } from "../core";
 import { AGENDA, CLIENTS, PUSHES, PUSH_LABEL, KPI, TEAM, BY_BOUTIQUE, BOUTIQUES, idrShort } from "../data";
 
 const ROLE_NAME = { sales_agent: "Sales Agent", supervisor: "Supervisor", super_admin: "Super Admin" };
@@ -8,13 +8,13 @@ function SearchProduct() {
   const { tx, nav } = useApp();
   return (
     <div className="mx-4 mt-3 flex items-center gap-3">
-      <button onClick={() => nav("catalog")} className="flex flex-1 items-center justify-between border-b border-[#bdbdbd] pb-1.5 text-left">
-        <span className="caps text-[10.5px] text-[#9a9a9a]">{tx("Search a product", "Cari produk")}</span>
-        <Icon name="search" size={18} />
+      <button onClick={() => nav("catalog")} className="flex flex-1 items-center gap-2 border-b-2 border-[var(--lc-lime)] pb-1.5 text-left">
+        <Icon name="search" size={17} />
+        <span className="text-[12.5px] text-[#8a8a8a]">{tx("Search a product", "Cari produk")}</span>
       </button>
-      <span aria-hidden className="text-black">
+      <button aria-label={tx("Scan barcode", "Pindai barcode")} onClick={() => nav("scan")} className="text-black">
         <Icon name="barcode" size={22} stroke={1.3} />
-      </span>
+      </button>
     </div>
   );
 }
@@ -67,7 +67,8 @@ export default function Home() {
       <>
         <AppBar />
         <Body pad={false}>
-          <BoutiqueArt height={150} />
+          <Announcement>{tx("Country view: 5 boutiques, IDR", "Tampilan negara: 5 boutique, Rupiah")}</Announcement>
+          <Hero title={tx("Longchamp Indonesia", "Longchamp Indonesia")} subtitle={tx("Clienteling overview", "Ringkasan clienteling")} cta={tx("See country KPI", "Lihat KPI negara")} onCta={() => reset("performance")} />
           <Hello />
           <div className="mt-3 grid grid-cols-2 gap-3 px-4">
             <BlackTile label={tx("All customers", "Semua pelanggan")} onClick={() => reset("clients")} />
@@ -106,7 +107,15 @@ export default function Home() {
     <>
       <AppBar />
       <Body pad={false}>
-        <BoutiqueArt height={150} />
+        <Announcement onClick={() => reset("actions")}>
+          {tx(`${myPushes.length} clienteling pushes waiting for you`, `${myPushes.length} clienteling push menunggu Anda`)}
+        </Announcement>
+        <Hero
+          title={tx("Be creative", "Jadilah kreatif")}
+          subtitle={tx("Le Pliage, new season", "Le Pliage, musim baru")}
+          cta={tx("Share with clients", "Bagikan ke klien")}
+          onCta={() => reset("catalog")}
+        />
         <SearchProduct />
         <div className="mt-4 grid grid-cols-2 gap-3 px-4">
           <BlackTile label={tx("Customer search", "Cari pelanggan")} onClick={() => reset("clients")} />
@@ -116,16 +125,16 @@ export default function Home() {
         </div>
         {role === "supervisor" && (
           <div className="mt-3 grid grid-cols-1 gap-3 px-4">
-            <button onClick={() => reset("templates")} className="flex w-full items-center justify-between border border-black px-4 py-3">
-              <span className="text-[13px] font-bold uppercase tracking-[0.03em]">{tx("WhatsApp templates", "Template WhatsApp")}</span>
+            <button onClick={() => reset("templates")} className="flex w-full items-center justify-between border-[1.25px] border-black px-4 py-3">
+              <span className="text-[12.5px] uppercase tracking-[0.08em]">{tx("WhatsApp templates", "Template WhatsApp")}</span>
               <span className="text-[11.5px]">{tx("1 pending, 1 rejected", "1 pending, 1 ditolak")}</span>
             </button>
           </div>
         )}
         {role === "supervisor" && (
           <div className="mt-3 px-4">
-            <button onClick={() => reset("team")} className="flex w-full items-center justify-between border border-black px-4 py-3">
-              <span className="text-[13px] font-bold uppercase tracking-[0.03em]">{tx("My team", "Tim saya")}</span>
+            <button onClick={() => reset("team")} className="flex w-full items-center justify-between border-[1.25px] border-black px-4 py-3">
+              <span className="text-[12.5px] uppercase tracking-[0.08em]">{tx("My team", "Tim saya")}</span>
               <span className="text-[11.5px]">
                 {tx("push completion", "penyelesaian push")}{" "}
                 <b>{Math.round((TEAM.reduce((s, x) => s + x.push_executed, 0) / TEAM.reduce((s, x) => s + x.push_sent, 0)) * 100)}</b>
@@ -151,9 +160,9 @@ export default function Home() {
               </span>
             </div>
           ))}
-          <button onClick={() => nav("client_new")} className="mt-4 w-full border border-black py-3 text-[11px] font-semibold uppercase tracking-[0.14em]">
+          <LcButton className="mt-4" onClick={() => nav("client_new")}>
             {tx("Register a new client", "Daftarkan klien baru")}
-          </button>
+          </LcButton>
         </div>
       </Body>
     </>

@@ -5,7 +5,7 @@
 import { Login, Register, Forgot } from "./screens/Auth";
 import Home, { Profile } from "./screens/Home";
 import { ClientSearch, ClientProfile, ClientNew, ReachOut, Lists, ListBuilder, ListDetail, TicketNew } from "./screens/Clients";
-import { Actions, AgendaNew, Catalog, Product, WishlistSend, Performance, Team, Unassigned, Admin, Users, PushRules } from "./screens/Work";
+import { Actions, AgendaNew, Catalog, Product, Scan, ClientWishlist, WishlistSend, Performance, Team, Unassigned, Admin, Users, PushRules } from "./screens/Work";
 import { Templates, TemplateNew } from "./screens/Templates";
 
 const ALL = ["sales_agent", "supervisor", "super_admin"];
@@ -133,6 +133,14 @@ export const SCREENS = {
     owner: "itdev",
     note: L("Placeholder product art — real Shopify images in the build.", "Gambar produk placeholder — gambar Shopify asli di build."),
   },
+  scan: {
+    C: Scan, roles: FIELD, group: "catalog",
+    title: L("Scan a barcode", "Pindai barcode"),
+    refs: ["UC-24", "AD-04", "SD-05"],
+    api: ["GET /v1/products?barcode= → Shopify variant barcode lookup"],
+    owner: "itdev",
+    note: L("Deck: barcode icon next to 'Search a product'. Camera scan resolves the Shopify variant barcode.", "Deck: ikon barcode di samping 'Cari produk'. Pindai kamera mencari barcode varian Shopify."),
+  },
   product: {
     C: Product, roles: ALL, group: "catalog", params: { sku: "L10165HFP" },
     title: L("Product & stock", "Produk & stok"),
@@ -142,6 +150,14 @@ export const SCREENS = {
     note: L("Stock per boutique is read live, never via webhook.", "Stok per boutique dibaca live, tidak lewat webhook."),
   },
   catalog_pick: { C: Catalog, roles: FIELD, group: "catalog", hidden: true, title: L("Catalog for wishlist"), refs: ["UC-17"], api: [], owner: "itdev", note: L("") },
+  client_wishlist: {
+    C: ClientWishlist, roles: FIELD, group: "catalog", params: { customer_id: 100245 },
+    title: L("Client wishlist", "Wishlist klien"),
+    refs: ["UC-28", "UC-17", "AD-04", "SD-05"],
+    api: ["GET /v1/customers/{id}/wishlist → Wishlist board items by customer_id", "POST / DELETE /v1/customers/{id}/wishlist (status saved)"],
+    owner: "itdev",
+    note: L("Pick a customer, save products to their wishlist (status Saved), send later on WhatsApp (Sent), conversion within 30 days (Purchased). RBAC on the customer comes from CP-02.", "Pilih pelanggan, simpan produk ke wishlist-nya (status Tersimpan), kirim nanti via WhatsApp (Terkirim), konversi dalam 30 hari (Dibeli). RBAC pelanggan dari CP-02."),
+  },
   wishlist_send: {
     C: WishlistSend, roles: FIELD, group: "catalog",
     title: L("Send wishlist", "Kirim wishlist"),
@@ -238,6 +254,6 @@ export const GROUPS = {
 /* Which tab root a screen lives under (for the stack when jumping directly) */
 export const ROOT_OF = {
   client: "clients", client_new: "clients", reach_out: "clients", lists: "home", list_builder: "home", list_detail: "home", ticket_new: "clients",
-  agenda_new: "actions", product: "catalog", catalog_pick: "clients", wishlist_send: "catalog",
+  agenda_new: "actions", product: "catalog", scan: "catalog", catalog_pick: "clients", client_wishlist: "clients", wishlist_send: "catalog",
   clients_unassigned: "team", users: "admin", templates: "admin", template_new: "templates", push_rules: "admin", profile: "home",
 };

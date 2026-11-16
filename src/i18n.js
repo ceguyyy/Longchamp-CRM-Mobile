@@ -1,6 +1,15 @@
 export const T = {
   en: {
-    nav: { usecase: "Use Case", activity: "Activity", architecture: "Architecture", sequence: "Sequence", dataflow: "Data Flow", erd: "ERD", mockup: "App Mockup" },
+    nav: { usecase: "Use Case", activity: "Activity", architecture: "Architecture", sequence: "Sequence", dataflow: "Data Flow", erd: "ERD", mockup: "App Mockup", coverage: "PDF Coverage" },
+    cov: {
+      title: "PDF coverage",
+      subtitle: "Every capability in the Longchamp APAC CX deck (Belong app), mapped to the mockup screen and the use case, activity and sequence diagrams that carry it. Click a screen to open it in the prototype.",
+      status: { covered: "Covered", adapted: "Adapted for Indonesia", excluded: "Excluded" },
+      cols: { cap: "Capability (deck)", screen: "Mockup screen", status: "Status", note: "Note", task: "Activity" },
+      raciDesc: "The deck's RACI (Retail, CRM, IT, Training) mapped to the parties of this project. Deck 'IT' is split into Cekat IT Dev and Cekat Product.",
+      raciLegend: "R responsible · A accountable · C consulted · I informed. Proposal, to confirm with Longchamp.",
+      deckCol: "deck",
+    },
     soon: "Soon",
     showActors: "Actor links",
     showData: "Data connections",
@@ -132,7 +141,16 @@ export const T = {
     },
   },
   id: {
-    nav: { usecase: "Use Case", activity: "Activity", architecture: "Architecture", sequence: "Sequence", dataflow: "Data Flow", erd: "ERD", mockup: "Mockup App" },
+    nav: { usecase: "Use Case", activity: "Activity", architecture: "Architecture", sequence: "Sequence", dataflow: "Data Flow", erd: "ERD", mockup: "Mockup App", coverage: "Cakupan PDF" },
+    cov: {
+      title: "Cakupan PDF",
+      subtitle: "Setiap kapabilitas di deck Longchamp APAC CX (app Belong), dipetakan ke layar mockup serta diagram use case, activity, dan sequence yang memuatnya. Klik layar untuk membukanya di prototipe.",
+      status: { covered: "Tercakup", adapted: "Disesuaikan untuk Indonesia", excluded: "Tidak dimasukkan" },
+      cols: { cap: "Kapabilitas (deck)", screen: "Layar mockup", status: "Status", note: "Catatan", task: "Aktivitas" },
+      raciDesc: "RACI dari deck (Retail, CRM, IT, Training) dipetakan ke pihak di proyek ini. 'IT' di deck dipecah menjadi Cekat IT Dev dan Cekat Product.",
+      raciLegend: "R responsible · A accountable · C consulted · I informed. Usulan, perlu dikonfirmasi dengan Longchamp.",
+      deckCol: "deck",
+    },
     soon: "Segera",
     showActors: "Relasi aktor",
     showData: "Koneksi data",

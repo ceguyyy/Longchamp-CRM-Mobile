@@ -7,6 +7,7 @@ import ArchitecturePage from "./pages/ArchitecturePage";
 import ErdPage from "./pages/ErdPage";
 import SequencePage from "./pages/SequencePage";
 import MockupPage from "./pages/MockupPage";
+import CoveragePage from "./pages/CoveragePage";
 import { T } from "./i18n";
 
 const NAV = [
@@ -16,6 +17,7 @@ const NAV = [
   { key: "erd", to: "/erd", ready: true },
   { key: "sequence", to: "/sequence", ready: true },
   { key: "mockup", to: "/mockup", ready: true },
+  { key: "coverage", to: "/coverage", ready: true },
 ];
 
 const LANG_BTN =
@@ -106,6 +108,7 @@ export default function App() {
           <Route path="/erd" element={<ErdPage lang={lang} t={t} />} />
           <Route path="/architecture" element={<ArchitecturePage lang={lang} t={t} />} />
           <Route path="/activity" element={<ActivityPage lang={lang} t={t} />} />
+          <Route path="/coverage" element={<CoveragePage lang={lang} t={t} />} />
           <Route path="*" element={<Navigate to="/use-case" replace />} />
         </Routes>
       </div>

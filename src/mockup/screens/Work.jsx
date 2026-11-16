@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Button, Input, Label, ProgressBar, Switch, Tabs, TextField } from "@heroui/react";
-import { useApp, AppBar, Body, SectionTitle, Tile, TierBadge, Initials, Pill, Stat, BagArt } from "../core";
+import { useApp, AppBar, Body, SectionTitle, Tile, TierBadge, Initials, Pill, Stat, BagArt, Icon, LcButton } from "../core";
 import { PushRow } from "./Home";
 import { visibleClients } from "./Clients";
 import {
-  AGENDA, PUSHES, PRODUCTS, BOUTIQUES, CLIENTS, TEAM, KPI, BY_CHANNEL, BY_BOUTIQUE, TEMPLATES, PUSH_RULES, PUSH_LABEL, USERS, idr, idrShort,
+  AGENDA, PUSHES, PRODUCTS, BOUTIQUES, CLIENTS, TEAM, KPI, BY_CHANNEL, BY_BOUTIQUE, TEMPLATES, PUSH_RULES, PUSH_LABEL, USERS, WISHLIST_KPI, PUSH_KPI, idr, idrShort,
 } from "../data";
 
 /* ================================================================ ACTIONS */
@@ -12,6 +12,7 @@ export function Actions() {
   const { tx, session, nav } = useApp();
   const [tab, setTab] = useState("pushes");
   const [status, setStatus] = useState("sent");
+  const [boutique, setBoutique] = useState(3);
   const inScope = (p) =>
     session.role === "sales_agent" ? p.assigned_user_id === 87 : session.role === "supervisor" ? [87, 91, 94, 12].includes(p.assigned_user_id) : true;
   const pushes = PUSHES.filter(inScope).filter(
@@ -23,7 +24,7 @@ export function Actions() {
         title={tx("Actions", "Aksi")}
         sub={session.role === "supervisor" ? tx("Team pushes & agenda", "Push & agenda tim") : tx("Clienteling pushes & agenda", "Clienteling push & agenda")}
         right={
-          <button onClick={() => nav("agenda_new", {})} className="grid h-9 w-9 place-items-center rounded-full bg-[var(--lc-forest)] text-[20px] text-white" aria-label="New">
+          <button onClick={() => nav("agenda_new", {})} className="grid h-9 w-9 place-items-center bg-black text-[20px] text-white" aria-label="New">
             +
           </button>
         }
@@ -78,6 +79,37 @@ export function Actions() {
 
         {tab === "agenda" && (
           <>
+            {session.role !== "sales_agent" && (
+              <div className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4">
+                {(session.role === "supervisor" ? BOUTIQUES.filter((b) => b.boutique_id === 3) : BOUTIQUES).map((b) => (
+                  <Pill key={b.boutique_id} active={boutique === b.boutique_id} onClick={() => setBoutique(b.boutique_id)}>
+                    {b.boutique_name}
+                  </Pill>
+                ))}
+              </div>
+            )}
+            <div className="mt-3 grid grid-cols-2 gap-2">
+              {[
+                [tx("Appointments", "Appointment"), "appointment"],
+                [tx("Tasks", "Task"), "task"],
+              ].map(([l, kind]) => {
+                const items = AGENDA.filter((a) => a.item_type === kind);
+                const todo = items.filter((a) => a.status === "open").length;
+                const late = kind === "task" ? 1 : 0;
+                return (
+                  <div key={kind} className="border border-[var(--lc-line)] p-2.5">
+                    <p className="caps text-[10px]">{l}</p>
+                    <p className="mt-1 text-[12px]">
+                      <span className="text-[18px]">{todo}</span> {tx("to do", "belum")}
+                      <span className="mx-1.5 text-[var(--lc-muted)]">|</span>
+                      <span className={late ? "text-[#b4441c]" : ""}>
+                        <span className="text-[18px]">{late}</span> {tx("late", "terlambat")}
+                      </span>
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
             <div className="mt-3 grid grid-cols-7 gap-1 text-center">
               {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
                 <div key={i} className={`rounded-xl py-2 ${i === 0 ? "bg-[var(--lc-forest)] text-white" : "bg-white"}`}>
@@ -90,7 +122,7 @@ export function Actions() {
             <div className="mt-3 flex flex-col gap-2">
               {AGENDA.map((a) => (
                 <Tile key={a.agenda_item_id} className={`flex gap-3 p-3 ${a.status === "done" ? "opacity-50" : ""}`}>
-                  <div className="w-16 shrink-0">
+                  <div className="w-[84px] shrink-0">
                     <p className="text-[13px] font-semibold text-[var(--lc-forest)]">{a.time.split(" ")[0]}</p>
                     <p className="text-[10px] uppercase text-[var(--lc-muted)]">{a.item_type}</p>
                   </div>
@@ -110,9 +142,12 @@ export function Actions() {
   );
 }
 
-export function AgendaNew({ customer_id }) {
+const SLOTS = ["10:00", "10:30", "11:00", "11:30", "13:00", "14:00", "15:30", "16:00", "17:00", "19:00"];
+const BUSY = ["11:00", "14:00"];
+export function AgendaNew({ customer_id, kind }) {
   const { tx, back, notify } = useApp();
-  const [type, setType] = useState("appointment");
+  const [type, setType] = useState(kind || "appointment");
+  const [slot, setSlot] = useState("15:30");
   const [sub, setSub] = useState("one_to_one");
   const c = customer_id && CLIENTS.find((x) => x.customer_id === customer_id);
   const subs = type === "task" ? ["call", "follow_up", "prepare_appointment", "styling_session"] : ["one_to_one", "coffee_catchup", "personalisation", "rtw_fitting"];
@@ -155,10 +190,28 @@ export function AgendaNew({ customer_id }) {
               <Label className="text-[12px] font-medium">{tx("Date", "Tanggal")}</Label>
               <Input className="h-11 rounded-xl border border-[var(--lc-line)] bg-white px-3 text-[14px]" />
             </TextField>
-            <TextField className="flex flex-col gap-1" defaultValue={type === "task" ? "10:00" : "11:00 – 12:00"}>
+            <TextField className="flex flex-col gap-1" value={slot} onChange={setSlot}>
               <Label className="text-[12px] font-medium">{tx("Time", "Jam")}</Label>
               <Input className="h-11 rounded-xl border border-[var(--lc-line)] bg-white px-3 text-[14px]" />
             </TextField>
+          </div>
+          <div>
+            <p className="caps mb-1.5 text-[10px]">{tx("Free slots, Mon 23 Nov", "Slot kosong, Sen 23 Nov")}</p>
+            <div className="grid grid-cols-5 gap-1.5">
+              {SLOTS.map((t) => {
+                const busy = BUSY.includes(t);
+                return (
+                  <button
+                    key={t}
+                    disabled={busy}
+                    onClick={() => setSlot(t)}
+                    className={`border py-2 text-[12px] ${slot === t ? "border-black bg-black text-white" : busy ? "border-[var(--lc-line)] text-[#c4c4c4] line-through" : "border-[var(--lc-line)]"}`}
+                  >
+                    {t}
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <Button
             fullWidth
@@ -181,12 +234,61 @@ function WishlistBar() {
   const { wishlist, tx, nav } = useApp();
   if (!wishlist.length) return null;
   return (
-    <button onClick={() => nav("wishlist_send", {})} className="absolute inset-x-4 bottom-8 z-20 flex items-center justify-between rounded-2xl bg-[var(--lc-forest)] px-4 py-3 text-white shadow-lg">
+    <button onClick={() => nav("wishlist_send", {})} className="absolute inset-x-4 bottom-[92px] z-20 flex items-center justify-between bg-black px-4 py-3 text-white">
       <span className="text-[13px]">
         ♥ {wishlist.length} {tx("in wishlist", "di wishlist")}
       </span>
       <span className="text-[13px] font-semibold text-[var(--lc-lime)]">{tx("Send", "Kirim")} ›</span>
     </button>
+  );
+}
+
+function ConnectedChip() {
+  const { connected, tx } = useApp();
+  const c = connected && CLIENTS.find((x) => x.customer_id === connected);
+  if (!c) return null;
+  return (
+    <div className="-mx-4 mb-3 flex items-center gap-2 bg-[var(--lc-lime)] px-4 py-1.5 text-[11.5px]">
+      <Icon name="userCheck" size={15} />
+      {tx("Connected:", "Terhubung:")} <span className="uppercase tracking-[0.06em]">{c.full_name}</span>
+    </div>
+  );
+}
+
+export function Scan() {
+  const { tx, back, nav } = useApp();
+  const [found, setFound] = useState(false);
+  const p = PRODUCTS[0];
+  return (
+    <>
+      <AppBar title={tx("Scan a barcode", "Pindai barcode")} onBack={back} />
+      <div className="relative flex flex-1 flex-col bg-black text-white">
+        <div className="relative mx-8 mt-10 aspect-[4/3] border border-white/30">
+          {["left-0 top-0 border-l-2 border-t-2", "right-0 top-0 border-r-2 border-t-2", "left-0 bottom-0 border-l-2 border-b-2", "right-0 bottom-0 border-r-2 border-b-2"].map((c) => (
+            <span key={c} className={`absolute h-6 w-6 border-[var(--lc-lime)] ${c}`} />
+          ))}
+          <span className="absolute inset-x-4 top-1/2 h-px bg-[var(--lc-lime)]" />
+          <div className="absolute inset-0 grid place-items-center opacity-70">
+            <Icon name="barcode" size={72} stroke={1} />
+          </div>
+        </div>
+        <p className="mt-5 px-8 text-center text-[12.5px]">
+          {found ? `${p.product_name} · SKU ${p.sku}` : tx("Point the camera at the product label", "Arahkan kamera ke label produk")}
+        </p>
+        <p className="mt-1 px-8 text-center text-[10.5px] text-white/60">{tx("Barcode → Shopify variant lookup", "Barcode → pencarian varian Shopify")}</p>
+        <div className="mt-auto p-4">
+          {found ? (
+            <button className="w-full bg-white py-3 text-[12px] uppercase tracking-[0.1em] text-black" onClick={() => nav("product", { sku: p.sku })}>
+              {tx("Open product", "Buka produk")}
+            </button>
+          ) : (
+            <button className="w-full border border-white py-3 text-[12px] uppercase tracking-[0.1em]" onClick={() => setFound(true)}>
+              {tx("Simulate scan", "Simulasikan pindai")}
+            </button>
+          )}
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -200,6 +302,16 @@ export function Catalog({ customer_id }) {
     <>
       <AppBar title={tx("Product Catalog", "Katalog Produk")} sub={c ? `${tx("Wishlist for", "Wishlist untuk")} ${c.full_name}` : tx("Live from Shopify · stock from Odoo", "Live dari Shopify · stok dari Odoo")} onBack={stack.length > 1 ? back : undefined} />
       <Body>
+        <ConnectedChip />
+        <div className="mb-3 flex items-center gap-3">
+          <div className="flex flex-1 items-center gap-2 border-b-2 border-[var(--lc-lime)] pb-1.5 text-[12.5px] text-[#8a8a8a]">
+            <Icon name="search" size={16} />
+            {tx("Search", "Cari")}
+          </div>
+          <button aria-label="Scan" onClick={() => nav("scan")}>
+            <Icon name="barcode" size={22} stroke={1.3} />
+          </button>
+        </div>
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
           {cols.map((x) => (
             <Pill key={x} active={col === x} onClick={() => setCol(x)}>
@@ -210,8 +322,14 @@ export function Catalog({ customer_id }) {
         <div className="mt-3 grid grid-cols-2 gap-3 pb-16">
           {list.map((p) => (
             <button key={p.sku} onClick={() => nav("product", { sku: p.sku, customer_id })} className="text-left">
-              <BagArt color={p.color} size={165} />
-              <p className="mt-1.5 text-[13px] font-semibold leading-tight">{p.product_name}</p>
+              <span className="relative block">
+                <BagArt color={p.color} size={165} />
+                <span className="absolute right-2 top-2 text-[var(--lc-lime)]">
+                  <Icon name="heart" size={18} />
+                </span>
+                {!p.stock[3] && <span className="caps absolute bottom-2 left-2 bg-white px-1.5 py-0.5 text-[8.5px]">{tx("Notify me", "Beritahu saya")}</span>}
+              </span>
+              <p className="mt-1.5 text-[13px] leading-tight">{p.product_name}</p>
               <p className="text-[12px] text-[var(--lc-muted)]">{idr(p.price_idr)}</p>
               <p className={`text-[11px] ${p.stock[3] ? "text-[var(--lc-forest)]" : "text-[#b4441c]"}`}>
                 {p.stock[3] ? `${p.stock[3]} ${tx("in my boutique", "di boutique saya")}` : tx("Out of stock here", "Habis di sini")}
@@ -225,14 +343,72 @@ export function Catalog({ customer_id }) {
   );
 }
 
+/* Pick a customer, then save the product to that customer's wishlist (Wishlist board, status saved) */
+export function addToClientWishlist(app, customer_id, sku) {
+  const { clientWishlist, setClientWishlist, session } = app;
+  const cur = clientWishlist[customer_id] || [];
+  if (cur.some((w) => w.sku === sku && w.status !== "purchased")) return false;
+  setClientWishlist({
+    ...clientWishlist,
+    [customer_id]: [...cur, { sku, status: "saved", added_at: "2026-11-16", added_by: session.user.full_name, source: "catalog" }],
+  });
+  return true;
+}
+
+function PickClientSheet({ sku }) {
+  const app = useApp();
+  const { tx, setSheet, notify, session, nav } = app;
+  const [q, setQ] = useState("");
+  const list = visibleClients(session.role).filter((c) => c.full_name.toLowerCase().includes(q.toLowerCase()));
+  return (
+    <div>
+      <p className="mb-2 text-[15px]">{tx("Add to a client's wishlist", "Tambah ke wishlist klien")}</p>
+      <div className="mb-2 flex items-center gap-2 border-b-2 border-[var(--lc-lime)] pb-1.5">
+        <Icon name="search" size={16} />
+        <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={tx("Name, phone or e-mail", "Nama, telepon, atau e-mail")} className="flex-1 bg-transparent text-[13px] outline-none" />
+      </div>
+      <div className="max-h-[300px] overflow-y-auto">
+        {list.map((c) => {
+          const n = (app.clientWishlist[c.customer_id] || []).filter((w) => w.status !== "purchased").length;
+          return (
+            <button
+              key={c.customer_id}
+              onClick={() => {
+                const ok = addToClientWishlist(app, c.customer_id, sku);
+                setSheet(null);
+                notify(ok ? tx(`Saved to ${c.full_name}'s wishlist`, `Tersimpan di wishlist ${c.full_name}`) : tx("Already in this client's wishlist", "Sudah ada di wishlist klien ini"));
+                nav("client_wishlist", { customer_id: c.customer_id });
+              }}
+              className="flex w-full items-center gap-2 border-b border-[var(--lc-line)] py-2.5 text-left"
+            >
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[12.5px] uppercase tracking-[0.05em]">{c.full_name}</span>
+                <span className="block text-[10.5px] text-[var(--lc-muted)]">
+                  {n} {tx("in wishlist", "di wishlist")}
+                  {c.consent_wa ? "" : `, ${tx("no WhatsApp consent", "tanpa consent WhatsApp")}`}
+                </span>
+              </span>
+              <TierBadge tier={c.current_tier_name} small />
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export function Product({ sku, customer_id }) {
-  const { tx, back, wishlist, setWishlist, notify, session } = useApp();
+  const app = useApp();
+  const { tx, back, wishlist, setWishlist, notify, session, nav, connected, setSheet } = app;
+  const forClient = customer_id || connected;
+  const fc = forClient && CLIENTS.find((x) => x.customer_id === forClient);
   const p = PRODUCTS.find((x) => x.sku === sku);
   const inList = wishlist.some((w) => w.sku === sku);
   return (
     <>
       <AppBar title="" onBack={back} />
       <Body>
+        <ConnectedChip />
         <div className="flex justify-center">
           <BagArt color={p.color} size={300} />
         </div>
@@ -255,20 +431,38 @@ export function Product({ sku, customer_id }) {
           ))}
         </Tile>
         {session.role !== "super_admin" && (
-          <Button
-            fullWidth
-            className={`mb-16 mt-4 h-12 rounded-xl ${inList ? "bg-white text-[var(--lc-forest)]" : "bg-[var(--lc-forest)] text-white"}`}
-            variant={inList ? "outline" : "primary"}
-            onPress={() => {
-              if (inList) setWishlist(wishlist.filter((w) => w.sku !== sku));
-              else {
-                setWishlist([...wishlist, { ...p, customer_id }]);
-                notify(tx("Added to wishlist", "Ditambahkan ke wishlist"));
-              }
-            }}
-          >
-            {inList ? tx("Remove from wishlist", "Hapus dari wishlist") : `♥ ${tx("Add to wishlist", "Tambah ke wishlist")}`}
-          </Button>
+          <div className="mt-4 flex flex-col gap-2">
+            {fc ? (
+              <LcButton
+                onClick={() => {
+                  const ok = addToClientWishlist(app, fc.customer_id, sku);
+                  notify(ok ? tx(`Saved to ${fc.full_name}'s wishlist`, `Tersimpan di wishlist ${fc.full_name}`) : tx("Already in this client's wishlist", "Sudah ada di wishlist klien ini"));
+                }}
+              >
+                ♥ {tx(`Add to ${fc.full_name.split(" ")[0]}'s wishlist`, `Tambah ke wishlist ${fc.full_name.split(" ")[0]}`)}
+              </LcButton>
+            ) : null}
+            <LcButton variant={fc ? "outline" : "primary"} onClick={() => setSheet(<PickClientSheet sku={sku} />)}>
+              {fc ? tx("Another client…", "Klien lain…") : `♥ ${tx("Add to a client's wishlist", "Tambah ke wishlist klien")}`}
+            </LcButton>
+            <button
+              className="py-1 text-[11px] underline"
+              onClick={() => {
+                if (inList) setWishlist(wishlist.filter((w) => w.sku !== sku));
+                else {
+                  setWishlist([...wishlist, { ...p, customer_id }]);
+                  notify(tx("Added to the basket to send", "Ditambahkan ke keranjang kirim"));
+                }
+              }}
+            >
+              {inList ? tx("Remove from send basket", "Hapus dari keranjang kirim") : tx("Add to send basket only", "Hanya tambah ke keranjang kirim")}
+            </button>
+          </div>
+        )}
+        {session.role !== "super_admin" && (
+          <LcButton variant="outline" className="mb-16 mt-2" onClick={() => nav("ticket_new", { customer_id: customer_id || connected || 100245, sku })}>
+            {tx("Create a ticket", "Buat tiket")}
+          </LcButton>
         )}
       </Body>
       <WishlistBar />
@@ -276,8 +470,80 @@ export function Product({ sku, customer_id }) {
   );
 }
 
+const WL_STATUS = {
+  saved: ["Saved", "Tersimpan", "border border-black"],
+  sent: ["Sent", "Terkirim", "bg-black text-white"],
+  purchased: ["Purchased", "Dibeli", "bg-[var(--lc-lime)] text-black"],
+};
+export function ClientWishlist({ customer_id }) {
+  const app = useApp();
+  const { tx, back, nav, notify, clientWishlist, setClientWishlist, setWishlist } = app;
+  const c = CLIENTS.find((x) => x.customer_id === customer_id);
+  const items = (clientWishlist[customer_id] || []).map((w) => ({ ...w, p: PRODUCTS.find((x) => x.sku === w.sku) })).filter((w) => w.p);
+  const saved = items.filter((w) => w.status === "saved");
+  const remove = (sku) => {
+    setClientWishlist({ ...clientWishlist, [customer_id]: (clientWishlist[customer_id] || []).filter((w) => !(w.sku === sku && w.status === "saved")) });
+    notify(tx("Removed from wishlist", "Dihapus dari wishlist"));
+  };
+  return (
+    <>
+      <AppBar title={tx("Client wishlist", "Wishlist klien")} onBack={back} />
+      <Body pad={false}>
+        <div className="bg-black px-4 pb-3 text-white">
+          <p className="text-[15px] uppercase tracking-[0.06em]">{c.full_name}</p>
+          <p className="text-[11px] text-white/60">
+            {items.length} {tx("products", "produk")}, {saved.length} {tx("not sent yet", "belum dikirim")}
+          </p>
+        </div>
+        <div className="px-4">
+          {items.length === 0 && <p className="py-8 text-center text-[13px] text-[var(--lc-muted)]">{tx("No products yet. Add one from the catalog.", "Belum ada produk. Tambahkan dari katalog.")}</p>}
+          {items.map((w) => (
+            <div key={w.sku + w.status} className="flex items-center gap-3 border-b border-[var(--lc-line)] py-2.5">
+              <button onClick={() => nav("product", { sku: w.sku, customer_id })}>
+                <BagArt color={w.p.color} size={56} />
+              </button>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[13px]">{w.p.product_name}</p>
+                <p className="text-[11px] text-[var(--lc-muted)]">
+                  {idr(w.p.price_idr)}, {w.p.stock[3] ? `${w.p.stock[3]} ${tx("in boutique", "di boutique")}` : tx("out of stock here", "habis di sini")}
+                </p>
+                <p className="text-[10.5px] text-[var(--lc-muted)]">
+                  {tx("Added", "Ditambah")} {w.added_at.slice(5).split("-").reverse().join("/")} {tx("by", "oleh")} {w.added_by}
+                  {w.sent_at ? `, ${tx("sent", "dikirim")} ${w.sent_at.slice(5).split("-").reverse().join("/")}${w.delivery ? ` (${w.delivery})` : ""}` : ""}
+                </p>
+              </div>
+              <div className="flex flex-col items-end gap-1.5">
+                <span className={`caps px-1.5 py-0.5 text-[8.5px] ${WL_STATUS[w.status][2]}`}>{tx(WL_STATUS[w.status][0], WL_STATUS[w.status][1])}</span>
+                {w.status === "saved" && (
+                  <button onClick={() => remove(w.sku)} className="text-[10.5px] underline">
+                    {tx("Remove", "Hapus")}
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+          <LcButton variant="outline" className="mt-4" onClick={() => nav("catalog_pick", { customer_id })}>
+            + {tx("Add products", "Tambah produk")}
+          </LcButton>
+          <LcButton
+            className="mb-6 mt-2"
+            onClick={() => {
+              if (!saved.length) return notify(tx("Nothing new to send", "Tidak ada yang baru untuk dikirim"));
+              if (!c.consent_wa) return notify(tx("No WhatsApp consent for this client", "Klien ini belum consent WhatsApp"));
+              setWishlist(saved.map((w) => ({ ...w.p, customer_id })));
+              nav("wishlist_send", { customer_id });
+            }}
+          >
+            {tx(`Send ${saved.length} on WhatsApp`, `Kirim ${saved.length} via WhatsApp`)}
+          </LcButton>
+        </div>
+      </Body>
+    </>
+  );
+}
+
 export function WishlistSend() {
-  const { tx, back, wishlist, setWishlist, notify, reset, session } = useApp();
+  const { tx, back, wishlist, setWishlist, notify, reset, session, clientWishlist, setClientWishlist } = useApp();
   const preset = wishlist.find((w) => w.customer_id)?.customer_id;
   const [cid, setCid] = useState(preset || 100245);
   const clients = visibleClients(session.role).filter((c) => c.consent_wa);
@@ -315,6 +581,13 @@ export function WishlistSend() {
           fullWidth
           className="mt-4 h-12 rounded-xl bg-[var(--lc-forest)] text-white"
           onPress={() => {
+            const skus = wishlist.map((w) => w.sku);
+            const cur = clientWishlist[cid] || [];
+            const kept = cur.filter((w) => !(skus.includes(w.sku) && w.status === "saved"));
+            setClientWishlist({
+              ...clientWishlist,
+              [cid]: [...kept, ...skus.map((sku) => ({ sku, status: "sent", added_at: "2026-11-16", sent_at: "2026-11-16", delivery: "sent", added_by: session.user.full_name, source: "catalog" }))],
+            });
             setWishlist([]);
             notify(tx("Wishlist sent · tracked for 30 days", "Wishlist terkirim · dilacak 30 hari"));
             reset("home");
@@ -364,7 +637,7 @@ export function Performance() {
               <div className="flex justify-between text-[12.5px]">
                 <span className="font-medium">{c.channel}</span>
                 <span className="text-[var(--lc-muted)]">
-                  {tx("share", "porsi")} {c.share} · conv. {c.conversion_rate}
+                  {tx("share", "porsi")} {c.share} · conv. {c.conversion_rate} · {idrShort(c.sales_idr)}
                 </span>
               </div>
               <ProgressBar aria-label={c.channel} value={c.share} className="mt-1">
@@ -374,6 +647,33 @@ export function Performance() {
               </ProgressBar>
             </div>
           ))}
+        </Tile>
+        <SectionTitle>{tx("Wishlist", "Wishlist")}</SectionTitle>
+        <div className="grid grid-cols-2 gap-2">
+          <Stat label={tx("Wishlists sent", "Wishlist terkirim")} value={WISHLIST_KPI.sent} />
+          <Stat label="Conv. rate" value={WISHLIST_KPI.conversion_rate} sub={`${WISHLIST_KPI.vs_lm_pts} pts vs LM`} />
+          <Stat label={tx("Wishlist sales", "Sales wishlist")} value={idrShort(WISHLIST_KPI.sales_idr)} sub={`${WISHLIST_KPI.vs_lm_pct} vs LM`} />
+          <Stat label={tx("Avg conv. days", "Rata-rata hari konv.")} value={WISHLIST_KPI.avg_conversion_days} />
+        </div>
+        <SectionTitle>{tx("Push completion", "Penyelesaian push")}</SectionTitle>
+        <Tile className="p-3">
+          <div className="flex justify-between text-[12.5px]">
+            <span>
+              {PUSH_KPI.executed}/{PUSH_KPI.sent} {tx("executed", "dieksekusi")}
+            </span>
+            <span className="text-[var(--lc-muted)]">
+              {PUSH_KPI.cancelled} {tx("cancelled", "dibatalkan")} ({PUSH_KPI.cancelled_pct})
+            </span>
+          </div>
+          <ProgressBar aria-label="push completion" value={PUSH_KPI.treated} className="mt-1.5">
+            <ProgressBar.Track className="h-1.5 bg-[#ececec]">
+              <ProgressBar.Fill className="bg-black" />
+            </ProgressBar.Track>
+          </ProgressBar>
+          <p className="mt-1.5 text-[11px] text-[var(--lc-muted)]">
+            {tx("Treated", "Ditangani")} {PUSH_KPI.treated} ({PUSH_KPI.vs_lm_pts > 0 ? "+" : ""}
+            {PUSH_KPI.vs_lm_pts} pts vs LM) · {tx("not treated", "belum ditangani")} {PUSH_KPI.non_treated}
+          </p>
         </Tile>
         <SectionTitle>{tx("By reason", "Per alasan")}</SectionTitle>
         <Tile className="divide-y divide-[var(--lc-line)]">

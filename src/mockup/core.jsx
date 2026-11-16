@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useCallback } from "react";
 import { Avatar } from "@heroui/react";
-import { TIER_STYLE, USERS } from "./data";
+import { TIER_STYLE, USERS, CLIENT_WISHLIST } from "./data";
 
 /* ------------------------------------------------------------------ context */
 export const Ctx = createContext(null);
@@ -13,7 +13,9 @@ export function useAppState({ role, initial, lang, signedIn }) {
   const [sheet, setSheet] = useState(null);
   const [menu, setMenu] = useState(false);
   const [wishlist, setWishlist] = useState([]);
+  const [clientWishlist, setClientWishlist] = useState(CLIENT_WISHLIST);
   const [overrides, setOverrides] = useState({});
+  const [connected, setConnected] = useState(null); // client "connected" to the session, as in Belong
 
   const nav = useCallback((id, params = {}) => {
     setMenu(false);
@@ -32,7 +34,8 @@ export function useAppState({ role, initial, lang, signedIn }) {
 
   return {
     lang, tx, stack, current: stack[stack.length - 1], nav, back, reset,
-    session, setSession, toast, notify, sheet, setSheet, menu, setMenu, wishlist, setWishlist, overrides, setOverrides,
+    session, setSession, toast, notify, sheet, setSheet, menu, setMenu, wishlist, setWishlist, clientWishlist, setClientWishlist, overrides, setOverrides,
+    connected, setConnected,
   };
 }
 
@@ -61,7 +64,14 @@ export function Phone({ children, scale = 1, darkStatus = false }) {
 
 /* ------------------------------------------------------------------ icons (thin line, like the Belong app) */
 const P = {
+  userCheck: "M10 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zM2 21c0-4.2 3.6-7 8-7 1.5 0 2.9.3 4 .9M15 18l2.5 2.5L22 16",
+  scan: "M3 7V4h3M18 4h3v3M21 17v3h-3M6 20H3v-3M7 8v8M10 8v8M13 8v8M16 8v8",
   menu: "M3 6h18M3 12h18M3 18h18",
+  home: "M3 11 12 4l9 7M5 10v10h5v-6h4v6h5V10",
+  lists: "M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01",
+  chart: "M4 20V10M10 20V4M16 20v-7M22 20H2",
+  more: "M4.5 12h1.5M11.25 12h1.5M18 12h1.5",
+  template: "M4 4h16v12H8l-4 4zM8 8h8M8 11h5",
   back: "M15 4 7 12l8 8",
   user: "M12 12a4.5 4.5 0 1 0 0-9 4.5 4.5 0 0 0 0 9zM3.5 21c0-4.2 3.8-7 8.5-7s8.5 2.8 8.5 7",
   bag: "M5 8h14l-1.2 13H6.2zM9 8V6.5a3 3 0 0 1 6 0V8",
@@ -94,14 +104,14 @@ export function Icon({ name, size = 22, stroke = 1.5, className = "" }) {
 export function Wordmark({ light, size = 15 }) {
   return (
     <span className={`flex flex-col items-center leading-none ${light ? "text-white" : "text-black"}`}>
-      <span style={{ fontSize: size, letterSpacing: "0.32em", fontWeight: 600, marginRight: "-0.32em" }}>LONGCHAMP</span>
+      <span style={{ fontSize: size, letterSpacing: "0.3em", fontWeight: 400, marginRight: "-0.3em" }}>LONGCHAMP</span>
       <span style={{ fontSize: Math.max(5, size * 0.36), letterSpacing: "0.6em", marginTop: 3, marginRight: "-0.6em" }}>PARIS</span>
     </span>
   );
 }
 
 export function AppBar({ title, sub, onBack, right }) {
-  const { setMenu, nav, session } = useApp();
+  const { setMenu, nav, session, connected, wishlist } = useApp();
   return (
     <div className="shrink-0 bg-white pt-11">
       <div className="flex h-[52px] items-center px-3">
@@ -111,9 +121,6 @@ export function AppBar({ title, sub, onBack, right }) {
               <Icon name="back" />
             </button>
           )}
-          <button onClick={() => setMenu(true)} aria-label="Menu" className="grid h-9 w-9 place-items-center">
-            <Icon name="menu" />
-          </button>
         </div>
         <div className="flex flex-1 justify-center">
           <Wordmark />
@@ -121,19 +128,26 @@ export function AppBar({ title, sub, onBack, right }) {
         <div className="flex w-[84px] items-center justify-end">
           {right || (
             <>
-              <button aria-label="Account" onClick={() => session && nav("profile")} className="grid h-9 w-9 place-items-center">
-                <Icon name="user" />
+              <button
+                aria-label={connected ? "Connected client" : "Account"}
+                onClick={() => session && (connected ? nav("client", { customer_id: connected }) : nav("profile"))}
+                className="grid h-9 w-9 place-items-center"
+              >
+                <Icon name={connected ? "userCheck" : "user"} />
               </button>
-              <span className="grid h-9 w-9 place-items-center">
-                <Icon name="bag" />
-              </span>
+              <button aria-label="Wishlist" onClick={() => session && wishlist.length && nav("wishlist_send", {})} className="relative grid h-9 w-9 place-items-center">
+                <Icon name="heart" />
+                {wishlist.length > 0 && (
+                  <span className="absolute right-0.5 top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--lc-lime)] px-1 text-[9px] font-bold text-black">{wishlist.length}</span>
+                )}
+              </button>
             </>
           )}
         </div>
       </div>
       {title && (
         <div className="bg-black px-4 py-[7px] text-center">
-          <p className="caps truncate text-[10.5px] font-medium text-white">{title}</p>
+          <p className="caps truncate text-[11px] text-white">{title}</p>
         </div>
       )}
       {sub && <p className="border-b border-[var(--lc-line)] px-4 py-2 text-center text-[11.5px] text-[var(--lc-muted)]">{sub}</p>}
@@ -151,8 +165,8 @@ export function FullBody({ children, className = "" }) {
 
 export function SectionTitle({ children, action }) {
   return (
-    <div className="mb-2 mt-6 flex items-end justify-between border-b border-black pb-1.5">
-      <p className="caps text-[10.5px] font-semibold">{children}</p>
+    <div className="mb-2 mt-6 flex items-end justify-between border-b border-[var(--lc-line)] pb-1.5">
+      <p className="text-[15px] tracking-[0.02em]">{children}</p>
       {action}
     </div>
   );
@@ -208,7 +222,7 @@ export function Initials({ name, size = 40, dark }) {
 export function BagArt({ color = "#1f3557", size = 120 }) {
   return (
     <svg width={size} height={size} viewBox="0 0 120 120" aria-hidden>
-      <rect width="120" height="120" fill="#f4f4f2" />
+      <rect width="120" height="120" fill="#f2f2f2" />
       <path d="M40 46 C40 29, 80 29, 80 46" fill="none" stroke="#3a2a1a" strokeWidth="3.5" strokeLinecap="round" />
       <path d="M27 46 H93 L87 97 Q86 102 80 102 H40 Q34 102 33 97 Z" fill={color} />
       <path d="M27 46 H93 L91.5 57 H28.5 Z" fill="#000" opacity=".14" />
@@ -219,7 +233,7 @@ export function BagArt({ color = "#1f3557", size = 120 }) {
 
 /* Boutique hero — illustrated stand-in for the store photo used in the deck */
 export function BoutiqueArt({ height = 180 }) {
-  const bags = ["#1f3557", "#8dc63f", "#6b3e26", "#c9b79c", "#2b2b2b", "#b24a3c", "#1f3557", "#d9c27a", "#3e6b4a", "#6b3e26"];
+  const bags = ["#1f3557", "#a3e363", "#6b3e26", "#c9b79c", "#2b2b2b", "#b24a3c", "#1f3557", "#d9c27a", "#3e6b4a", "#6b3e26"];
   return (
     <svg width="100%" height={height} viewBox="0 0 360 180" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Boutique">
       <rect width="360" height="180" fill="#efe9df" />
@@ -251,7 +265,7 @@ export function Toast() {
   const { toast } = useApp();
   if (!toast) return null;
   return (
-    <div role="status" className="absolute inset-x-4 bottom-8 z-50 flex items-center gap-2 bg-black px-4 py-3 text-[12.5px] text-white">
+    <div role="status" className="absolute inset-x-4 bottom-[92px] z-50 flex items-center gap-2 bg-black px-4 py-3 text-[12.5px] text-white">
       <span className="inline-block h-2 w-2 shrink-0 bg-[var(--lc-lime)]" />
       {toast}
     </div>
@@ -293,11 +307,60 @@ export function Pill({ active, children, onClick }) {
 }
 
 /* The black squares of the Belong home */
-export function BlackTile({ label, onClick, sub }) {
+/* Editorial tile, as on longchamp.co.id: image ground, white caps title bottom-left, arrow bottom-right */
+const TILE_GROUNDS = [
+  ["#3b4a2a", "#1d2414"],
+  ["#5a4636", "#2a1f17"],
+  ["#2f3b4c", "#151c26"],
+  ["#4a4a46", "#1e1e1c"],
+];
+let tileSeq = 0;
+export function BlackTile({ label, onClick, sub, tone }) {
+  const [a, b] = TILE_GROUNDS[(tone ?? tileSeq++) % TILE_GROUNDS.length];
   return (
-    <button onClick={onClick} className="flex aspect-[1.45/1] flex-col items-center justify-center bg-black px-2 text-center text-white active:bg-[#262626]">
-      <span className="text-[13.5px] font-bold uppercase leading-tight tracking-[0.03em]">{label}</span>
-      {sub && <span className="mt-1 text-[10.5px] text-[var(--lc-lime)]">{sub}</span>}
+    <button
+      onClick={onClick}
+      className="relative flex aspect-[1/1.05] flex-col justify-end overflow-hidden p-3 text-left text-white active:opacity-90"
+      style={{ background: `linear-gradient(160deg, ${a} 0%, ${b} 100%)` }}
+    >
+      <svg className="absolute inset-0 h-full w-full opacity-25" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice" aria-hidden>
+        <path d="M30 42 C30 22, 70 22, 70 42" stroke="#fff" strokeWidth="2" fill="none" />
+        <path d="M22 42 H78 L72 82 H28 Z" fill="#fff" opacity=".35" />
+      </svg>
+      <span className="relative text-[14px] uppercase leading-tight tracking-[0.08em]">{label}</span>
+      <span className="relative mt-0.5 flex items-end justify-between gap-2">
+        <span className="text-[10.5px] text-[var(--lc-lime)]">{sub || "\u00a0"}</span>
+        <span aria-hidden className="text-[15px] leading-none">→</span>
+      </span>
+    </button>
+  );
+}
+
+/* Hero, as on longchamp.co.id: full-bleed image, white caps headline, underlined CTA */
+export function Hero({ title, subtitle, cta, onCta, height = 190 }) {
+  return (
+    <div className="relative">
+      <BoutiqueArt height={height} />
+      <div className="absolute inset-0 flex flex-col items-center justify-end bg-gradient-to-t from-black/80 via-black/45 to-black/5 px-6 pb-5 text-center text-white">
+        <p className="text-[21px] uppercase leading-tight tracking-[0.08em]">{title}</p>
+        {subtitle && <p className="mt-1 text-[10.5px] uppercase tracking-[0.1em]">{subtitle}</p>}
+        {cta && (
+          <button onClick={onCta} className="mt-2.5 border-b border-white pb-0.5 text-[11.5px] uppercase tracking-[0.07em]">
+            {cta}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* Square buttons from the site: black filled primary, black outlined secondary */
+export function LcButton({ children, onClick, variant = "primary", className = "" }) {
+  const base = "w-full py-3 text-[12px] uppercase tracking-[0.1em]";
+  const look = variant === "primary" ? "bg-black text-white active:bg-[#262626]" : "border-[1.25px] border-black bg-white text-black";
+  return (
+    <button onClick={onClick} className={`${base} ${look} ${className}`}>
+      {children}
     </button>
   );
 }
@@ -315,6 +378,15 @@ export function ContactBar({ items }) {
         </button>
       ))}
     </div>
+  );
+}
+
+/* Lime announcement bar, as on longchamp.co.id */
+export function Announcement({ children, onClick }) {
+  return (
+    <button onClick={onClick} className="block w-full bg-[var(--lc-lime)] px-4 py-1.5 text-center text-[11.5px] text-black">
+      {children}
+    </button>
   );
 }
 
@@ -346,52 +418,86 @@ export const MENU = {
     { id: "users", en: "Users & roles", idl: "User & role" },
   ],
 };
-export const TABS = MENU;
+/* Bottom app bar: four fixed tabs per role + "More" (the rest of MENU, account, sign out) */
+export const TABS = {
+  sales_agent: [
+    { id: "home", icon: "home", en: "Home", idl: "Beranda" },
+    { id: "clients", icon: "clients", en: "Clients", idl: "Klien" },
+    { id: "actions", icon: "calendar", en: "Actions", idl: "Aksi" },
+    { id: "catalog", icon: "catalog", en: "Catalog", idl: "Katalog" },
+  ],
+  supervisor: [
+    { id: "home", icon: "home", en: "Home", idl: "Beranda" },
+    { id: "clients", icon: "clients", en: "Clients", idl: "Klien" },
+    { id: "actions", icon: "calendar", en: "Actions", idl: "Aksi" },
+    { id: "team", icon: "team", en: "Team", idl: "Tim" },
+  ],
+  super_admin: [
+    { id: "home", icon: "home", en: "Overview", idl: "Ringkasan" },
+    { id: "clients", icon: "clients", en: "Clients", idl: "Klien" },
+    { id: "performance", icon: "chart", en: "KPI", idl: "KPI" },
+    { id: "templates", icon: "template", en: "Templates", idl: "Template" },
+  ],
+};
 
-export function Drawer() {
-  const { session, menu, setMenu, reset, stack, tx, setSession } = useApp();
-  if (!session) return null;
-  const root = stack[0].id;
+function MoreSheet() {
+  const { session, reset, tx, setSheet, setSession, nav } = useApp();
+  const inTabs = TABS[session.role].map((t) => t.id);
+  const rest = MENU[session.role].filter((m) => !inTabs.includes(m.id));
+  const go = (f) => {
+    setSheet(null);
+    f();
+  };
   return (
-    <>
-      <div className={`lc-scrim absolute inset-0 z-40 bg-black/40 ${menu ? "opacity-100" : "pointer-events-none opacity-0"}`} onClick={() => setMenu(false)} />
-      <aside className={`lc-drawer absolute bottom-0 left-0 top-0 z-50 flex w-[82%] flex-col bg-white pt-11 ${menu ? "translate-x-0" : "-translate-x-full"}`} aria-hidden={!menu} inert={!menu ? "" : undefined}>
-        <div className="flex h-[52px] items-center justify-between px-4">
-          <Wordmark size={13} />
-          <button onClick={() => setMenu(false)} aria-label="Close menu" className="grid h-9 w-9 place-items-center">
-            <Icon name="close" />
-          </button>
-        </div>
-        <div className="bg-black px-4 py-3 text-white">
-          <p className="text-[15px] font-semibold uppercase tracking-[0.06em]">{session.user.full_name}</p>
-          <p className="text-[11.5px] text-white/60">{{ sales_agent: "Sales Agent", supervisor: "Supervisor", super_admin: "Super Admin" }[session.role]}</p>
-        </div>
-        <nav className="flex-1 overflow-y-auto px-4">
-          {MENU[session.role].map((m) => (
-            <button key={m.id} onClick={() => reset(m.id)} className="flex w-full items-center justify-between border-b border-[var(--lc-line)] py-3.5 text-left">
-              <span className={`caps flex items-center text-[11px] ${root === m.id ? "font-bold" : "font-medium"}`}>
-                {root === m.id && <span className="mr-2 inline-block h-2 w-2 bg-[var(--lc-lime)]" />}
-                {tx(m.en, m.idl)}
-              </span>
-              <Icon name="chevron" size={15} className="text-[#9a9a9a]" />
-            </button>
-          ))}
-        </nav>
-        <button
-          onClick={() => {
+    <div>
+      <div className="-mx-5 -mt-5 mb-2 bg-black px-5 py-3 text-white">
+        <p className="text-[14px] uppercase tracking-[0.06em]">{session.user.full_name}</p>
+        <p className="text-[11px] text-white/60">{{ sales_agent: "Sales Agent", supervisor: "Supervisor", super_admin: "Super Admin" }[session.role]}</p>
+      </div>
+      {rest.map((m) => (
+        <button key={m.id} onClick={() => go(() => reset(m.id))} className="flex w-full items-center justify-between border-b border-[var(--lc-line)] py-3 text-left">
+          <span className="caps text-[11px]">{tx(m.en, m.idl)}</span>
+          <Icon name="chevron" size={15} className="text-[#9a9a9a]" />
+        </button>
+      ))}
+      <button onClick={() => go(() => nav("profile"))} className="flex w-full items-center justify-between border-b border-[var(--lc-line)] py-3 text-left">
+        <span className="caps text-[11px]">{tx("My account", "Akun saya")}</span>
+        <Icon name="chevron" size={15} className="text-[#9a9a9a]" />
+      </button>
+      <button
+        onClick={() =>
+          go(() => {
             setSession(null);
             reset("login");
-          }}
-          className="caps m-4 border border-black py-3 text-[10.5px] font-semibold"
-        >
-          {tx("Sign out", "Keluar")}
-        </button>
-      </aside>
-    </>
+          })
+        }
+        className="caps mt-4 w-full border-[1.25px] border-black py-3 text-[11px]"
+      >
+        {tx("Sign out", "Keluar")}
+      </button>
+    </div>
   );
 }
 
-/* compatibility: the app uses the drawer instead of a tab bar */
 export function TabBar() {
-  return <Drawer />;
+  const { session, stack, reset, tx, setSheet } = useApp();
+  if (!session) return null;
+  const root = stack[0].id;
+  const tabs = TABS[session.role];
+  const isMore = !tabs.some((t) => t.id === root);
+  const Item = ({ active, icon, label, onClick }) => (
+    <button onClick={onClick} className="relative flex flex-1 flex-col items-center gap-1 pt-2" aria-current={active ? "page" : undefined}>
+      {active && <span className="absolute inset-x-5 top-0 h-[3px] bg-[var(--lc-lime)]" />}
+      <Icon name={icon} size={21} stroke={active ? 1.7 : 1.3} />
+      <span className={`caps text-[8.5px] ${active ? "text-black" : "text-[#8a8a8a]"}`}>{label}</span>
+    </button>
+  );
+  return (
+    <nav className="relative z-30 flex shrink-0 border-t border-[var(--lc-line)] bg-white pb-6" aria-label="Main">
+      {tabs.map((t) => (
+        <Item key={t.id} active={root === t.id} icon={t.icon} label={tx(t.en, t.idl)} onClick={() => reset(t.id)} />
+      ))}
+      <Item active={isMore} icon="more" label={tx("More", "Lainnya")} onClick={() => setSheet(<MoreSheet />)} />
+    </nav>
+  );
 }

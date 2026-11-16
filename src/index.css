@@ -92,23 +92,32 @@ body {
   --lc-cream: #ffffff;
   --lc-line: #e4e4e4;
   --lc-muted: #8a8a8a;
-  --lc-lime: #8dc63f;
-  --lc-lime-soft: #f1f8e6;
-  font-family: "Cabin", "Gill Sans", "Gill Sans MT", ui-sans-serif, sans-serif;
+  --lc-lime: #a3e363;            /* longchamp.co.id accent */
+  --lc-lime-soft: #f1fae6;
+  --lc-card: #f2f2f2;            /* product card ground on the site */
+  font-family: "Gill Sans", "Gill Sans MT", "Cabin", ui-sans-serif, sans-serif;
+  letter-spacing: 0.6px;
   color: #000;
   background: #fff;
+}
+/* the site sets everything in Gill Sans regular — no bold */
+.lc-app .font-bold,
+.lc-app .font-semibold,
+.lc-app .font-medium,
+.lc-app b {
+  font-weight: 400;
 }
 .lc-app [class*="rounded"]:not(.rounded-full) {
   border-radius: 0 !important;
 }
 .lc-app .font-display {
-  font-family: "Cabin", "Gill Sans", "Gill Sans MT", sans-serif;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+  font-family: "Gill Sans", "Gill Sans MT", "Cabin", sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.06em;
 }
 .lc-app .caps {
   text-transform: uppercase;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.1em;
 }
 .lc-app .script {
   font-family: "Allura", "Snell Roundhand", cursive;

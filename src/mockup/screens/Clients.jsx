@@ -1,7 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Button, Chip, Input, Label, SearchField, Switch, Tabs, TextField } from "@heroui/react";
-import { useApp, AppBar, Body, SectionTitle, Tile, TierBadge, Initials, Pill, Row, ContactBar } from "../core";
-import { CLIENTS, LISTS, LOVE_TAGS, PUSHES, PUSH_LABEL, TEAM, TEMPLATES, REACH_REASONS, BOUTIQUES, idr, tag, usableTemplates } from "../data";
+import { useApp, AppBar, Body, SectionTitle, Tile, TierBadge, Initials, Pill, Row, ContactBar, Icon, LcButton } from "../core";
+import { CLIENTS, LISTS, LOVE_TAGS, PUSHES, PUSH_LABEL, TEAM, TEMPLATES, REACH_REASONS, BOUTIQUES, idr, tag, usableTemplates, loveLabel } from "../data";
 
 /* RBAC as returned by Cekat Product (CP-02) — the app only renders what comes back */
 export function visibleClients(role) {
@@ -138,34 +138,75 @@ function LoveTagsEditor({ c }) {
   };
   return (
     <div>
-      {Object.entries(LOVE_TAGS).map(([g, tags]) => (
-        <div key={g} className="mb-3">
-          <p className="mb-1.5 text-[10.5px] uppercase tracking-wider text-[var(--lc-muted)]">{g}</p>
-          <div className="flex flex-wrap gap-1.5">
-            {tags.map((t) => (
-              <button
-                key={t}
-                onClick={() => toggle(t)}
-                className={`rounded-full px-2.5 py-1 text-[12px] ${sel.has(t) ? "bg-[var(--lc-forest)] text-white" : "border border-[var(--lc-line)] bg-white"}`}
-              >
-                {sel.has(t) ? "♥ " : ""}
-                {tag(t)}
-              </button>
-            ))}
-          </div>
-        </div>
-      ))}
-      <Button
-        fullWidth
-        className="mt-1 h-11 rounded-xl bg-[var(--lc-forest)] text-white"
-        onPress={() => {
+      <ul>
+        {LOVE_TAGS.map((t) => (
+          <li key={t}>
+            <button onClick={() => toggle(t)} aria-pressed={sel.has(t)} className="flex w-full items-center gap-2.5 py-[5px] text-left">
+              <span className={`grid h-3.5 w-3.5 shrink-0 place-items-center border ${sel.has(t) ? "border-black bg-black" : "border-[#9a9a9a]"}`}>
+                {sel.has(t) && <span className="h-1.5 w-1.5 bg-white" />}
+              </span>
+              <span className="caps text-[9.5px]">{loveLabel(t)}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      <button
+        className="mt-3 h-10 w-full bg-[var(--lc-olive)] text-[10px] font-semibold uppercase tracking-[0.18em] text-white"
+        onClick={() => {
           setOverrides((o) => ({ ...o, [c.customer_id]: { ...(o[c.customer_id] || {}), love_tags: [...sel] } }));
-          notify(tx("Love Tags saved to Cekat CRM", "Love Tags tersimpan di Cekat CRM"));
+          notify(tx("Love Tags validated", "Love Tags tervalidasi"));
         }}
       >
-        {tx("Save Love Tags", "Simpan Love Tags")}
-      </Button>
-      <p className="mt-2 text-[11px] text-[var(--lc-muted)]">{tx("Do not collect health, religion, politics or data about minors.", "Jangan mencatat kesehatan, agama, politik, atau data anak di bawah umur.")}</p>
+        {tx("Validate", "Validasi")}
+      </button>
+    </div>
+  );
+}
+
+function Commentary({ c }) {
+  const { tx, setOverrides, notify } = useApp();
+  const [text, setText] = useState(c.client_note || "");
+  return (
+    <div className="border-b border-[var(--lc-line)] py-2">
+      <p className="text-[10.5px] text-[var(--lc-muted)]">{tx("Do not record health, religion, political views or anything about minors.", "Jangan mencatat kesehatan, agama, pandangan politik, atau data anak di bawah umur.")}</p>
+      <textarea
+        aria-label="Customer commentaries"
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        rows={4}
+        className="mt-2 w-full resize-none bg-[#f2f2f2] p-2.5 text-center text-[12px] italic leading-snug outline-none"
+      />
+      <button
+        className="mt-2 h-9 w-full bg-[var(--lc-olive)] text-[9.5px] font-semibold uppercase tracking-[0.18em] text-white"
+        onClick={() => {
+          setOverrides((o) => ({ ...o, [c.customer_id]: { ...(o[c.customer_id] || {}), client_note: text } }));
+          notify(tx("Commentary updated", "Komentar diperbarui"));
+        }}
+      >
+        {tx("Commentary updated", "Perbarui komentar")}
+      </button>
+    </div>
+  );
+}
+
+function QuickAddSheet({ c }) {
+  const { tx, nav, setSheet } = useApp();
+  const go = (id, p = {}) => {
+    setSheet(null);
+    nav(id, { customer_id: c.customer_id, ...p });
+  };
+  return (
+    <div>
+      <p className="mb-2 text-[13px] font-bold uppercase tracking-[0.08em]">{c.full_name}</p>
+      {[
+        [tx("New task", "Task baru"), () => go("agenda_new", { kind: "task" })],
+        [tx("New appointment", "Appointment baru"), () => go("agenda_new", { kind: "appointment" })],
+        [tx("After-sales case", "Kasus after-sales"), () => go("ticket_new")],
+        [tx("Add to a list", "Tambah ke list"), () => go("lists")],
+        [tx("Wishlist", "Wishlist"), () => go("client_wishlist")],
+      ].map(([l, f]) => (
+        <Row key={l} label={l} onClick={f} />
+      ))}
     </div>
   );
 }
@@ -180,6 +221,10 @@ export function ClientProfile({ customer_id, push_id }) {
   const toggle = (k) => setOpen(open === k ? null : k);
   const avg = Math.round(c.total_spent_idr / Math.max(1, c.purchase_count));
   const reach = (channel) => nav("reach_out", { customer_id: c.customer_id, push_id, channel });
+  const { setConnected, connected, wishlist, clientWishlist } = useApp();
+  useEffect(() => {
+    if (canAct) setConnected(c.customer_id);
+  }, [c.customer_id, canAct, setConnected]);
 
   return (
     <>
@@ -204,7 +249,7 @@ export function ClientProfile({ customer_id, push_id }) {
                 { label: "E-mail", icon: "mail", disabled: !c.consent_email, onClick: () => reach("email") },
                 { label: "SMS", icon: "sms", onClick: () => reach("sms") },
                 { label: "WhatsApp", icon: "whatsapp", disabled: !c.consent_wa, active: !!push, onClick: () => reach("whatsapp") },
-                { label: "Wishlist", icon: "heart", onClick: () => nav("catalog_pick", { customer_id: c.customer_id }) },
+                { label: "Wishlist", icon: "heart", onClick: () => nav("client_wishlist", { customer_id: c.customer_id }) },
                 { label: "Agenda", icon: "calendar", onClick: () => nav("agenda_new", { customer_id: c.customer_id }) },
                 { label: tx("Ticket", "Tiket"), icon: "ticket", onClick: () => nav("ticket_new", { customer_id: c.customer_id }) },
               ]}
@@ -225,6 +270,8 @@ export function ClientProfile({ customer_id, push_id }) {
               [tx("Birth date", "Tanggal lahir"), c.birthdate],
               [tx("Average basket", "Rata-rata belanja"), `IDR ${avg.toLocaleString("id-ID")}`],
               [tx("Last purchase", "Pembelian terakhir"), c.last_purchase_date],
+              [tx("Purchase frequency", "Frekuensi belanja"), c.purchase_frequency],
+              [tx("Odoo client ID", "ID klien Odoo"), c.odoo_partner_id],
               [tx("Purchases", "Jumlah order"), c.purchase_count],
               [tx("Last contact", "Kontak terakhir"), c.days_since_last_contact === null ? tx("Never", "Belum pernah") : `${c.days_since_last_contact} ${tx("days ago", "hari lalu")}`],
             ].map(([k, v]) => (
@@ -270,12 +317,29 @@ export function ClientProfile({ customer_id, push_id }) {
                 </p>
               </div>
             ))}
-          <Row label={tx("Wishlist", "Wishlist")} count={1} onClick={() => toggle("wishlist")} open={open === "wishlist"} />
-          {open === "wishlist" && <p className="border-b border-[var(--lc-line)] py-2 text-[12.5px]">Roseau Shoulder Bag · {tx("sent 20/10, read", "terkirim 20/10, dibaca")}</p>}
+          <Row label={tx("Wishlist", "Wishlist")} count={(clientWishlist[c.customer_id] || []).length} onClick={() => nav("client_wishlist", { customer_id: c.customer_id })} />
           <Row label="Love tags" count={c.love_tags.length} onClick={() => toggle("love")} open={open === "love"} />
           {open === "love" && <div className="border-b border-[var(--lc-line)] py-3">{canAct ? <LoveTagsEditor c={c} /> : <p className="text-[12.5px]">{c.love_tags.map(tag).join(", ")}</p>}</div>}
           <Row label={tx("Customer commentaries", "Komentar pelanggan")} onClick={() => toggle("note")} open={open === "note"} />
-          {open === "note" && <p className="border-b border-[var(--lc-line)] py-2 text-[12.5px] leading-relaxed">{c.client_note || tx("No comment yet.", "Belum ada komentar.")}</p>}
+          {open === "note" && (canAct ? <Commentary c={c} /> : <p className="border-b border-[var(--lc-line)] py-2 text-[12.5px] leading-relaxed">{c.client_note || tx("No comment yet.", "Belum ada komentar.")}</p>)}
+          <Row label={tx("After sales cases", "Kasus after-sales")} count={(c.tickets || []).length} onClick={() => toggle("aftersales")} open={open === "aftersales"} />
+          {open === "aftersales" && (
+            <div className="border-b border-[var(--lc-line)] py-2 text-[12.5px]">
+              {(c.tickets || []).map((t) => (
+                <p key={t.ticket_id} className="flex justify-between py-1">
+                  <span>
+                    {t.ticket_id}, {t.type}, {t.sku}
+                  </span>
+                  <span className="text-[var(--lc-muted)]">{t.status}</span>
+                </p>
+              ))}
+              {canAct && (
+                <button onClick={() => nav("ticket_new", { customer_id: c.customer_id })} className="mt-1 text-[11px] underline">
+                  {tx("Open a new case", "Buka kasus baru")}
+                </button>
+              )}
+            </div>
+          )}
           <Row label={tx("Timeline", "Timeline")} onClick={() => toggle("timeline")} open={open === "timeline"} />
           {open === "timeline" && (
             <div className="border-b border-[var(--lc-line)] py-2 text-[12px]">
@@ -291,6 +355,22 @@ export function ClientProfile({ customer_id, push_id }) {
             </div>
           )}
         </div>
+        {canAct && (
+          <div className="mt-6">
+            <button onClick={() => setSheet(<QuickAddSheet c={c} />)} aria-label="Add" className="grid h-9 w-full place-items-center bg-black text-white">
+              <Icon name="plus" size={18} />
+            </button>
+            <button
+              onClick={() => {
+                setConnected(null);
+                back();
+              }}
+              className="h-10 w-full bg-[var(--lc-olive)] text-[10px] font-semibold uppercase tracking-[0.18em] text-white"
+            >
+              {tx("Disconnect customer", "Putuskan pelanggan")}
+            </button>
+          </div>
+        )}
       </Body>
     </>
   );
@@ -385,17 +465,26 @@ function Dropdown({ label, value, open, onToggle, children }) {
   );
 }
 
-export function ReachOut({ customer_id, push_id, channel: startChannel }) {
+const MOMENT_LABEL = {
+  welcome: ["Welcome", "Welcome"], new_client: ["New clients", "Klien baru"], birthday: ["Birthday", "Ulang tahun"], upgrade: ["Tier upgrade", "Naik tier"],
+  wishlist: ["Wishlist", "Wishlist"], after_sales: ["After sales", "After sales"], event: ["Events", "Event"], collection: ["Collection", "Koleksi"],
+  thank_you: ["Thank you", "Terima kasih"], reactivation: ["Reactivation", "Reaktivasi"],
+};
+export function ReachOut({ customer_id, push_id, channel: startChannel, motive: startMotive }) {
   const { tx, back, notify, session } = useApp();
+  const [msgLang, setMsgLang] = useState("id");
   const c = useClient(customer_id);
   const eligible = c.days_since_last_contact === null || c.days_since_last_contact >= 30;
   const [step, setStep] = useState(eligible ? "contact" : "blocked");
   const [channel, setChannel] = useState(startChannel || (c.consent_wa ? "whatsapp" : "call"));
-  const [tpl, setTpl] = useState(TEMPLATES[0]);
-  const [motive, setMotive] = useState(push_id ? "push" : null);
+  const usable = usableTemplates(3);
+  const [tpl, setTpl] = useState(
+    (startMotive === "welcome" && usable.find((t) => t.moment === "new_client")) || TEMPLATES[0]
+  );
+  const [motive, setMotive] = useState(push_id ? "push" : startMotive === "welcome" ? "other" : null);
   const [dd, setDd] = useState("motive");
   const first = c.full_name.split(" ")[0];
-  const body = tpl.body
+  const body = (msgLang === "en" && tpl.body_en ? tpl.body_en : tpl.body)
     .replace("{{first_name}}", first)
     .replace("{{tier}}", c.current_tier_name)
     .replace("{{sa_name}}", session.user.full_name.split(" ")[0])
@@ -445,12 +534,35 @@ export function ReachOut({ customer_id, push_id, channel: startChannel }) {
               />
               {channel === "whatsapp" && (
                 <>
-                  <SectionTitle>{tx("Template library", "Template library")}</SectionTitle>
-                  {usableTemplates(3).map((t) => (
-                    <button key={t.template_id} onClick={() => setTpl(t)} className="flex w-full items-center justify-between border-b border-[var(--lc-line)] py-2.5 text-left">
-                      <span className={`text-[12.5px] ${tpl.template_id === t.template_id ? "font-bold" : ""}`}>{t.title}</span>
-                      {tpl.template_id === t.template_id && <span className="h-2.5 w-2.5 bg-[var(--lc-lime)]" />}
-                    </button>
+                  <SectionTitle
+                    action={
+                      <span className="flex">
+                        {["id", "en"].map((l) => (
+                          <button key={l} onClick={() => setMsgLang(l)} className={`caps px-2 py-0.5 text-[10px] ${msgLang === l ? "bg-black text-white" : "border border-black"}`}>
+                            {l}
+                          </button>
+                        ))}
+                      </span>
+                    }
+                  >
+                    {tx("Key moments", "Momen penting")}
+                  </SectionTitle>
+                  {Object.entries(
+                    usable.reduce((acc, t) => {
+                      (acc[t.moment] = acc[t.moment] || []).push(t);
+                      return acc;
+                    }, {})
+                  ).map(([m, list]) => (
+                    <div key={m} className="mb-1">
+                      <p className="caps mt-2 text-[9.5px] text-[var(--lc-muted)]">{MOMENT_LABEL[m] ? tx(...MOMENT_LABEL[m]) : m.replace(/_/g, " ")}</p>
+                      {list.map((t) => (
+                        <button key={t.template_id} onClick={() => setTpl(t)} className="flex w-full items-center gap-2.5 border-b border-[var(--lc-line)] py-2 text-left">
+                          <span className="w-5 text-center text-[13px]" aria-hidden>{t.icon}</span>
+                          <span className="flex-1 text-[12.5px]">{t.title}</span>
+                          {tpl.template_id === t.template_id && <span className="h-2.5 w-2.5 bg-[var(--lc-lime)]" />}
+                        </button>
+                      ))}
+                    </div>
                   ))}
                   <p className="mt-3 bg-[#e7f3d9] p-3 text-[12.5px] leading-relaxed">{body}</p>
                   <p className="mt-1 text-[10.5px] text-[var(--lc-muted)]">{tx("Personalise before sending.", "Personalisasi sebelum mengirim.")}</p>
@@ -503,29 +615,75 @@ export function ReachOut({ customer_id, push_id, channel: startChannel }) {
   );
 }
 
+function CreateListSheet() {
+  const { tx, setSheet, nav, notify } = useApp();
+  const [kind, setKind] = useState("dynamic");
+  const [share, setShare] = useState(true);
+  return (
+    <div>
+      <p className="mb-3 text-[15px]">{tx("Create a customer list", "Buat daftar pelanggan")}</p>
+      <TextField className="flex flex-col gap-1" defaultValue="VIC December">
+        <Label className="caps text-[10px]">{tx("List name", "Nama list")}</Label>
+        <Input className="h-10 border-0 border-b border-black px-0 text-[14px]" />
+      </TextField>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        {[
+          ["manual", tx("Manual", "Manual"), tx("Pick customers one by one", "Pilih pelanggan satu per satu")],
+          ["dynamic", tx("Dynamic", "Dinamis"), tx("Filters, refreshed nightly", "Filter, diperbarui tiap malam")],
+        ].map(([k, l, d]) => (
+          <button key={k} onClick={() => setKind(k)} className={`border p-2.5 text-left ${kind === k ? "border-[var(--lc-lime)] outline outline-2 outline-[var(--lc-lime)]" : "border-[var(--lc-line)]"}`}>
+            <span className="caps block text-[11px]">{l}</span>
+            <span className="block text-[10.5px] text-[var(--lc-muted)]">{d}</span>
+          </button>
+        ))}
+      </div>
+      <label className="mt-4 flex items-start gap-2.5 text-[12.5px]">
+        <input type="checkbox" checked={share} onChange={(e) => setShare(e.target.checked)} className="mt-0.5 h-4 w-4 accent-black" />
+        <span>
+          {tx("Share with store sellers", "Bagikan ke seller boutique")}
+          <span className="block text-[10.5px] text-[var(--lc-muted)]">{tx("Plaza Indonesia team can see this list, within their own RBAC scope", "Tim Plaza Indonesia bisa melihat list ini, sesuai scope RBAC masing-masing")}</span>
+        </span>
+      </label>
+      <button
+        className="mt-4 w-full bg-[var(--lc-olive)] py-3 text-[12px] uppercase tracking-[0.1em] text-white"
+        onClick={() => {
+          setSheet(null);
+          if (kind === "dynamic") nav("list_builder", { shared: share });
+          else {
+            notify(tx("List created, add customers from search", "List dibuat, tambahkan pelanggan dari pencarian"));
+            nav("clients");
+          }
+        }}
+      >
+        {tx("To create", "Buat")}
+      </button>
+    </div>
+  );
+}
+
 export function Lists() {
-  const { tx, back, nav, stack } = useApp();
+  const { tx, back, nav, stack, setSheet } = useApp();
   return (
     <>
       <AppBar title={tx("Customer Lists", "Daftar Pelanggan")} sub={tx("Dynamic lists & Client Book", "Dynamic list & Client Book")} onBack={stack.length > 1 ? back : undefined} />
       <Body>
-        <button onClick={() => nav("list_builder")} className="w-full rounded-2xl bg-[var(--lc-forest)] p-4 text-left text-white">
-          <p className="text-[15px] font-semibold">+ {tx("New dynamic list", "Dynamic list baru")}</p>
-          <p className="text-[12px] text-white/70">{tx("Filter by tier, SA, wishlist, reason, category, area…", "Filter tier, SA, wishlist, alasan, kategori, area…")}</p>
-        </button>
+        <LcButton onClick={() => setSheet(<CreateListSheet />)}>+ {tx("Create a customer list", "Buat daftar pelanggan")}</LcButton>
         <SectionTitle>{tx("Saved lists", "List tersimpan")}</SectionTitle>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col">
           {LISTS.map((l) => (
-            <Tile key={l.list_id} onClick={() => nav("list_detail", { list_id: l.list_id })} className="flex items-center gap-3 p-3">
-              <span className="grid h-10 w-10 place-items-center rounded-xl bg-[var(--lc-lime-soft)] text-[11px] font-bold text-[var(--lc-forest)]">
+            <button key={l.list_id} onClick={() => nav("list_detail", { list_id: l.list_id })} className="flex items-center gap-3 border-b border-[var(--lc-line)] py-3 text-left">
+              <span className="caps grid h-10 w-10 shrink-0 place-items-center bg-black text-[9px] text-white">
                 {{ dynamic: "DYN", client_book: "BOOK", event_guests: "EVT", manual: "MAN" }[l.list_type]}
               </span>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-[14px] font-semibold">{l.name}</p>
-                <p className="text-[11.5px] text-[var(--lc-muted)]">{l.filter}</p>
-              </div>
-              <span className="font-display text-[20px]">{l.member_count}</span>
-            </Tile>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[13.5px] uppercase tracking-[0.04em]">{l.name}</span>
+                <span className="block text-[11px] text-[var(--lc-muted)]">
+                  {l.filter}
+                  {l.shared ? `, ${tx("shared with boutique", "dibagikan ke boutique")}` : ""}
+                </span>
+              </span>
+              <span className="text-[18px]">{l.member_count}</span>
+            </button>
           ))}
         </div>
       </Body>
@@ -533,10 +691,11 @@ export function Lists() {
   );
 }
 
-export function ListBuilder() {
+export function ListBuilder({ shared = true }) {
   const { tx, back, notify } = useApp();
   const [tiers, setTiers] = useState(new Set(["FAN", "FRIEND", "FAMILY"]));
   const [win, setWin] = useState(30);
+  const [sort, setSort] = useState("last_contact");
   return (
     <>
       <AppBar title={tx("New dynamic list", "Dynamic list baru")} onBack={back} />
@@ -582,22 +741,53 @@ export function ListBuilder() {
             </div>
           ))}
         </Tile>
-        <div className="mt-4 rounded-2xl bg-white p-3 text-center">
-          <p className="font-display text-[32px] text-[var(--lc-forest)]">18</p>
+        <SectionTitle>{tx("Sort by", "Urutkan")}</SectionTitle>
+        <div className="flex flex-wrap gap-1.5">
+          {[
+            ["last_contact", tx("Last contact", "Kontak terakhir")],
+            ["last_purchase", tx("Last purchase", "Pembelian terakhir")],
+            ["sales_12m", tx("Sales 12 months", "Sales 12 bulan")],
+            ["name", tx("Name A–Z", "Nama A–Z")],
+          ].map(([k, l]) => (
+            <Pill key={k} active={sort === k} onClick={() => setSort(k)}>
+              {l}
+            </Pill>
+          ))}
+        </div>
+        <p className="mt-3 text-[11.5px]">
+          {shared ? tx("Shared with store sellers", "Dibagikan ke seller boutique") : tx("Private to me", "Hanya untuk saya")}
+        </p>
+        <div className="mt-4 border border-[var(--lc-line)] p-3 text-center">
+          <p className="font-display text-[32px]">18</p>
           <p className="text-[12px] text-[var(--lc-muted)]">{tx("matching clients in your scope", "klien cocok dalam scope Anda")}</p>
         </div>
-        <Button
-          fullWidth
-          className="mt-4 h-12 rounded-xl bg-[var(--lc-forest)] text-white"
-          onPress={() => {
+        <LcButton
+          className="mt-4"
+          onClick={() => {
             notify(tx("List saved", "List tersimpan"));
             back();
           }}
         >
           {tx("Save list", "Simpan list")}
-        </Button>
+        </LcButton>
       </Body>
     </>
+  );
+}
+
+function Attendance() {
+  const { tx, notify } = useApp();
+  const [here, setHere] = useState(false);
+  return (
+    <button
+      onClick={() => {
+        setHere(!here);
+        if (!here) notify(tx("Attendance saved to the client timeline", "Kehadiran tersimpan di timeline klien"));
+      }}
+      className={`caps ml-auto px-2.5 py-1.5 text-[9.5px] ${here ? "bg-[var(--lc-lime)] text-black" : "border border-black"}`}
+    >
+      {here ? tx("Attended", "Hadir") : tx("Mark attended", "Tandai hadir")}
+    </button>
   );
 }
 
@@ -623,31 +813,57 @@ export function ListDetail({ list_id }) {
             ))}
           </div>
         )}
-        <div className="flex flex-col gap-2">
-          {members.map((c, i) => (
-            <Tile key={c.customer_id} onClick={() => nav("client", { customer_id: c.customer_id })} className="flex items-center gap-3 p-3">
-              <Initials name={c.full_name} size={36} />
-              <div className="min-w-0 flex-1">
-                <p className="text-[13.5px] font-semibold">{c.full_name}</p>
+        {l.list_type === "client_book" && (
+          <p className="mb-2 bg-[var(--lc-lime)] px-3 py-1.5 text-[11.5px]">
+            {tx("2 new clients waiting for a welcome message", "2 klien baru menunggu pesan welcome")}
+          </p>
+        )}
+        <div className="flex flex-col">
+          {members.map((c, i) => {
+            const welcome = l.list_type === "client_book" && (c.welcome_status === "pending" || i < 2);
+            const rsvp = ["accepted", "no reply", "accepted", "declined", "invited"][i];
+            return (
+              <div key={c.customer_id} className="border-b border-[var(--lc-line)] py-2.5">
+                <button onClick={() => nav("client", { customer_id: c.customer_id })} className="flex w-full items-center gap-2 text-left">
+                  <span className="min-w-0 flex-1 truncate text-[12.5px] uppercase tracking-[0.05em]">{c.full_name}</span>
+                  <TierBadge tier={c.current_tier_name} small />
+                </button>
                 <p className="text-[11px] text-[var(--lc-muted)]">
-                  {l.list_type === "event_guests" ? ["accepted", "no reply", "accepted", "declined", "invited"][i] : `🎂 ${c.birthdate.slice(5).split("-").reverse().join("/")}`}
+                  {l.list_type === "event_guests"
+                    ? rsvp
+                    : `${tx("Birthday", "Ultah")} ${c.birthdate.slice(5).split("-").reverse().join("/")}${c.days_since_last_contact !== null ? `, ${tx("follow-up", "follow-up")} ${c.days_since_last_contact}${tx("d ago", " hr lalu")}` : `, ${tx("never contacted", "belum pernah dihubungi")}`}`}
                 </p>
+                <div className="mt-1.5 flex items-center gap-1.5">
+                  {[
+                    ["user", () => nav("client", { customer_id: c.customer_id })],
+                    ["call", () => nav("reach_out", { customer_id: c.customer_id, channel: "call" })],
+                    ["sms", () => nav("reach_out", { customer_id: c.customer_id, channel: "sms" })],
+                    ["whatsapp", () => nav("reach_out", { customer_id: c.customer_id, channel: "whatsapp" })],
+                  ].map(([ic, f]) => (
+                    <button key={ic} aria-label={ic} onClick={f} disabled={ic === "whatsapp" && !c.consent_wa} className="grid h-7 w-7 place-items-center border border-black disabled:opacity-25">
+                      <Icon name={ic} size={14} />
+                    </button>
+                  ))}
+                  {welcome && (
+                    <button onClick={() => nav("reach_out", { customer_id: c.customer_id, channel: "whatsapp", motive: "welcome" })} className="caps ml-auto bg-black px-2.5 py-1.5 text-[9.5px] text-white">
+                      {tx("Welcome", "Welcome")}
+                    </button>
+                  )}
+                  {l.list_type === "event_guests" && rsvp === "accepted" && session.role !== "super_admin" && <Attendance />}
+                </div>
               </div>
-              <TierBadge tier={c.current_tier_name} small />
-            </Tile>
-          ))}
+            );
+          })}
         </div>
         {l.list_type === "event_guests" && session.role !== "super_admin" && (
-          <Button fullWidth className="mt-4 h-12 rounded-xl bg-[var(--lc-forest)] text-white">
-            {tx("Send invitation (WA template)", "Kirim undangan (template WA)")}
-          </Button>
+          <LcButton className="mt-4">{tx("Send invitation (WA template)", "Kirim undangan (template WA)")}</LcButton>
         )}
       </Body>
     </>
   );
 }
 
-export function TicketNew({ customer_id }) {
+export function TicketNew({ customer_id, sku }) {
   const { tx, back, notify } = useApp();
   const c = useClient(customer_id);
   const [type, setType] = useState("repair");
@@ -664,7 +880,7 @@ export function TicketNew({ customer_id }) {
           ))}
         </div>
         <div className="mt-4 flex flex-col gap-3">
-          <Field label="SKU" defaultValue="L1899089P59 · Le Pliage Original M" />
+          <Field label="SKU" defaultValue={sku ? `${sku} · ${tx("from catalog", "dari katalog")}` : "L1899089P59 · Le Pliage Original M"} />
           <TextField className="flex flex-col gap-1">
             <Label className="text-[12px] font-medium">{tx("Description", "Deskripsi")}</Label>
             <Input defaultValue="Strap stitching loose, purchased 28/10." className="h-11 rounded-xl border border-[var(--lc-line)] bg-white px-3 text-[14px]" />

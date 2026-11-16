@@ -34,16 +34,16 @@ export const TIER_STYLE = {
   LOVER: { bg: "#e2e2e2", fg: "#000000" },
   COLLECTOR: { bg: "#bdbdbd", fg: "#000000" },
   FAN: { bg: "#000000", fg: "#ffffff" },
-  FRIEND: { bg: "#000000", fg: "#8dc63f" },
-  FAMILY: { bg: "#8dc63f", fg: "#000000" },
+  FRIEND: { bg: "#000000", fg: "#a3e363" },
+  FAMILY: { bg: "#a3e363", fg: "#000000" },
 };
 
 export const CLIENTS = [
   {
-    customer_id: 100245, full_name: "Sari Dewi", phone_e164: "+6281234567890", email: "sari.dewi@mail.com", birthdate: "1990-12-02",
+    customer_id: 100245, odoo_partner_id: 10432, purchase_frequency: "every 2 months", tickets: [{ ticket_id: "TCK-10398", type: "repair", status: "ready for pick-up", sku: "Le Pliage Original M" }], full_name: "Sari Dewi", phone_e164: "+6281234567890", email: "sari.dewi@mail.com", birthdate: "1990-12-02",
     current_tier_name: "FAN", total_spent_idr: 64500000, purchase_count: 7, last_purchase_date: "2026-10-28",
     assigned_user_id: 87, assigned_user_name: "Andi Pratama", boutique_id: 3, consent_wa: true, consent_email: false,
-    last_reach_out_at: "2026-10-02", days_since_last_contact: 45, love_tags: ["le_pliage", "leather", "navy", "gifting"],
+    last_reach_out_at: "2026-10-02", days_since_last_contact: 45, love_tags: ["event", "fashion", "gift", "leather", "trend"],
     client_note: "Prefers navy. Buys gifts for her mother every December.", city: "Jakarta Selatan", is_promoter: true,
     purchases: [
       { receipt_number: "PI-0055231", date: "28 Oct 2026", item: "Le Pliage Original M", amount_net_idr: 4750000, channel: "offline" },
@@ -52,31 +52,31 @@ export const CLIENTS = [
     ],
   },
   {
-    customer_id: 100311, full_name: "Michelle Tan", phone_e164: "+6281399887766", email: "michelle.tan@mail.com", birthdate: "1987-11-24",
+    customer_id: 100311, odoo_partner_id: 10511, purchase_frequency: "monthly", tickets: [], full_name: "Michelle Tan", phone_e164: "+6281399887766", email: "michelle.tan@mail.com", birthdate: "1987-11-24",
     current_tier_name: "FRIEND", total_spent_idr: 128400000, purchase_count: 15, last_purchase_date: "2026-09-12",
     assigned_user_id: 87, assigned_user_name: "Andi Pratama", boutique_id: 3, consent_wa: true, consent_email: true,
-    last_reach_out_at: "2026-11-09", days_since_last_contact: 7, love_tags: ["roseau", "black", "events"],
+    last_reach_out_at: "2026-11-09", days_since_last_contact: 7, love_tags: ["event", "art", "limited"],
     client_note: "Attends every preview event. Plus one: husband.", city: "Jakarta Pusat", is_promoter: false,
     purchases: [{ receipt_number: "PI-0052001", date: "12 Sep 2026", item: "Roseau Box Bag", amount_net_idr: 12500000, channel: "offline" }],
   },
   {
-    customer_id: 100402, full_name: "Ayu Kartika", phone_e164: "+6285611223344", email: null, birthdate: "1995-11-30",
+    customer_id: 100402, odoo_partner_id: 10688, purchase_frequency: "twice a year", tickets: [], full_name: "Ayu Kartika", phone_e164: "+6285611223344", email: null, birthdate: "1995-11-30",
     current_tier_name: "LOVER", total_spent_idr: 8900000, purchase_count: 3, last_purchase_date: "2026-06-03",
     assigned_user_id: 87, assigned_user_name: "Andi Pratama", boutique_id: 3, consent_wa: true, consent_email: false,
-    last_reach_out_at: "2026-07-01", days_since_last_contact: 138, love_tags: ["le_pliage", "colourful"],
+    last_reach_out_at: "2026-07-01", days_since_last_contact: 138, love_tags: ["fashion", "music"],
     client_note: "", city: "Tangerang", is_promoter: false,
     purchases: [{ receipt_number: "PI-0041200", date: "03 Jun 2026", item: "Le Pliage Pouch", amount_net_idr: 1450000, channel: "offline" }],
   },
   {
-    customer_id: 100518, full_name: "Hendra Gunawan", phone_e164: "+6281288776655", email: "hendra.g@mail.com", birthdate: "1979-03-15",
+    customer_id: 100518, odoo_partner_id: 10790, purchase_frequency: "quarterly", tickets: [{ ticket_id: "TCK-10311", type: "exchange", status: "closed", sku: "Boxford Travel Bag" }], full_name: "Hendra Gunawan", phone_e164: "+6281288776655", email: "hendra.g@mail.com", birthdate: "1979-03-15",
     current_tier_name: "COLLECTOR", total_spent_idr: 27800000, purchase_count: 5, last_purchase_date: "2026-10-03",
     assigned_user_id: 91, assigned_user_name: "Maya Lestari", boutique_id: 3, consent_wa: false, consent_email: true,
-    last_reach_out_at: null, days_since_last_contact: null, love_tags: ["leather", "travel"],
+    last_reach_out_at: null, days_since_last_contact: null, love_tags: ["leather", "travel", "sport"],
     client_note: "Travel bags for business trips.", city: "Jakarta Barat", is_promoter: false,
     purchases: [{ receipt_number: "PI-0053120", date: "03 Oct 2026", item: "Boxford Travel Bag", amount_net_idr: 7800000, channel: "offline" }],
   },
   {
-    customer_id: 100620, full_name: "Nadia Putri", phone_e164: "+6287877665544", email: "nadia.p@mail.com", birthdate: "2000-12-10",
+    customer_id: 100620, odoo_partner_id: 11020, purchase_frequency: "new client", tickets: [], welcome_status: "welcome_pending", full_name: "Nadia Putri", phone_e164: "+6287877665544", email: "nadia.p@mail.com", birthdate: "2000-12-10",
     current_tier_name: "LIKER", total_spent_idr: 2450000, purchase_count: 1, last_purchase_date: "2026-11-15",
     assigned_user_id: null, assigned_user_name: null, boutique_id: 3, consent_wa: true, consent_email: true,
     last_reach_out_at: null, days_since_last_contact: null, love_tags: [],
@@ -84,23 +84,21 @@ export const CLIENTS = [
     purchases: [{ receipt_number: "PI-0055410", date: "15 Nov 2026", item: "Le Pliage Original S", amount_net_idr: 2450000, channel: "offline" }],
   },
   {
-    customer_id: 100733, full_name: "Laura Siregar", phone_e164: "+6281122334455", email: "laura.s@mail.com", birthdate: "1984-11-19",
+    customer_id: 100733, odoo_partner_id: 9001, purchase_frequency: "monthly", tickets: [], full_name: "Laura Siregar", phone_e164: "+6281122334455", email: "laura.s@mail.com", birthdate: "1984-11-19",
     current_tier_name: "FAMILY", total_spent_idr: 412000000, purchase_count: 38, last_purchase_date: "2026-11-01",
     assigned_user_id: 120, assigned_user_name: "Kevin Lim", boutique_id: 5, consent_wa: true, consent_email: true,
-    last_reach_out_at: "2026-11-02", days_since_last_contact: 14, love_tags: ["roseau", "personalisation", "events"],
+    last_reach_out_at: "2026-11-02", days_since_last_contact: 14, love_tags: ["custom", "event", "art"],
     client_note: "Top client Grand Indonesia.", city: "Jakarta Pusat", is_promoter: true,
     purchases: [{ receipt_number: "GI-0031020", date: "01 Nov 2026", item: "Roseau Essential Tote", amount_net_idr: 14200000, channel: "offline" }],
   },
 ];
 
-export const LOVE_TAGS = {
-  line: ["le_pliage", "roseau", "le_foulonne", "box_trot", "epure"],
-  material: ["leather", "nylon", "canvas"],
-  colour: ["navy", "black", "colourful", "neutral"],
-  style: ["classic", "travel", "work"],
-  gifting: ["gifting", "personalisation"],
-  experience: ["events", "after_sales"],
-};
+/* The Love Tags page of the deck — 18 emotional interests */
+export const LOVE_TAGS = [
+  "animal", "art", "beauty", "book", "collab", "custom", "event", "fashion", "food",
+  "gift", "green", "leather", "limited", "music", "ready_to_wear", "sport", "travel", "trend",
+];
+export const loveLabel = (t) => `${t.replace(/_/g, " ")} lover`;
 
 export const PUSHES = [
   { push_id: 6120, push_type: "high_value_upgrade", customer_id: 100245, due_date: "2026-11-23", status: "sent", assigned_user_id: 87, detail: "LOVER → FAN" },
@@ -126,10 +124,10 @@ export const AGENDA = [
 ];
 
 export const LISTS = [
-  { list_id: 501, name: "November birthdays — FAN+", list_type: "dynamic", member_count: 18, filter: "Tier ≥ FAN · birthday ≤ 30 days" },
+  { list_id: 501, name: "November birthdays — FAN+", list_type: "dynamic", member_count: 18, filter: "Tier ≥ FAN, birthday ≤ 30 days", shared: true, sort_by: "last_contact" },
   { list_id: 503, name: "Not contacted 90+ days", list_type: "dynamic", member_count: 41, filter: "last_reach_out_at > 90 days" },
   { list_id: 510, name: "My Client Book", list_type: "client_book", member_count: 142, filter: "Manual" },
-  { list_id: 502, name: "Le Pliage Re-Play Preview", list_type: "event_guests", member_count: 26, filter: "Event · 5 Dec 2026" },
+  { list_id: 502, name: "Le Pliage Re-Play Preview", list_type: "event_guests", member_count: 26, filter: "Event, 5 Dec 2026", shared: true },
 ];
 
 export const PRODUCTS = [
@@ -141,11 +139,20 @@ export const PRODUCTS = [
   { sku: "L3418HPN", product_name: "Le Pliage Pouch", collection: "Le Pliage", price_idr: 1450000, color: "#8dc63f", stock: { 3: 9, 4: 6, 5: 4, 6: 5, 7: 3 } },
 ];
 
+/* Saved wishlist per client (Wishlist board). status: saved → sent → purchased */
+export const CLIENT_WISHLIST = {
+  100245: [
+    { sku: "L10165HFP", status: "sent", added_at: "2026-10-20", sent_at: "2026-10-20", delivery: "read", added_by: "Andi Pratama", source: "catalog" },
+    { sku: "L1899089P59", status: "saved", added_at: "2026-11-12", added_by: "Andi Pratama", source: "scan" },
+  ],
+  100311: [{ sku: "L2605HPN", status: "purchased", added_at: "2026-09-02", sent_at: "2026-09-02", delivery: "read", added_by: "Andi Pratama", source: "catalog" }],
+};
+
 export const TEMPLATES = [
-  { template_id: 14, code: "vip_upgrade_thanks", title: "Thank you — new tier", moment: "upgrade", wa_template_name: "lc_vip_upgrade_id",
+  { template_id: 14, icon: "⭐", body_en: "Hello {{first_name}}, thank you for being part of Longchamp. You are now {{tier}}. I'm {{sa_name}} from {{boutique_name}}.", code: "vip_upgrade_thanks", title: "Thank you — new tier", moment: "upgrade", wa_template_name: "lc_vip_upgrade_id",
     scope: "global", boutique_id: null, created_by: "Dimas Hartono", wa_category: "marketing", language: "id", meta_status: "approved",
     body: "Halo {{first_name}}, terima kasih telah menjadi bagian dari Longchamp. Kini Anda berada di tier {{tier}}. Saya {{sa_name}} dari {{boutique_name}} siap membantu." },
-  { template_id: 9, code: "birthday_greeting", title: "Birthday greeting", moment: "birthday", wa_template_name: "lc_birthday_id",
+  { template_id: 9, icon: "🎂", body_en: "Happy birthday, {{first_name}}! Warm wishes from {{sa_name}} and the {{boutique_name}} team.", code: "birthday_greeting", title: "Birthday: in advance", moment: "birthday", wa_template_name: "lc_birthday_id",
     scope: "global", boutique_id: null, created_by: "Dimas Hartono", wa_category: "marketing", language: "id", meta_status: "approved",
     body: "Selamat ulang tahun, {{first_name}}! Semoga hari Anda menyenangkan. Salam hangat dari {{sa_name}} dan tim {{boutique_name}}." },
   { template_id: 21, code: "event_invite", title: "Event invitation — Re-Play preview", moment: "event", wa_template_name: "lc_pi_event_replay_id",
@@ -161,6 +168,33 @@ export const TEMPLATES = [
   { template_id: 40, code: "gi_welcome", title: "Welcome — Grand Indonesia", moment: "new_client", wa_template_name: "lc_gi_welcome_id",
     scope: "boutique", boutique_id: 5, created_by: "Sinta Halim", wa_category: "marketing", language: "id", meta_status: "approved",
     body: "Halo {{first_name}}, terima kasih telah berkunjung ke {{boutique_name}}." },
+  { template_id: 50, code: "after_sales_pickup", title: "After-sales pick-up", moment: "after_sales", wa_template_name: "lc_after_sales_pickup_id", icon: "✔",
+    scope: "global", boutique_id: null, created_by: "Dimas Hartono", wa_category: "utility", language: "id", meta_status: "approved",
+    body: "Halo {{first_name}}, produk Anda sudah siap diambil di {{boutique_name}}. Sampai jumpa!", body_en: "Hello {{first_name}}, your item is ready for pick-up at {{boutique_name}}. See you soon!" },
+  { template_id: 51, code: "birthday_dday", title: "Birthday: D-day", moment: "birthday", wa_template_name: "lc_birthday_dday_id", icon: "🎂",
+    scope: "global", boutique_id: null, created_by: "Dimas Hartono", wa_category: "marketing", language: "id", meta_status: "approved",
+    body: "Selamat ulang tahun hari ini, {{first_name}}! Salam hangat dari {{sa_name}}.", body_en: "Happy birthday today, {{first_name}}! Warm wishes from {{sa_name}}." },
+  { template_id: 52, code: "welcome_new_client", title: "Welcome: new clients", moment: "new_client", wa_template_name: "lc_welcome_new_id", icon: "👋",
+    scope: "global", boutique_id: null, created_by: "Dimas Hartono", wa_category: "marketing", language: "id", meta_status: "approved",
+    body: "Halo {{first_name}}, terima kasih atas kunjungan pertama Anda ke {{boutique_name}}. Saya {{sa_name}}, siap membantu kapan pun.", body_en: "Hello {{first_name}}, thank you for your first visit to {{boutique_name}}. I'm {{sa_name}}, here whenever you need me." },
+  { template_id: 53, code: "welcome_back", title: "Welcome back: returning clients", moment: "general", wa_template_name: "lc_welcome_back_id", icon: "🤗",
+    scope: "global", boutique_id: null, created_by: "Dimas Hartono", wa_category: "marketing", language: "id", meta_status: "approved",
+    body: "Halo {{first_name}}, senang Anda kembali ke {{boutique_name}}.", body_en: "Hello {{first_name}}, lovely to see you back at {{boutique_name}}." },
+  { template_id: 54, code: "wishlist_reminder", title: "Wishlist: reminder", moment: "wishlist", wa_template_name: "lc_wishlist_reminder_id", icon: "💌",
+    scope: "global", boutique_id: null, created_by: "Dimas Hartono", wa_category: "marketing", language: "id", meta_status: "approved",
+    body: "Halo {{first_name}}, pilihan wishlist Anda masih tersedia di {{boutique_name}}.", body_en: "Hello {{first_name}}, your wishlist pieces are still available at {{boutique_name}}." },
+  { template_id: 55, code: "thank_you_post_purchase", title: "Thank you: post-purchase", moment: "general", wa_template_name: "lc_thank_you_id", icon: "💚",
+    scope: "global", boutique_id: null, created_by: "Dimas Hartono", wa_category: "utility", language: "id", meta_status: "approved",
+    body: "Terima kasih atas pembelian Anda, {{first_name}}. Semoga Anda menyukainya!", body_en: "Thank you for your purchase, {{first_name}}. We hope you love it!" },
+  { template_id: 56, code: "private_appointment", title: "Private appointment", moment: "general", wa_template_name: "lc_private_appt_id", icon: "📅",
+    scope: "global", boutique_id: null, created_by: "Dimas Hartono", wa_category: "marketing", language: "id", meta_status: "approved",
+    body: "Halo {{first_name}}, apakah Anda ingin sesi pribadi di {{boutique_name}} minggu ini?", body_en: "Hello {{first_name}}, would you like a private session at {{boutique_name}} this week?" },
+  { template_id: 57, code: "ramadan_invitation", title: "Ramadan: boutique invitation", moment: "event", wa_template_name: "lc_ramadan_invite_id", icon: "🌙",
+    scope: "global", boutique_id: null, created_by: "Dimas Hartono", wa_category: "marketing", language: "id", meta_status: "approved",
+    body: "Halo {{first_name}}, kami mengundang Anda ke koleksi hantaran Ramadan di {{boutique_name}}.", body_en: "Hello {{first_name}}, join us for the Ramadan gifting selection at {{boutique_name}}." },
+  { template_id: 58, code: "leather_novelties", title: "Leather novelties", moment: "general", wa_template_name: "lc_leather_novelties_id", icon: "👜",
+    scope: "global", boutique_id: null, created_by: "Dimas Hartono", wa_category: "marketing", language: "id", meta_status: "approved",
+    body: "Halo {{first_name}}, koleksi kulit terbaru sudah tiba di {{boutique_name}}.", body_en: "Hello {{first_name}}, the new leather pieces have arrived at {{boutique_name}}." },
   { template_id: 30, code: "wishlist_share", title: "Wishlist selection", moment: "wishlist", wa_template_name: null,
     scope: "global", boutique_id: null, created_by: "Dimas Hartono", wa_category: null, language: "id", meta_status: "session",
     body: "Halo {{first_name}}, berikut pilihan dari saya untuk Anda: {{links}}" },
@@ -183,11 +217,14 @@ export const KPI = {
   super_admin: { actions: 812, actions_per_pos_day: 5.4, conversion_rate: 7, sales_idr: 742000000, avg_conversion_days: 8.0, vs_last_month_pts: -3 },
 };
 
+export const WISHLIST_KPI = { sent: 84, conversion_rate: 16, vs_lm_pts: -8, sales_idr: 54800000, vs_lm_pct: -26, avg_conversion_days: 6 };
+export const PUSH_KPI = { sent: 30, executed: 26, cancelled: 2, treated: 87, vs_lm_pts: 3, non_treated: 13, cancelled_pct: 7 };
+
 export const BY_CHANNEL = [
-  { channel: "WhatsApp", share: 58, conversion_rate: 9 },
-  { channel: "Call", share: 22, conversion_rate: 7 },
-  { channel: "SMS", share: 8, conversion_rate: 3 },
-  { channel: "Email", share: 12, conversion_rate: 2 },
+  { channel: "WhatsApp", share: 58, conversion_rate: 9, sales_idr: 28100000 },
+  { channel: "Phone call", share: 22, conversion_rate: 7, sales_idr: 12400000 },
+  { channel: "SMS", share: 8, conversion_rate: 3, sales_idr: 2100000 },
+  { channel: "E-mail", share: 12, conversion_rate: 2, sales_idr: 5900000 },
 ];
 
 export const BY_BOUTIQUE = [
@@ -200,6 +237,6 @@ export const BY_BOUTIQUE = [
 
 export const REACH_REASONS = ["push", "wishlist", "birthday", "clienteling_kit", "services_appointment", "event_invite", "new_client_welcome", "after_sales", "other"];
 
-export const idr = (n) => "IDR " + Math.round(n).toLocaleString("id-ID");
-export const idrShort = (n) => (n >= 1e9 ? `IDR ${(n / 1e9).toFixed(1)} M` : n >= 1e6 ? `IDR ${(n / 1e6).toFixed(1)} jt` : idr(n));
+export const idr = (n) => "Rp " + Math.round(n).toLocaleString("id-ID");
+export const idrShort = (n) => (n >= 1e9 ? `Rp ${(n / 1e9).toFixed(1)} M` : n >= 1e6 ? `Rp ${(n / 1e6).toFixed(1)} jt` : idr(n));
 export const tag = (t) => t.replace(/_/g, " ");

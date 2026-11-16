@@ -12,7 +12,7 @@
 const model = {
   meta: {
     title: { en: "Longchamp Clienteling Mobile App", id: "Aplikasi Mobile Clienteling Longchamp" },
-    version: "0.2",
+    version: "0.3",
     date: "2026-11-16",
   },
 
@@ -167,8 +167,8 @@ const model = {
       id: "UC-06", module: "lists", actors: ["sa"],
       name: { en: "Build dynamic list", id: "Buat dynamic list" },
       desc: {
-        en: "Filters: segment tier, assigned SA, wishlist sent, reach-out reason, product category, promoter, geographic area.",
-        id: "Filter: tier segmen, SA yang ditugaskan, wishlist terkirim, alasan reach-out, kategori produk, promoter, area geografis.",
+        en: "Create a list manually (pick customers) or dynamically (filters: segment tier, assigned SA, wishlist sent, reach-out reason, product category, promoter, geographic area, love tags) and sort it (last contact, last purchase, 12-month sales, name).",
+        id: "Buat list manual (pilih pelanggan) atau dinamis (filter: tier segmen, SA, wishlist terkirim, alasan reach-out, kategori produk, promoter, area, love tags) dan urutkan (kontak terakhir, pembelian terakhir, sales 12 bulan, nama).",
       },
       rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
@@ -277,8 +277,8 @@ const model = {
       id: "UC-14", module: "actions", actors: ["sa"],
       name: { en: "Manage Agenda", id: "Kelola Agenda" },
       desc: {
-        en: "Tasks (call, follow-up) and appointments (one-to-one, personalisation, fitting).",
-        id: "Task (telepon, follow-up) dan appointment (one-to-one, personalisasi, fitting).",
+        en: "Tasks (call, follow-up) and appointments (one-to-one, personalisation, fitting) with To do / Late counters, free time slots, and a boutique selector for Supervisor and Super Admin.",
+        id: "Task (telepon, follow-up) dan appointment (one-to-one, personalisasi, fitting) dengan penghitung Belum / Terlambat, slot waktu kosong, dan pemilih boutique untuk Supervisor dan Super Admin.",
       },
       rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
@@ -318,8 +318,8 @@ const model = {
       id: "UC-17", module: "catalog", actors: [],
       name: { en: "Create & send wishlist", id: "Buat & kirim wishlist" },
       desc: {
-        en: "Pick products for a client and send them via WhatsApp; tracked for conversion.",
-        id: "Pilih produk untuk klien lalu kirim via WhatsApp; dilacak konversinya.",
+        en: "Send the saved wishlist items of a client via WhatsApp (items move from Saved to Sent); tracked for conversion within 30 days.",
+        id: "Kirim item wishlist klien yang tersimpan via WhatsApp (item berpindah dari Tersimpan ke Terkirim); konversi dilacak 30 hari.",
       },
       rbac: { sa: "own", sm: "boutique", hq: "none" },
       sources: [
@@ -346,8 +346,8 @@ const model = {
       id: "UC-19", module: "perf", actors: ["sa", "sm", "hq"],
       name: { en: "View performance KPI", id: "Lihat KPI performa" },
       desc: {
-        en: "Actions, actions/POS/day, conversion rate, sales, avg conversion days — by channel and reason. SA sees own, SM boutique, Admin country.",
-        id: "Actions, actions/POS/hari, conversion rate, sales, rata-rata hari konversi — per channel dan alasan. SA lihat miliknya, SM boutique, Admin negara.",
+        en: "Actions, actions/POS/day, conversion rate, sales, avg conversion days — by channel (incl. sales per channel) and reason, plus a Wishlist block (sent, conversion, sales) and Push completion (executed, cancelled, treated). SA sees own, SM boutique, Admin country.",
+        id: "Actions, actions/POS/hari, conversion rate, sales, rata-rata hari konversi — per channel (termasuk sales per channel) dan alasan, plus blok Wishlist (terkirim, konversi, sales) dan Penyelesaian push (dieksekusi, dibatalkan, ditangani). SA lihat miliknya, SM boutique, Admin negara.",
       },
       rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
@@ -382,6 +382,71 @@ const model = {
         { sys: "n8n", type: "Scheduler", dir: "read", ref: "Poll template status every 15 min → Template Library board", status: "internal" },
         { sys: "cekatApi", type: "API", dir: "write", ref: "Board API — Template Library item (scope, owner, status)", status: "available", verify: true },
         { sys: "cekatNew", type: "API", dir: "write", ref: "RBAC: Supervisor may create for own boutique only", status: "product", cp: "CP-02" },
+      ],
+    },
+
+    {
+      id: "UC-24", module: "catalog", actors: [],
+      name: { en: "Scan product barcode", id: "Pindai barcode produk" },
+      desc: {
+        en: "Scan the label with the phone camera to open the product sheet (price, variants, stock).",
+        id: "Pindai label dengan kamera HP untuk membuka detail produk (harga, varian, stok).",
+      },
+      rbac: { sa: "use", sm: "use", hq: "none" },
+      sources: [
+        { sys: "shopify", type: "API", dir: "read", ref: "Variant lookup by barcode (GraphQL productVariants query: barcode)", status: "available" },
+      ],
+    },
+    {
+      id: "UC-28", module: "catalog", actors: ["sa"],
+      name: { en: "Manage client wishlist", id: "Kelola wishlist klien" },
+      desc: {
+        en: "Pick a customer (search, profile, or the connected client), save products to that customer's wishlist from the catalog, product page or barcode scan, remove items, and send the unsent ones later. Status per item: Saved, Sent, Purchased.",
+        id: "Pilih pelanggan (cari, profil, atau klien terhubung), simpan produk ke wishlist pelanggan itu dari katalog, halaman produk, atau pindai barcode, hapus item, lalu kirim yang belum terkirim. Status per item: Tersimpan, Terkirim, Dibeli.",
+      },
+      rbac: { sa: "own", sm: "boutique", hq: "all" },
+      sources: [
+        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/crm/boards/{wishlistBoardId}/items (filter customer_id)", status: "available" },
+        { sys: "cekatApi", type: "API", dir: "write", ref: "Board API — create item status=saved / delete item", status: "available", verify: true },
+        { sys: "cekatNew", type: "API", dir: "read", ref: "Server-side filter on items by customer_id", status: "product", cp: "CP-04" },
+        { sys: "cekatNew", type: "API", dir: "write", ref: "RBAC: only clients in the user's scope (403 otherwise)", status: "product", cp: "CP-02" },
+      ],
+    },
+    {
+      id: "UC-25", module: "search", actors: [],
+      name: { en: "Connect / disconnect client", id: "Hubungkan / putuskan klien" },
+      desc: {
+        en: "Opening a profile connects the client to the session: catalog, wishlist and tickets are pre-filled for that client until 'Disconnect customer'.",
+        id: "Membuka profil menghubungkan klien ke sesi: katalog, wishlist, dan tiket otomatis untuk klien itu sampai 'Disconnect customer'.",
+      },
+      rbac: { sa: "own", sm: "boutique", hq: "none" },
+      sources: [
+        { sys: "n8n", type: "Workflow", dir: "read", ref: "App session state only — no backend call", status: "internal" },
+      ],
+    },
+    {
+      id: "UC-26", module: "lists", actors: [],
+      name: { en: "Share list with boutique team", id: "Bagikan list ke tim boutique" },
+      desc: {
+        en: "'Share with store sellers': the list is visible to the boutique team; each seller still only sees the clients in their own RBAC scope.",
+        id: "'Share with store sellers': list terlihat oleh tim boutique; tiap seller tetap hanya melihat klien dalam scope RBAC-nya.",
+      },
+      rbac: { sa: "own", sm: "boutique", hq: "all" },
+      sources: [
+        { sys: "cekatApi", type: "API", dir: "write", ref: "Board API — Lists item: shared_with_boutique, boutique_id", status: "available", verify: true },
+        { sys: "cekatNew", type: "API", dir: "read", ref: "RBAC applied to list members (CP-02)", status: "product", cp: "CP-02" },
+      ],
+    },
+    {
+      id: "UC-27", module: "search", actors: [],
+      name: { en: "View after-sales cases", id: "Lihat kasus after-sales" },
+      desc: {
+        en: "Client profile shows open and closed after-sales / repair tickets with status.",
+        id: "Profil klien menampilkan tiket after-sales / perbaikan yang terbuka dan selesai beserta statusnya.",
+      },
+      rbac: { sa: "own", sm: "boutique", hq: "all" },
+      sources: [
+        { sys: "cekatChat", type: "API", dir: "read", ref: "Tickets API — list tickets by contact", status: "available", verify: true },
       ],
     },
 
@@ -424,7 +489,13 @@ const model = {
     { from: "UC-11", to: "UC-12", type: "include" },
     { from: "UC-13", to: "UC-11", type: "extend" },
     { from: "UC-16", to: "UC-15", type: "extend" },
-    { from: "UC-17", to: "UC-15", type: "extend" },
+    { from: "UC-28", to: "UC-15", type: "extend" },
+    { from: "UC-17", to: "UC-28", type: "include" },
+    { from: "UC-28", to: "UC-02", type: "extend" },
+    { from: "UC-24", to: "UC-15", type: "extend" },
+    { from: "UC-26", to: "UC-06", type: "extend" },
+    { from: "UC-27", to: "UC-02", type: "extend" },
+    { from: "UC-25", to: "UC-02", type: "extend" },
   ],
 
   notes: [

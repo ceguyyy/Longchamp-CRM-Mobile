@@ -21,7 +21,8 @@ npm run build    # static build in dist/ (relative paths, works on GitHub Pages)
 | Solution architecture (Cekat CRM as database) | ✅ v0.2 |
 | ERD + field-level data dictionary (CSV export, JSON samples) | ✅ v0.2 |
 | Sequence diagrams (6 flows, request/response variables, endpoint inventory) | ✅ v0.2 |
-| App mockup (HeroUI) — login, account activation, 3 roles, prototype + gallery | ✅ v0.2 |
+| App mockup (HeroUI) — login, account activation, 3 roles, prototype + gallery; longchamp.co.id look, bottom tab bar | ✅ v0.3 |
+| PDF coverage — every deck capability → mockup screen + UC / AD / SD, plus RACI | ✅ |
 
 ### Roles
 
@@ -75,5 +76,6 @@ src/
   components/DataSourceMatrix.jsx  HeroUI Table
   pages/UseCasePage.jsx
   mockup/                       HeroUI app mockup (data, screens, MockApp shell)
+  data/coverage.js              PDF capability coverage + RACI
   i18n.js                       EN / ID strings
 ```
