@@ -4,14 +4,15 @@ import { Chip, ToggleButton, ToggleButtonGroup } from "@heroui/react";
 import UseCasePage from "./pages/UseCasePage";
 import ActivityPage from "./pages/ActivityPage";
 import ArchitecturePage from "./pages/ArchitecturePage";
+import ErdPage from "./pages/ErdPage";
 import { T } from "./i18n";
 
 const NAV = [
   { key: "usecase", to: "/use-case", ready: true },
   { key: "activity", to: "/activity", ready: true },
   { key: "architecture", to: "/architecture", ready: true },
+  { key: "erd", to: "/erd", ready: true },
   { key: "sequence", to: "/sequence" },
-  { key: "erd", to: "/erd" },
   { key: "mockup", to: "/mockup" },
 ];
 
@@ -98,6 +99,7 @@ export default function App() {
         <Header lang={lang} setLang={changeLang} t={t} />
         <Routes>
           <Route path="/use-case" element={<UseCasePage lang={lang} t={t} />} />
+          <Route path="/erd" element={<ErdPage lang={lang} t={t} />} />
           <Route path="/architecture" element={<ArchitecturePage lang={lang} t={t} />} />
           <Route path="/activity" element={<ActivityPage lang={lang} t={t} />} />
           <Route path="*" element={<Navigate to="/use-case" replace />} />

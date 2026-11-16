@@ -19,8 +19,8 @@ npm run build    # static build in dist/ (relative paths, works on GitHub Pages)
 | Use Case diagram + RBAC matrix + Cekat Product backlog | ✅ v0.2 |
 | Activity diagrams (5 flows, swimlanes per implementor) | ✅ v0.2 |
 | Solution architecture (Cekat CRM as database) | ✅ v0.2 |
+| ERD + field-level data dictionary (CSV export, JSON samples) | ✅ v0.2 |
 | Sequence diagram | planned |
-| ERD | planned |
 | App mockup (HeroUI) | planned |
 
 ### Implementors (Cekat side)
@@ -57,6 +57,7 @@ src/
   data/activities.js            activity diagrams (lanes, nodes, edges)
   data/architecture.js          architecture components, interfaces, data ownership
   data/cekatProduct.js          implementors + Cekat Product backlog
+  data/erd.js                   entities → Cekat Contacts / Boards / Tickets, every field
   components/diagram/layout.js  coordinates for nodes & edges
   components/diagram/UseCaseSvg.jsx
   components/DetailPanel.jsx    HeroUI Card / Chip

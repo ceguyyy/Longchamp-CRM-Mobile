@@ -117,7 +117,7 @@ const model = {
       },
       rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/crm/boards/{goldenRecordBoardId}/items", status: "available" },
+        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/contacts (Golden Record fields)", status: "available" },
         { sys: "cekatWh", type: "Webhook", dir: "in", ref: "Event: Contact updated → n8n", status: "available",
           note: "Event is listed; payload fields are not documented yet.", verify: true },
       ],
@@ -146,7 +146,7 @@ const model = {
       },
       rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "write", ref: "Board API — update Golden Record item (Love Tags, comment)", status: "available", verify: true },
+        { sys: "cekatApi", type: "API", dir: "write", ref: "Contact API — update Golden Record fields + Love Tags board", status: "available", verify: true },
       ],
     },
     {
@@ -173,7 +173,7 @@ const model = {
       },
       rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/crm/boards/{goldenRecordBoardId}/items", status: "available" },
+        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/contacts (Golden Record fields)", status: "available" },
         { sys: "n8n", type: "Workflow", dir: "read", ref: "Interim: filter in BFF after paging items", status: "internal" },
         { sys: "cekatNew", type: "API", dir: "read", ref: "Server-side filter & search on items", status: "product", cp: "CP-04" },
       ],
@@ -187,7 +187,7 @@ const model = {
       },
       rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "read", ref: "Golden Record items, filter birth_date", status: "available" },
+        { sys: "cekatApi", type: "API", dir: "read", ref: "Contacts, filter birthdate", status: "available" },
         { sys: "cekatNew", type: "API", dir: "read", ref: "Date-range filter (birthday window)", status: "product", cp: "CP-04" },
       ],
     },
@@ -243,10 +243,10 @@ const model = {
       },
       rbac: { sa: "own", sm: "boutique", hq: "none" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "read", ref: "last_contacted_at on Golden Record", status: "available" },
+        { sys: "cekatApi", type: "API", dir: "read", ref: "last_reach_out_at on contact (Golden Record)", status: "available" },
         { sys: "cekatChat", type: "API", dir: "write", ref: "Message API — send session / template message to inbox_id", status: "available", verify: true,
           note: "inbox_id from GET /api/inboxes." },
-        { sys: "cekatWh", type: "Webhook", dir: "in", ref: "Message Sent · Message Received → n8n updates last_contacted_at", status: "available" },
+        { sys: "cekatWh", type: "Webhook", dir: "in", ref: "Message Sent · Message Received → n8n updates last_reach_out_at", status: "available" },
       ],
     },
     {
