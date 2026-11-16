@@ -1,6 +1,6 @@
 export const T = {
   en: {
-    nav: { usecase: "Use Case", activity: "Activity", architecture: "Architecture", sequence: "Sequence", dataflow: "Data Flow", erd: "ERD", mockup: "App Mockup", coverage: "PDF Coverage" },
+    nav: { usecase: "Use Case", activity: "Activity", architecture: "Architecture", sequence: "Sequence", dataflow: "Data Flow", erd: "ERD", mockup: "App Mockup", api: "API & TOR", coverage: "PDF Coverage" },
     cov: {
       title: "PDF coverage",
       subtitle: "Every capability in the Longchamp APAC CX deck (Belong app), mapped to the mockup screen and the use case, activity and sequence diagrams that carry it. Click a screen to open it in the prototype.",
@@ -141,7 +141,7 @@ export const T = {
     },
   },
   id: {
-    nav: { usecase: "Use Case", activity: "Activity", architecture: "Architecture", sequence: "Sequence", dataflow: "Data Flow", erd: "ERD", mockup: "Mockup App", coverage: "Cakupan PDF" },
+    nav: { usecase: "Use Case", activity: "Activity", architecture: "Architecture", sequence: "Sequence", dataflow: "Data Flow", erd: "ERD", mockup: "Mockup App", api: "API & TOR", coverage: "Cakupan PDF" },
     cov: {
       title: "Cakupan PDF",
       subtitle: "Setiap kapabilitas di deck Longchamp APAC CX (app Belong), dipetakan ke layar mockup serta diagram use case, activity, dan sequence yang memuatnya. Klik layar untuk membukanya di prototipe.",

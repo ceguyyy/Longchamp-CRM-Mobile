@@ -22,6 +22,7 @@ npm run build    # static build in dist/ (relative paths, works on GitHub Pages)
 | ERD + field-level data dictionary (CSV export, JSON samples) | ✅ v0.2 |
 | Sequence diagrams (6 flows, request/response variables, endpoint inventory) | ✅ v0.2 |
 | App mockup (HeroUI) — login, account activation, 3 roles, prototype + gallery; longchamp.co.id look, bottom tab bar | ✅ v0.3 |
+| API & TOR — tech stack, components per party (Vendor / Cekat IT Delivery / Cekat Product), 55 endpoints with logic, variables, filters, responses; webhooks & n8n jobs | ✅ |
 | PDF coverage — every deck capability → mockup screen + UC / AD / SD, plus RACI | ✅ |
 
 ### Roles
@@ -77,5 +78,7 @@ src/
   pages/UseCasePage.jsx
   mockup/                       HeroUI app mockup (data, screens, MockApp shell)
   data/coverage.js              PDF capability coverage + RACI
+  data/apiSpec.js               Clienteling API spec (Go) — endpoints, conventions, webhooks, jobs
+  data/components.js            Components per party + tech stack
   i18n.js                       EN / ID strings
 ```
