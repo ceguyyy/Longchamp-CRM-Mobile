@@ -1,4 +1,4 @@
-# Graph Report - longchamp-crm-mobile  (2026-11-17)
+# Graph Report - Longchamp-CRM-Mobile  (2026-11-17)
 
 ## Corpus Check
 - 49 files · ~65,124 words
@@ -17,10 +17,10 @@
 
 ## Community Hubs (Navigation)
 - UseCasePage.jsx
-- App.jsx
-- core.jsx
-- ApiPage.jsx
+- package.json
 - Work.jsx
+- ApiPage.jsx
+- screens.js
 - ErdPage.jsx
 - Clients.jsx
 - Icon
@@ -41,8 +41,8 @@
 1. `useApp()` - 56 edges
 2. `AppBar()` - 34 edges
 3. `Body()` - 30 edges
-4. `@heroui/react` - 22 edges
-5. `react` - 22 edges
+4. `@heroui/react` - 21 edges
+5. `react` - 21 edges
 6. `Icon()` - 20 edges
 7. `OwnerChip()` - 18 edges
 8. `SectionTitle()` - 18 edges
@@ -139,6 +139,8 @@ Cohesion: 0.33
 Nodes (10): BagArt(), idr(), addToClientWishlist(), Catalog(), ClientWishlist(), ConnectedChip(), PickClientSheet(), Product() (+2 more)
 
 ## Knowledge Gaps
+- **75 isolated node(s):** `name`, `private`, `version`, `type`, `dev` (+70 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 88 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
 - **2 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
