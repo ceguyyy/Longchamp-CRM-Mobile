@@ -45,7 +45,7 @@ export default function DataSourceMatrix({ model, lang, t, onSelect }) {
                   <code className="text-[12px]">{src.ref}</code>
                 </Table.Cell>
                 <Table.Cell>
-                  <StatusChip status={src.status} t={t} />
+                  <StatusChip src={src} t={t} />
                 </Table.Cell>
               </Table.Row>
             ))}

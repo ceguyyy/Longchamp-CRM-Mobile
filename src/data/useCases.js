@@ -1,51 +1,86 @@
 /*
  * Longchamp Clienteling Mobile App — Use Case model
- * Single source of truth for the use case diagram, the detail panel
- * and the data source matrix.
+ * Single source of truth for the use case diagram, detail panel,
+ * data source matrix and RBAC matrix.
  *
- * status:
- *   "confirmed" — endpoint / event is listed in Cekat docs (or standard Shopify/Odoo)
- *   "confirm"   — capability exists but exact path/payload must be confirmed with Cekat
- *   "internal"  — designed inside this project (n8n workflow, app-side logic)
+ * source.status:  available | internal | product   (see src/data/cekatProduct.js)
+ * source.verify:  true → section exists in the Cekat API docs, exact path/payload to verify
+ * source.cp:      Cekat Product backlog id when status = product
+ *
+ * rbac scope per role:  own | boutique | all | use | manage | none
  */
 const model = {
   meta: {
     title: { en: "Longchamp Clienteling Mobile App", id: "Aplikasi Mobile Clienteling Longchamp" },
-    subtitle: {
-      en: "Use Case Diagram — v0.1 · Cekat × Longchamp Indonesia",
-      id: "Use Case Diagram — v0.1 · Cekat × Longchamp Indonesia"
-    },
-    version: "0.1",
-    date: "2026-11-16"
+    version: "0.2",
+    date: "2026-11-16",
   },
 
   actors: [
     {
       id: "sa",
       name: { en: "Sales Associate", id: "Sales Associate" },
-      note: { en: "Boutique staff (5 boutiques)", id: "Staf boutique (5 boutique)" }
+      note: { en: "Boutique staff (5 boutiques)", id: "Staf boutique (5 boutique)" },
     },
     {
       id: "sm",
       name: { en: "Store Manager", id: "Store Manager" },
       note: { en: "Inherits all SA use cases", id: "Mewarisi semua use case SA" },
-      generalizes: "sa"
+      generalizes: "sa",
     },
     {
       id: "hq",
       name: { en: "CRM / CX Admin", id: "Admin CRM / CX" },
-      note: { en: "Longchamp HQ Indonesia", id: "HQ Longchamp Indonesia" }
-    }
+      note: { en: "Longchamp HQ Indonesia", id: "HQ Longchamp Indonesia" },
+    },
+  ],
+
+  /* RBAC roles, mapped onto Cekat CRM Role Hierarchy + authority */
+  roles: [
+    {
+      id: "sa",
+      name: { en: "Sales Associate", id: "Sales Associate" },
+      cekatRole: "SA – {Boutique}",
+      reportsTo: "SM – {Boutique}",
+      authority: "Basic User",
+      peers: false,
+      scope: {
+        en: "Own assigned clients + unassigned clients of the boutique",
+        id: "Klien yang di-assign ke dirinya + klien boutique tanpa assignee",
+      },
+    },
+    {
+      id: "sm",
+      name: { en: "Store Manager", id: "Store Manager" },
+      cekatRole: "SM – {Boutique}",
+      reportsTo: "CX Admin",
+      authority: "Basic User",
+      peers: false,
+      scope: {
+        en: "All clients of the SAs in their boutique (subordinates)",
+        id: "Semua klien milik SA di boutique-nya (bawahan)",
+      },
+    },
+    {
+      id: "hq",
+      name: { en: "CRM / CX Admin", id: "Admin CRM / CX" },
+      cekatRole: "CX Admin",
+      reportsTo: "—",
+      authority: "Administrator",
+      peers: true,
+      scope: { en: "All boutiques, all clients", id: "Semua boutique, semua klien" },
+    },
   ],
 
   systems: [
-    { id: "shopify", name: "Shopify", sub: "Webhook + REST Admin API" },
-    { id: "odoo", name: "Odoo POS", sub: "base.automation webhook + REST" },
-    { id: "cekatWh", name: "Cekat Webhook", sub: "Devtools → Webhooks" },
-    { id: "n8n", name: "n8n", sub: "Orchestration · Scheduler · BFF" },
-    { id: "cekatApi", name: "Cekat CRM API", sub: "api.cekat.ai · Contacts · Boards" },
-    { id: "cekatChat", name: "Cekat Chat / WABA", sub: "Message · Broadcast · Tickets" },
-    { id: "push", name: "Push Service", sub: "FCM / APNs" }
+    { id: "shopify", name: "Shopify", sub: "Webhook + REST Admin API", owner: "external" },
+    { id: "odoo", name: "Odoo POS", sub: "base.automation webhook + REST", owner: "external" },
+    { id: "cekatWh", name: "Cekat Webhook", sub: "Devtools → Webhooks", owner: "itdev" },
+    { id: "n8n", name: "n8n + BFF", sub: "Orchestration · Scheduler · RBAC", owner: "itdev" },
+    { id: "cekatApi", name: "Cekat CRM API", sub: "Contact · Board (docs)", owner: "itdev" },
+    { id: "cekatChat", name: "Cekat Chat API", sub: "Message · Broadcast · Tickets", owner: "itdev" },
+    { id: "cekatNew", name: "Cekat Product (new)", sub: "CP-01 … CP-06 — not in docs", owner: "product" },
+    { id: "push", name: "Push Service", sub: "FCM / APNs", owner: "itdev" },
   ],
 
   modules: [
@@ -53,7 +88,8 @@ const model = {
     { id: "lists", col: 0, name: { en: "2 · Customer Lists", id: "2 · Customer Lists" } },
     { id: "perf", col: 0, name: { en: "5 · Performance & Admin", id: "5 · Performa & Admin" } },
     { id: "actions", col: 1, name: { en: "3 · Actions", id: "3 · Actions" } },
-    { id: "catalog", col: 1, name: { en: "4 · Product Catalog", id: "4 · Product Catalog" } }
+    { id: "catalog", col: 1, name: { en: "4 · Product Catalog", id: "4 · Product Catalog" } },
+    { id: "access", col: 1, name: { en: "6 · Access & RBAC", id: "6 · Akses & RBAC" } },
   ],
 
   useCases: [
@@ -62,66 +98,69 @@ const model = {
       id: "UC-01", module: "search", actors: ["sa"],
       name: { en: "Search customer", id: "Cari pelanggan" },
       desc: {
-        en: "Find a client by phone (E.164), name or email while in the boutique.",
-        id: "Cari klien berdasarkan nomor HP (E.164), nama, atau email saat di boutique."
+        en: "Find a client by phone (E.164), name or email. Results are limited to the user's RBAC scope.",
+        id: "Cari klien berdasarkan nomor HP (E.164), nama, atau email. Hasil dibatasi sesuai scope RBAC user.",
       },
+      rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/contacts?limit=&page=", status: "confirmed" },
-        { sys: "cekatApi", type: "API", dir: "read", ref: "Search / filter by phone", status: "confirm",
-          note: "Search query param is not listed in the docs. Fallback: query Golden Record board items." }
-      ]
+        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/contacts?limit=&page=", status: "available" },
+        { sys: "n8n", type: "Workflow", dir: "read", ref: "BFF filters by assigned SA ∈ user scope (interim RBAC)", status: "internal" },
+        { sys: "cekatNew", type: "API", dir: "read", ref: "Role-scoped contacts query", status: "product", cp: "CP-02" },
+      ],
     },
     {
       id: "UC-02", module: "search", actors: [],
       name: { en: "View client profile (Golden Record)", id: "Lihat profil klien (Golden Record)" },
       desc: {
         en: "Identity, segment tier, assigned SA, consent (UU PDP), Love Tags and last contact date.",
-        id: "Identitas, tier segmen, SA yang ditugaskan, consent (UU PDP), Love Tags, dan tanggal kontak terakhir."
+        id: "Identitas, tier segmen, SA yang ditugaskan, consent (UU PDP), Love Tags, dan tanggal kontak terakhir.",
       },
+      rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/crm/boards/{goldenRecordBoardId}/items", status: "confirmed" },
-        { sys: "cekatWh", type: "Webhook", dir: "in", ref: "Event: Contact updated → n8n", status: "confirmed",
-          note: "Event is listed; payload fields are not documented yet." }
-      ]
+        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/crm/boards/{goldenRecordBoardId}/items", status: "available" },
+        { sys: "cekatWh", type: "Webhook", dir: "in", ref: "Event: Contact updated → n8n", status: "available",
+          note: "Event is listed; payload fields are not documented yet.", verify: true },
+      ],
     },
     {
       id: "UC-03", module: "search", actors: [],
       name: { en: "View purchase history", id: "Lihat riwayat pembelian" },
       desc: {
         en: "Online (Shopify) and offline (Odoo POS) transactions incl. refund/cancel, in IDR.",
-        id: "Transaksi online (Shopify) dan offline (Odoo POS) termasuk refund/cancel, dalam IDR."
+        id: "Transaksi online (Shopify) dan offline (Odoo POS) termasuk refund/cancel, dalam IDR.",
       },
+      rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "shopify", type: "Webhook", dir: "in", ref: "orders/create · orders/updated · orders/cancelled · refunds/create", status: "confirmed" },
+        { sys: "shopify", type: "Webhook", dir: "in", ref: "orders/create · orders/updated · orders/cancelled · refunds/create", status: "available" },
         { sys: "odoo", type: "Webhook", dir: "in", ref: "base.automation on pos.order (create / refund)", status: "internal" },
-        { sys: "n8n", type: "Workflow", dir: "write", ref: "Upsert Transactions board item (idempotency sha256(source+id+event))", status: "internal" },
-        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/crm/boards/{transactionsBoardId}/items", status: "confirmed" }
-      ]
+        { sys: "n8n", type: "Workflow", dir: "write", ref: "Upsert Transactions item (idempotency sha256(source+id+event))", status: "internal" },
+        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/crm/boards/{transactionsBoardId}/items", status: "available" },
+      ],
     },
     {
       id: "UC-04", module: "search", actors: [],
       name: { en: "Add Love Tags & comments", id: "Tambah Love Tags & komentar" },
       desc: {
         en: "Qualitative data: favourite lines, materials, colours, style, event feedback. No sensitive data (health, religion, politics, minors).",
-        id: "Data kualitatif: lini favorit, material, warna, gaya, feedback event. Tanpa data sensitif (kesehatan, agama, politik, anak di bawah umur)."
+        id: "Data kualitatif: lini favorit, material, warna, gaya, feedback event. Tanpa data sensitif (kesehatan, agama, politik, anak di bawah umur).",
       },
+      rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "write", ref: "Update Golden Record item (Love Tags, comment)", status: "confirm",
-          note: "Write endpoint for board items to be confirmed with Cekat." }
-      ]
+        { sys: "cekatApi", type: "API", dir: "write", ref: "Board API — update Golden Record item (Love Tags, comment)", status: "available", verify: true },
+      ],
     },
     {
       id: "UC-05", module: "search", actors: ["sa"],
       name: { en: "Register new client", id: "Daftarkan klien baru" },
       desc: {
-        en: "Capture a new client with consent_wa / consent_email; phone-first dedupe against the Golden Record.",
-        id: "Input klien baru dengan consent_wa / consent_email; dedupe berbasis nomor HP terhadap Golden Record."
+        en: "Capture a new client with consent_wa / consent_email; phone-first dedupe; auto-assigned to the registering SA.",
+        id: "Input klien baru dengan consent_wa / consent_email; dedupe berbasis nomor HP; otomatis di-assign ke SA yang mendaftarkan.",
       },
+      rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
         { sys: "n8n", type: "Workflow", dir: "write", ref: "Identity waterfall: phone → email → create", status: "internal" },
-        { sys: "cekatApi", type: "API", dir: "write", ref: "Create contact", status: "confirm",
-          note: "Contacts API lists create/update; exact path to confirm." }
-      ]
+        { sys: "cekatApi", type: "API", dir: "write", ref: "Contact API — create contact + assignee", status: "available", verify: true },
+      ],
     },
 
     /* ---------------- 2. CUSTOMER LISTS ---------------- */
@@ -130,48 +169,54 @@ const model = {
       name: { en: "Build dynamic list", id: "Buat dynamic list" },
       desc: {
         en: "Filters: segment tier, assigned SA, wishlist sent, reach-out reason, product category, promoter, geographic area.",
-        id: "Filter: tier segmen, SA yang ditugaskan, wishlist terkirim, alasan reach-out, kategori produk, promoter, area geografis."
+        id: "Filter: tier segmen, SA yang ditugaskan, wishlist terkirim, alasan reach-out, kategori produk, promoter, area geografis.",
       },
+      rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/crm/boards/{goldenRecordBoardId}/items", status: "confirmed" },
-        { sys: "n8n", type: "Workflow", dir: "read", ref: "Server-side filtering in BFF if API has no filter params", status: "internal" }
-      ]
+        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/crm/boards/{goldenRecordBoardId}/items", status: "available" },
+        { sys: "n8n", type: "Workflow", dir: "read", ref: "Interim: filter in BFF after paging items", status: "internal" },
+        { sys: "cekatNew", type: "API", dir: "read", ref: "Server-side filter & search on items", status: "product", cp: "CP-04" },
+      ],
     },
     {
       id: "UC-07", module: "lists", actors: ["sa"],
       name: { en: "Upcoming birthdays list", id: "List ulang tahun mendatang" },
       desc: {
         en: "Pre-set dynamic list: clients with a birthday in the next 30 days.",
-        id: "Dynamic list siap pakai: klien yang berulang tahun dalam 30 hari ke depan."
+        id: "Dynamic list siap pakai: klien yang berulang tahun dalam 30 hari ke depan.",
       },
+      rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "read", ref: "Golden Record items filtered by birth_date", status: "confirmed" }
-      ]
+        { sys: "cekatApi", type: "API", dir: "read", ref: "Golden Record items, filter birth_date", status: "available" },
+        { sys: "cekatNew", type: "API", dir: "read", ref: "Date-range filter (birthday window)", status: "product", cp: "CP-04" },
+      ],
     },
     {
       id: "UC-08", module: "lists", actors: ["sa"],
       name: { en: "Manage Client Book", id: "Kelola Client Book" },
       desc: {
         en: "Manual list of the SA's own clients; welcome & follow up new clients.",
-        id: "List manual klien milik SA; welcome & follow-up klien baru."
+        id: "List manual klien milik SA; welcome & follow-up klien baru.",
       },
+      rbac: { sa: "own", sm: "boutique", hq: "none" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/crm/boards/{clientBookBoardId}/items", status: "confirmed" },
-        { sys: "cekatApi", type: "API", dir: "write", ref: "Add / remove Client Book item", status: "confirm" }
-      ]
+        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/crm/boards/{clientBookBoardId}/items", status: "available" },
+        { sys: "cekatApi", type: "API", dir: "write", ref: "Board API — add / remove item", status: "available", verify: true },
+      ],
     },
     {
       id: "UC-09", module: "lists", actors: ["sa", "sm"],
       name: { en: "Event guest list & participation", id: "Guest list event & kehadiran" },
       desc: {
-        en: "Plan an event, invite clients and track RSVP / attendance.",
-        id: "Rencanakan event, undang klien, dan pantau RSVP / kehadiran."
+        en: "Plan an event, invite clients and track RSVP / attendance. SM creates the event, SA adds own clients.",
+        id: "Rencanakan event, undang klien, dan pantau RSVP / kehadiran. SM membuat event, SA menambahkan kliennya.",
       },
+      rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "read", ref: "Events board items", status: "confirmed" },
-        { sys: "cekatChat", type: "API", dir: "write", ref: "Broadcast campaign (WA template invitation)", status: "confirm",
-          note: "\"API Create Broadcast Campaign\" exists in docs; path & recipient-level tracking to confirm." }
-      ]
+        { sys: "cekatApi", type: "API", dir: "read", ref: "Events board items", status: "available" },
+        { sys: "cekatChat", type: "API", dir: "write", ref: "Broadcast API — WA template invitation", status: "available", verify: true },
+        { sys: "cekatNew", type: "Webhook", dir: "in", ref: "Recipient-level delivery / read status", status: "product", cp: "CP-06" },
+      ],
     },
 
     /* ---------------- 3. ACTIONS ---------------- */
@@ -179,63 +224,69 @@ const model = {
       id: "UC-10", module: "actions", actors: ["sa"],
       name: { en: "Receive clienteling push", id: "Terima clienteling push" },
       desc: {
-        en: "VIP Birthday, VIP Downgrade, High Value Upgrade, Beginner+ Upgrade — becomes a task in the SA's Agenda.",
-        id: "VIP Birthday, VIP Downgrade, High Value Upgrade, Beginner+ Upgrade — menjadi task di Agenda SA."
+        en: "VIP Birthday, VIP Downgrade, High Value Upgrade, Beginner+ Upgrade — becomes a task in the assigned SA's Agenda.",
+        id: "VIP Birthday, VIP Downgrade, High Value Upgrade, Beginner+ Upgrade — menjadi task di Agenda SA yang ditugaskan.",
       },
+      rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "n8n", type: "Scheduler", dir: "out", ref: "Daily cron: birthdays · tier change from order webhooks (refund/cancel can downgrade)", status: "internal" },
-        { sys: "cekatApi", type: "API", dir: "write", ref: "Create Task item for assigned SA", status: "confirm" },
-        { sys: "push", type: "Push", dir: "out", ref: "Mobile push notification to SA device", status: "internal" }
-      ]
+        { sys: "n8n", type: "Scheduler", dir: "out", ref: "Daily cron (birthdays) · tier change from order webhooks (refund/cancel can downgrade)", status: "internal" },
+        { sys: "cekatApi", type: "API", dir: "write", ref: "Board API — create Task item for assigned SA", status: "available", verify: true },
+        { sys: "push", type: "Push", dir: "out", ref: "FCM / APNs push to SA device", status: "internal" },
+      ],
     },
     {
       id: "UC-11", module: "actions", actors: ["sa"],
       name: { en: "Reach out to client", id: "Reach out ke klien" },
       desc: {
         en: "Only clients not contacted in the last 30 days. Channel: WhatsApp (Cekat) or phone call (native dialer).",
-        id: "Hanya klien yang belum dihubungi 30 hari terakhir. Channel: WhatsApp (Cekat) atau telepon (dialer bawaan HP)."
+        id: "Hanya klien yang belum dihubungi 30 hari terakhir. Channel: WhatsApp (Cekat) atau telepon (dialer bawaan HP).",
       },
+      rbac: { sa: "own", sm: "boutique", hq: "none" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "read", ref: "last_contacted_at on Golden Record", status: "confirmed" },
-        { sys: "cekatChat", type: "API", dir: "write", ref: "Send message / template message to inbox_id", status: "confirm",
-          note: "inbox_id from GET /api/inboxes (confirmed). Send path to confirm." },
-        { sys: "cekatWh", type: "Webhook", dir: "in", ref: "Message Sent · Message Received → n8n updates last_contacted_at", status: "confirmed" }
-      ]
+        { sys: "cekatApi", type: "API", dir: "read", ref: "last_contacted_at on Golden Record", status: "available" },
+        { sys: "cekatChat", type: "API", dir: "write", ref: "Message API — send session / template message to inbox_id", status: "available", verify: true,
+          note: "inbox_id from GET /api/inboxes." },
+        { sys: "cekatWh", type: "Webhook", dir: "in", ref: "Message Sent · Message Received → n8n updates last_contacted_at", status: "available" },
+      ],
     },
     {
       id: "UC-12", module: "actions", actors: [],
       name: { en: "Log reach-out reason & channel", id: "Catat alasan & channel reach-out" },
       desc: {
         en: "After contacting: select the reason and channel, then validate. Feeds KPI and attribution.",
-        id: "Setelah menghubungi: pilih alasan dan channel, lalu validasi. Jadi sumber KPI dan atribusi."
+        id: "Setelah menghubungi: pilih alasan dan channel, lalu validasi. Jadi sumber KPI dan atribusi.",
       },
+      rbac: { sa: "own", sm: "boutique", hq: "none" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "write", ref: "Create Reach Out item (contact_id, sa_id, reason, channel, at)", status: "confirm" }
-      ]
+        { sys: "cekatApi", type: "API", dir: "write", ref: "Board API — create Reach Out item (contact_id, sa_id, reason, channel, at)", status: "available", verify: true },
+      ],
     },
     {
       id: "UC-13", module: "actions", actors: [],
       name: { en: "Use Template Library", id: "Pakai Template Library" },
       desc: {
         en: "Starting-point messages per key moment; personalise before sending. WA outside 24h needs a Meta-approved template.",
-        id: "Template pesan per momen penting; dipersonalisasi sebelum dikirim. WA di luar 24 jam wajib template yang di-approve Meta."
+        id: "Template pesan per momen penting; dipersonalisasi sebelum dikirim. WA di luar 24 jam wajib template yang di-approve Meta.",
       },
+      rbac: { sa: "use", sm: "use", hq: "manage" },
       sources: [
-        { sys: "cekatChat", type: "API", dir: "read", ref: "WhatsApp templates (Meta-approved)", status: "confirm" },
-        { sys: "cekatApi", type: "API", dir: "read", ref: "Templates board (free-text templates)", status: "confirmed" }
-      ]
+        { sys: "cekatChat", type: "API", dir: "read", ref: "Broadcast API — WhatsApp templates (Meta-approved)", status: "available", verify: true },
+        { sys: "cekatApi", type: "API", dir: "read", ref: "Templates board (free-text templates)", status: "available" },
+      ],
     },
     {
       id: "UC-14", module: "actions", actors: ["sa"],
       name: { en: "Manage Agenda", id: "Kelola Agenda" },
       desc: {
         en: "Tasks (call, follow-up) and appointments (one-to-one, personalisation, fitting).",
-        id: "Task (telepon, follow-up) dan appointment (one-to-one, personalisasi, fitting)."
+        id: "Task (telepon, follow-up) dan appointment (one-to-one, personalisasi, fitting).",
       },
+      rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "read", ref: "Agenda board items (Calendar view)", status: "confirmed" },
-        { sys: "cekatApi", type: "API", dir: "write", ref: "Create / update task & appointment", status: "confirm" }
-      ]
+        { sys: "cekatApi", type: "API", dir: "read", ref: "Agenda board items (Calendar view)", status: "available" },
+        { sys: "cekatApi", type: "API", dir: "write", ref: "Board API — create / update task & appointment", status: "available", verify: true },
+        { sys: "cekatNew", type: "Webhook", dir: "in", ref: "Board item created / updated (tasks set in Cekat UI)", status: "product", cp: "CP-05" },
+      ],
     },
 
     /* ---------------- 4. PRODUCT CATALOG ---------------- */
@@ -244,46 +295,51 @@ const model = {
       name: { en: "Browse product catalog", id: "Lihat katalog produk" },
       desc: {
         en: "Product presentation with images, price (IDR) and variants.",
-        id: "Presentasi produk dengan gambar, harga (IDR), dan varian."
+        id: "Presentasi produk dengan gambar, harga (IDR), dan varian.",
       },
+      rbac: { sa: "use", sm: "use", hq: "use" },
       sources: [
-        { sys: "shopify", type: "API", dir: "read", ref: "REST Admin GET /products.json", status: "confirmed" },
-        { sys: "shopify", type: "Webhook", dir: "in", ref: "products/update → n8n refreshes cache", status: "confirmed" }
-      ]
+        { sys: "shopify", type: "API", dir: "read", ref: "REST Admin GET /products.json", status: "available" },
+        { sys: "shopify", type: "Webhook", dir: "in", ref: "products/update → n8n refreshes cache", status: "available" },
+      ],
     },
     {
       id: "UC-16", module: "catalog", actors: [],
       name: { en: "Check stock per boutique", id: "Cek stok per boutique" },
       desc: {
         en: "Real-time stock by location. Queried on demand, not via webhook.",
-        id: "Stok real-time per lokasi. Diambil saat dibutuhkan, bukan via webhook."
+        id: "Stok real-time per lokasi. Diambil saat dibutuhkan, bukan via webhook.",
       },
+      rbac: { sa: "use", sm: "use", hq: "use" },
       sources: [
-        { sys: "odoo", type: "API", dir: "read", ref: "REST stock.quant by location", status: "internal" }
-      ]
+        { sys: "odoo", type: "API", dir: "read", ref: "REST stock.quant by location", status: "internal" },
+      ],
     },
     {
       id: "UC-17", module: "catalog", actors: [],
       name: { en: "Create & send wishlist", id: "Buat & kirim wishlist" },
       desc: {
         en: "Pick products for a client and send them via WhatsApp; tracked for conversion.",
-        id: "Pilih produk untuk klien lalu kirim via WhatsApp; dilacak konversinya."
+        id: "Pilih produk untuk klien lalu kirim via WhatsApp; dilacak konversinya.",
       },
+      rbac: { sa: "own", sm: "boutique", hq: "none" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "write", ref: "Create Wishlist item", status: "confirm" },
-        { sys: "cekatChat", type: "API", dir: "write", ref: "Send WA message with product links", status: "confirm" }
-      ]
+        { sys: "cekatApi", type: "API", dir: "write", ref: "Board API — create Wishlist item", status: "available", verify: true },
+        { sys: "cekatChat", type: "API", dir: "write", ref: "Message API — send WA with product links", status: "available", verify: true },
+        { sys: "cekatNew", type: "Webhook", dir: "in", ref: "Recipient-level delivery / read status", status: "product", cp: "CP-06" },
+      ],
     },
     {
       id: "UC-18", module: "catalog", actors: ["sa"],
       name: { en: "Create service ticket", id: "Buat tiket servis" },
       desc: {
         en: "After-sales / repair / personalisation request linked to the client.",
-        id: "Permintaan after-sales / perbaikan / personalisasi yang terhubung ke klien."
+        id: "Permintaan after-sales / perbaikan / personalisasi yang terhubung ke klien.",
       },
+      rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "cekatChat", type: "API", dir: "write", ref: "Tickets API — create ticket", status: "confirm" }
-      ]
+        { sys: "cekatChat", type: "API", dir: "write", ref: "Tickets API — create ticket", status: "available", verify: true },
+      ],
     },
 
     /* ---------------- 5. PERFORMANCE & ADMIN ---------------- */
@@ -291,26 +347,58 @@ const model = {
       id: "UC-19", module: "perf", actors: ["sa", "sm", "hq"],
       name: { en: "View performance KPI", id: "Lihat KPI performa" },
       desc: {
-        en: "Actions, actions/POS/day, conversion rate, sales, avg conversion days — by channel and reason, at country / POS / SA level.",
-        id: "Actions, actions/POS/hari, conversion rate, sales, rata-rata hari konversi — per channel dan alasan, level negara / POS / SA."
+        en: "Actions, actions/POS/day, conversion rate, sales, avg conversion days — by channel and reason. SA sees own, SM boutique, Admin country.",
+        id: "Actions, actions/POS/hari, conversion rate, sales, rata-rata hari konversi — per channel dan alasan. SA lihat miliknya, SM boutique, Admin negara.",
       },
+      rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
         { sys: "n8n", type: "Scheduler", dir: "write", ref: "Aggregate Reach Out + Transactions (30-day attribution) → KPI board", status: "internal" },
-        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/crm/boards/{kpiBoardId}/items", status: "confirmed" }
-      ]
+        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/crm/boards/{kpiBoardId}/items", status: "available" },
+      ],
     },
     {
       id: "UC-20", module: "perf", actors: ["hq"],
       name: { en: "Manage templates & push rules", id: "Kelola template & aturan push" },
       desc: {
         en: "Maintain the Template Library and the localised clienteling push rules.",
-        id: "Kelola Template Library dan aturan clienteling push yang dilokalkan."
+        id: "Kelola Template Library dan aturan clienteling push yang dilokalkan.",
       },
+      rbac: { sa: "none", sm: "none", hq: "manage" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "write", ref: "Templates / Push Rules boards", status: "confirm" },
-        { sys: "n8n", type: "Workflow", dir: "read", ref: "Push scheduler reads active rules", status: "internal" }
-      ]
-    }
+        { sys: "cekatApi", type: "API", dir: "write", ref: "Board API — Templates / Push Rules boards", status: "available", verify: true },
+        { sys: "n8n", type: "Workflow", dir: "read", ref: "Push scheduler reads active rules", status: "internal" },
+      ],
+    },
+
+    /* ---------------- 6. ACCESS & RBAC ---------------- */
+    {
+      id: "UC-21", module: "access", actors: ["sa", "hq"],
+      name: { en: "Sign in & resolve role", id: "Login & tentukan role" },
+      desc: {
+        en: "Sign in with the Cekat CRM account; the app resolves role (SA / SM / Admin), boutique and data scope.",
+        id: "Login dengan akun Cekat CRM; app menentukan role (SA / SM / Admin), boutique, dan scope data.",
+      },
+      rbac: { sa: "use", sm: "use", hq: "use" },
+      sources: [
+        { sys: "cekatNew", type: "API", dir: "read", ref: "Third-party app sign-in / per-user token", status: "product", cp: "CP-01" },
+        { sys: "cekatNew", type: "API", dir: "read", ref: "Users & Role Hierarchy API (role, reports-to, authority)", status: "product", cp: "CP-03" },
+        { sys: "n8n", type: "Workflow", dir: "read", ref: "BFF session + role → boutique → SA scope mapping", status: "internal" },
+      ],
+    },
+    {
+      id: "UC-22", module: "access", actors: ["sm", "hq"],
+      name: { en: "Manage roles & client assignment", id: "Kelola role & assignment klien" },
+      desc: {
+        en: "Admin maintains users and the Role Hierarchy in Cekat; SM reassigns clients between SAs of the boutique.",
+        id: "Admin mengelola user dan Role Hierarchy di Cekat; SM memindahkan klien antar SA di boutique-nya.",
+      },
+      rbac: { sa: "none", sm: "boutique", hq: "manage" },
+      sources: [
+        { sys: "cekatApi", type: "API", dir: "write", ref: "Contact API — update assignee", status: "available", verify: true },
+        { sys: "cekatNew", type: "API", dir: "read", ref: "Users & Role Hierarchy API", status: "product", cp: "CP-03" },
+        { sys: "cekatNew", type: "Webhook", dir: "in", ref: "Assignment changed → notify new SA", status: "product", cp: "CP-05" },
+      ],
+    },
   ],
 
   /* include: base → included   |   extend: extension → base */
@@ -322,30 +410,35 @@ const model = {
     { from: "UC-11", to: "UC-12", type: "include" },
     { from: "UC-13", to: "UC-11", type: "extend" },
     { from: "UC-16", to: "UC-15", type: "extend" },
-    { from: "UC-17", to: "UC-15", type: "extend" }
+    { from: "UC-17", to: "UC-15", type: "extend" },
   ],
 
   notes: [
     {
-      en: "The mobile app never holds the Cekat api_key. It calls a thin BFF (n8n webhook endpoints or a small backend) that holds the key and enforces SA/boutique scoping.",
-      id: "Aplikasi mobile tidak menyimpan api_key Cekat. App memanggil BFF tipis (endpoint webhook n8n atau backend kecil) yang memegang key dan membatasi data per SA/boutique."
+      en: "Two implementors on the Cekat side: IT Dev builds with what is in the Cekat API docs (plus n8n, BFF and the mobile app); Cekat Product builds what is not in the docs (CP-01 … CP-06).",
+      id: "Dua implementor di sisi Cekat: IT Dev membangun dengan yang ada di dokumentasi API Cekat (plus n8n, BFF, dan aplikasi mobile); Cekat Product membangun yang belum ada di docs (CP-01 … CP-06).",
     },
     {
-      en: "Auth header differs between doc sites: docs.cekat.ai uses an `api_key` header, the developer docs show `Authorization: Bearer`. Confirm with Cekat.",
-      id: "Header auth berbeda antar situs docs: docs.cekat.ai pakai header `api_key`, developer docs pakai `Authorization: Bearer`. Konfirmasi ke Cekat."
+      en: "RBAC mirrors the Cekat CRM Role Hierarchy (SA reports to SM reports to CX Admin, peer sharing off for SA). Until CP-01/02/03 exist, the BFF holds the api_key and enforces scope by assigned SA.",
+      id: "RBAC mengikuti Role Hierarchy Cekat CRM (SA lapor ke SM lapor ke CX Admin, peer sharing mati untuk SA). Sebelum CP-01/02/03 ada, BFF memegang api_key dan membatasi scope berdasarkan SA yang di-assign.",
     },
     {
-      en: "Write endpoints for contacts and board items, the send-message path, and webhook payload fields are not in the public docs yet — marked \"to confirm\".",
-      id: "Endpoint write untuk contacts dan board items, path kirim pesan, dan field payload webhook belum ada di docs publik — ditandai \"to confirm\"."
+      en: "The mobile app never holds the Cekat api_key. All calls go through the BFF.",
+      id: "Aplikasi mobile tidak menyimpan api_key Cekat. Semua panggilan lewat BFF.",
+    },
+    {
+      en: "\"Verify path\" = the API section exists in the docs, but the exact endpoint / payload must be checked by IT Dev. Auth header also differs between doc sites (`api_key` vs `Authorization: Bearer`).",
+      id: "\"Verify path\" = section API-nya ada di docs, tapi endpoint / payload persisnya perlu dicek IT Dev. Header auth juga berbeda antar situs docs (`api_key` vs `Authorization: Bearer`).",
     },
     {
       en: "Odoo stock and Shopify catalog are read on demand (REST), because they are live data and not triggered by an event.",
-      id: "Stok Odoo dan katalog Shopify dibaca saat dibutuhkan (REST), karena data live dan tidak dipicu event."
+      id: "Stok Odoo dan katalog Shopify dibaca saat dibutuhkan (REST), karena data live dan tidak dipicu event.",
     },
     {
       en: "Anonymous offline transactions without a phone number cannot be attributed — KPI conversion is understated.",
-      id: "Transaksi offline anonim tanpa nomor HP tidak bisa diatribusikan — konversi KPI jadi lebih rendah dari aktual."
-    }
-  ]
+      id: "Transaksi offline anonim tanpa nomor HP tidak bisa diatribusikan — konversi KPI jadi lebih rendah dari aktual.",
+    },
+  ],
 };
+
 export default model;

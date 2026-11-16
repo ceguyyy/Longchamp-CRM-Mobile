@@ -14,6 +14,8 @@ function StickFigure({ x, y }) {
   );
 }
 
+const IMPL_FILL = { itdev: "var(--impl-itdev)", product: "var(--impl-product)", external: "var(--impl-ext)" };
+
 const cls = (...xs) => xs.filter(Boolean).join(" ");
 
 const UseCaseSvg = forwardRef(function UseCaseSvg(
@@ -122,7 +124,7 @@ const UseCaseSvg = forwardRef(function UseCaseSvg(
               key={e.id}
               d={e.d}
               className={edgeCls(e.id)}
-              stroke={SOURCE_COLORS[e.type]}
+              stroke={e.product ? "var(--impl-product)" : SOURCE_COLORS[e.type]}
               strokeWidth="1.3"
               strokeDasharray={e.type === "Webhook" ? "6 4" : e.type === "API" ? undefined : "2 4"}
               opacity="0.4"
@@ -202,8 +204,18 @@ const UseCaseSvg = forwardRef(function UseCaseSvg(
             }}
             {...hover({ kind: "system", id: s.id })}
           >
-            <rect x={s.x - w / 2} y={s.y - h / 2} width={w} height={h} rx="10" fill="#fff" stroke="var(--lc-forest)" strokeWidth="1.3" />
-            <rect x={s.x - w / 2} y={s.y - h / 2} width="6" height={h} rx="3" fill="var(--lc-lime)" />
+            <rect
+              x={s.x - w / 2}
+              y={s.y - h / 2}
+              width={w}
+              height={h}
+              rx="10"
+              fill={s.owner === "product" ? "#fff8eb" : "#fff"}
+              stroke={s.owner === "product" ? "var(--impl-product)" : "var(--lc-forest)"}
+              strokeWidth="1.3"
+              strokeDasharray={s.owner === "product" ? "5 3" : undefined}
+            />
+            <rect x={s.x - w / 2} y={s.y - h / 2} width="6" height={h} rx="3" fill={IMPL_FILL[s.owner]} />
             <text x={s.x - w / 2 + 18} y={s.y - 12} fontSize="9" fill="var(--lc-muted)" letterSpacing="1">
               «system»
             </text>

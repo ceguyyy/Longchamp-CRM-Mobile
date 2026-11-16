@@ -19,6 +19,11 @@
   --src-workflow: #7c3aed;
   --src-push: #0f766e;
 
+  /* implementors */
+  --impl-itdev: #0e6e8c;
+  --impl-product: #c27803;
+  --impl-ext: #6b6f63;
+
   /* HeroUI tokens */
   --accent: oklch(0.33 0.05 125);           /* ≈ forest */
   --accent-foreground: oklch(0.99 0 0);

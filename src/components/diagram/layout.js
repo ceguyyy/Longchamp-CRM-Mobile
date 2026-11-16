@@ -167,6 +167,7 @@ export function computeLayout(model) {
         sys: sysId,
         uc: u.id,
         type,
+        product: srcs.every((x) => x.status === "product"),
         types: [...new Set(srcs.map((x) => x.type))],
         d: `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2 + 3},${y2}`,
       });

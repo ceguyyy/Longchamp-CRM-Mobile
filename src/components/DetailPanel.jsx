@@ -1,5 +1,5 @@
 import { Card, Chip, Separator } from "@heroui/react";
-import { TypeChip, StatusChip } from "./SourceBadges";
+import { TypeChip, StatusChip, ScopeChip } from "./SourceBadges";
 
 function SourceRow({ src, sysName, t }) {
   return (
@@ -8,9 +8,9 @@ function SourceRow({ src, sysName, t }) {
         <TypeChip type={src.type} />
         <span className="text-xs font-semibold text-[var(--lc-ink)]">{sysName}</span>
         <span className="text-[11px] text-[var(--lc-muted)]">· {t.dir[src.dir]}</span>
-        <span className="ml-auto">
-          <StatusChip status={src.status} t={t} />
-        </span>
+      </div>
+      <div className="mt-2">
+        <StatusChip src={src} t={t} />
       </div>
       <code className="mt-2 block break-words text-[12px] leading-snug text-[var(--lc-ink)]">{src.ref}</code>
       {src.note && <p className="mt-1.5 text-[11.5px] leading-snug text-[var(--lc-muted)]">{src.note}</p>}
@@ -57,6 +57,17 @@ export default function DetailPanel({ model, selection, lang, t, onSelect }) {
             })}
           </div>
         )}
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--lc-muted)]">{t.rbac}</p>
+          <div className="grid grid-cols-3 gap-2">
+            {model.roles.map((r) => (
+              <div key={r.id} className="rounded-lg bg-[var(--lc-cream)] px-2 py-1.5">
+                <p className="text-[10.5px] text-[var(--lc-muted)]">{r.name[lang]}</p>
+                <ScopeChip scope={u.rbac[r.id]} t={t} />
+              </div>
+            ))}
+          </div>
+        </div>
         <Separator />
         <div>
           <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--lc-muted)]">{t.sources}</p>

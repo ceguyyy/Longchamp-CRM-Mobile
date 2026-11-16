@@ -1,9 +1,15 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import { downloadSvg as saveSvg } from "../utils/downloadSvg";
 import { Button, Card, Label, Switch } from "@heroui/react";
 import model from "../data/useCases";
 import UseCaseSvg from "../components/diagram/UseCaseSvg";
 import DetailPanel from "../components/DetailPanel";
 import DataSourceMatrix from "../components/DataSourceMatrix";
+import RbacMatrix, { RoleTable } from "../components/RbacMatrix";
+import CpBacklog from "../components/CpBacklog";
+import { OwnerChip } from "../components/SourceBadges";
+import { IMPLEMENTORS } from "../data/cekatProduct";
 import { SOURCE_COLORS } from "../components/diagram/layout";
 
 function Toggle({ value, onChange, children }) {
@@ -46,21 +52,13 @@ export default function UseCasePage({ lang, t }) {
     }
   };
 
-  const downloadSvg = () => {
-    const svg = svgRef.current;
-    if (!svg) return;
-    const clone = svg.cloneNode(true);
-    // inline the CSS variables so the file renders standalone
-    const vars = getComputedStyle(document.documentElement);
-    let src = new XMLSerializer().serializeToString(clone);
-    src = src.replace(/var\((--[a-z0-9-]+)\)/gi, (_, v) => vars.getPropertyValue(v).trim() || "#000");
-    const blob = new Blob([src], { type: "image/svg+xml" });
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = `longchamp-mobile-use-case-v${model.meta.version}.svg`;
-    a.click();
-    URL.revokeObjectURL(a.href);
-  };
+  const downloadSvg = () => saveSvg(svgRef.current, `longchamp-mobile-use-case-v${model.meta.version}.svg`);
+
+  const [params] = useSearchParams();
+  useEffect(() => {
+    const uc = params.get("uc");
+    if (uc && model.useCases.some((u) => u.id === uc)) setSelected({ kind: "uc", id: uc });
+  }, [params]);
 
   const li = t.legendItems;
 
@@ -125,6 +123,18 @@ export default function UseCasePage({ lang, t }) {
                 <LegendLine color="var(--lc-muted)" dash="5 4" marker="open" label={li.include} />
                 <LegendLine color="var(--lc-muted)" dash="5 4" marker="open" label={li.extend} />
                 <LegendLine color="var(--lc-forest)" marker="tri" label={li.gen} />
+                <LegendLine color="var(--impl-product)" dash="6 4" marker="dot" label={li.product} />
+              </ul>
+              <p className="mb-2 mt-5 text-xs font-semibold uppercase tracking-wider text-[var(--lc-muted)]">{t.implSplit}</p>
+              <ul className="flex flex-col gap-2">
+                {["itdev", "product"].map((k) => (
+                  <li key={k} className="flex flex-col gap-1">
+                    <span>
+                      <OwnerChip owner={k}>{IMPLEMENTORS[k].short}</OwnerChip>
+                    </span>
+                    <span className="text-[12px] leading-snug text-[var(--lc-muted)]">{IMPLEMENTORS[k].desc[lang]}</span>
+                  </li>
+                ))}
               </ul>
             </Card.Content>
           </Card>
@@ -136,6 +146,23 @@ export default function UseCasePage({ lang, t }) {
         <h2 className="font-display text-3xl font-semibold text-[var(--lc-forest)]">{t.matrix}</h2>
         <p className="mb-4 mt-1 text-sm text-[var(--lc-muted)]">{t.matrixDesc}</p>
         <DataSourceMatrix model={model} lang={lang} t={t} onSelect={(s) => { select(s); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
+      </section>
+
+      {/* RBAC */}
+      <section className="mt-12">
+        <h2 className="font-display text-3xl font-semibold text-[var(--lc-forest)]">{t.rbacTitle}</h2>
+        <p className="mb-4 mt-1 text-sm text-[var(--lc-muted)]">{t.rbacDesc}</p>
+        <RoleTable model={model} lang={lang} t={t} />
+        <div className="mt-4">
+          <RbacMatrix model={model} lang={lang} t={t} onSelect={(s) => { select(s); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
+        </div>
+      </section>
+
+      {/* Cekat Product backlog */}
+      <section className="mt-12">
+        <h2 className="font-display text-3xl font-semibold text-[var(--lc-forest)]">{t.backlog}</h2>
+        <p className="mb-4 mt-1 text-sm text-[var(--lc-muted)]">{t.backlogDesc}</p>
+        <CpBacklog lang={lang} t={t} onPick={(id) => { if (id.startsWith("UC")) { select({ kind: "uc", id }); window.scrollTo({ top: 0, behavior: "smooth" }); } else { window.location.hash = `#/activity?d=${id}`; } }} />
       </section>
 
       {/* Notes */}

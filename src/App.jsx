@@ -2,12 +2,15 @@ import { useState } from "react";
 import { HashRouter, NavLink, Navigate, Route, Routes } from "react-router-dom";
 import { Chip, ToggleButton, ToggleButtonGroup } from "@heroui/react";
 import UseCasePage from "./pages/UseCasePage";
+import ActivityPage from "./pages/ActivityPage";
+import ArchitecturePage from "./pages/ArchitecturePage";
 import { T } from "./i18n";
 
 const NAV = [
   { key: "usecase", to: "/use-case", ready: true },
+  { key: "activity", to: "/activity", ready: true },
+  { key: "architecture", to: "/architecture", ready: true },
   { key: "sequence", to: "/sequence" },
-  { key: "dataflow", to: "/data-flow" },
   { key: "erd", to: "/erd" },
   { key: "mockup", to: "/mockup" },
 ];
@@ -95,6 +98,8 @@ export default function App() {
         <Header lang={lang} setLang={changeLang} t={t} />
         <Routes>
           <Route path="/use-case" element={<UseCasePage lang={lang} t={t} />} />
+          <Route path="/architecture" element={<ArchitecturePage lang={lang} t={t} />} />
+          <Route path="/activity" element={<ActivityPage lang={lang} t={t} />} />
           <Route path="*" element={<Navigate to="/use-case" replace />} />
         </Routes>
       </div>
