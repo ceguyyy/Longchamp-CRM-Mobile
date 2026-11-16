@@ -32,8 +32,8 @@ const arch = {
         L("Role-aware navigation (RBAC)", "Navigasi sesuai role (RBAC)"),
       ],
       desc: L(
-        "Frontend for SA, SM and CX Admin. Holds no API keys and no business data beyond an offline cache; every call goes to the Backend API with the user's JWT.",
-        "Frontend untuk SA, SM, dan CX Admin. Tidak menyimpan API key maupun data bisnis selain cache offline; semua panggilan ke Backend API dengan JWT user."
+        "Frontend for SA, SM and CX Admin. Holds no API keys and no business data beyond an offline cache; every call goes to the Backend API with the Cekat user token issued by Cekat Product.",
+        "Frontend untuk SA, SM, dan CX Admin. Tidak menyimpan API key maupun data bisnis selain cache offline; semua panggilan ke Backend API dengan token user Cekat yang diterbitkan Cekat Product."
       ),
     },
     {
@@ -41,8 +41,8 @@ const arch = {
       title: L("Backend API (BFF)"),
       sub: L("Node.js · REST / JSON · stateless"),
       items: [
-        L("Auth & session (JWT)", "Auth & sesi (JWT)"),
-        L("RBAC scope guard: role → boutique → SA", "Guard scope RBAC: role → boutique → SA"),
+        L("Token pass-through (no auth / RBAC logic)", "Teruskan token (tanpa logika auth / RBAC)"),
+        L("Response shaping for the app", "Membentuk response untuk app"),
         L("Clients · Lists · Client Book API"),
         L("Actions · Agenda · Reach Out API"),
         L("Catalog & Stock API (cached)", "Catalog & Stock API (cache)"),
@@ -50,8 +50,8 @@ const arch = {
         L("Cache only — no business DB", "Hanya cache — tanpa DB bisnis"),
       ],
       desc: L(
-        "The only entry point for the app. Holds the Cekat api_key server-side, enforces RBAC on every request and translates app calls into Cekat, Shopify and Odoo API calls.",
-        "Satu-satunya pintu masuk untuk app. Menyimpan api_key Cekat di server, menegakkan RBAC di setiap request, dan menerjemahkan panggilan app ke API Cekat, Shopify, dan Odoo."
+        "The only entry point for the app. Forwards the Cekat user token so Cekat Product enforces login and RBAC, aggregates Cekat, Shopify and Odoo calls, and caches the catalog. Builds no auth or scope logic.",
+        "Satu-satunya pintu masuk untuk app. Meneruskan token user Cekat supaya Cekat Product menegakkan login dan RBAC, menggabungkan panggilan Cekat, Shopify, dan Odoo, serta cache katalog. Tidak membangun logika auth maupun scope."
       ),
     },
     {
@@ -115,13 +115,13 @@ const arch = {
       title: L("Cekat Product — to build", "Cekat Product — perlu dibangun"),
       sub: L("Not in the API docs yet", "Belum ada di API docs"),
       items: [
-        L("CP-01 App sign-in · CP-02 Role-scoped API", "CP-01 Login app · CP-02 API sesuai role"),
-        L("CP-03 Users & Roles API · CP-04 Item filter", "CP-03 API Users & Role · CP-04 Filter item"),
+        L("CP-01 Login & user token · CP-02 RBAC on API", "CP-01 Login & token user · CP-02 RBAC di API"),
+        L("CP-03 Users, roles & scope · CP-04 Item filter", "CP-03 User, role & scope · CP-04 Filter item"),
         L("CP-05 Board item webhook · CP-06 Msg status", "CP-05 Webhook board item · CP-06 Status pesan"),
       ],
       desc: L(
-        "Platform gaps owned by Cekat Product. Until they ship, the BFF uses the workspace api_key and filters by assigned SA.",
-        "Gap platform yang dimiliki Cekat Product. Sebelum tersedia, BFF memakai api_key workspace dan memfilter berdasarkan SA yang di-assign."
+        "Owned by Cekat Product: login, users, role hierarchy and RBAC enforcement on every user call, plus the other platform gaps. IT Dev depends on these and builds no workaround.",
+        "Dimiliki Cekat Product: login, user, role hierarchy, dan penegakan RBAC di setiap panggilan user, plus gap platform lainnya. IT Dev bergantung pada ini dan tidak membuat workaround."
       ),
     },
     {
@@ -152,12 +152,12 @@ const arch = {
   ],
 
   edges: [
-    { id: 1, from: "app", to: "bff", pts: [[270, 230], [360, 230]], label: L("HTTPS · JWT"), lx: 276, ly: 222,
-      proto: "HTTPS REST / JSON", auth: "User JWT", trigger: L("User action", "Aksi user"), owner: "itdev" },
+    { id: 1, from: "app", to: "bff", pts: [[270, 230], [360, 230]], label: L("HTTPS · token"), lx: 276, ly: 222,
+      proto: "HTTPS REST / JSON", auth: "Cekat user token (CP-01)", trigger: L("User action", "Aksi user"), owner: "itdev" },
     { id: 2, from: "bff", to: "crm", pts: [[750, 170], [820, 170]], label: L("API"), lx: 760, ly: 162,
-      proto: "Cekat Open API (REST)", auth: "api_key (server-side)", trigger: L("App request", "Request app"), owner: "itdev" },
+      proto: "Cekat Open API (REST)", auth: "User token → RBAC by Cekat Product", trigger: L("App request", "Request app"), owner: "itdev" },
     { id: 3, from: "bff", to: "chat", pts: [[750, 320], [806, 320], [806, 510], [820, 510]], label: L("API"), lx: 756, ly: 312,
-      proto: "Cekat Open API (REST)", auth: "api_key (server-side)", trigger: L("Reach Out · wishlist · ticket"), owner: "itdev" },
+      proto: "Cekat Open API (REST)", auth: "User token → RBAC by Cekat Product", trigger: L("Reach Out · wishlist · ticket"), owner: "itdev" },
     { id: 4, from: "bff", to: "shopify", pts: [[700, 110], [700, 80], [1426, 80], [1426, 110]], label: L("REST · products · stock", "REST · produk · stok"), lx: 1050, ly: 72,
       proto: "Shopify REST Admin API", auth: "Admin API token", trigger: L("Catalog request (cached)", "Request katalog (cache)"), owner: "itdev" },
     { id: 5, from: "bff", to: "odoo", pts: [[720, 110], [720, 92], [1580, 92], [1580, 243], [1556, 243]], label: null,
@@ -179,7 +179,7 @@ const arch = {
     { id: 13, from: "n8n", to: "klaviyo", pts: [[600, 654], [600, 856], [1270, 856], [1270, 615], [1296, 615]], label: L("consented profiles", "profil consent"), lx: 1100, ly: 848,
       proto: "Klaviyo profile-import API", auth: "Private API key", trigger: L("Consent = true", "Consent = true"), owner: "itdev" },
     { id: 14, from: "bff", to: "cp", pts: [[750, 260], [786, 260], [786, 716], [820, 716]], label: L("CP-01 · 02 · 03 · 04"), lx: 781, ly: 530, dashed: true, anchor: "middle", rot: true,
-      proto: "Cekat API (new)", auth: "User token (CP-01)", trigger: L("Sign-in · scoped reads", "Login · baca sesuai scope"), owner: "product" },
+      proto: "Cekat API (new)", auth: "User token (CP-01)", trigger: L("Login · role & scope · RBAC check", "Login · role & scope · cek RBAC"), owner: "product" },
     { id: 15, from: "cp", to: "n8n", pts: [[820, 790], [768, 790], [768, 640], [750, 640]], label: L("CP-05 · 06"), lx: 690, ly: 806, dashed: true, anchor: "start",
       proto: "Webhook (new)", auth: "Webhook secret", trigger: L("Board item / message status change", "Perubahan board item / status pesan"), owner: "product" },
   ],
@@ -194,9 +194,9 @@ const arch = {
     { entity: L("Events & guest lists", "Event & guest list"), store: "Events board", writers: "App via BFF (SM)", readers: "App via BFF" },
     { entity: L("Templates & push rules", "Template & aturan push"), store: "Templates · Push Rules boards", writers: "CX Admin (App / Cekat UI)", readers: "App · n8n" },
     { entity: L("KPI snapshot"), store: "KPI board", writers: "n8n (scheduled)", readers: "App via BFF" },
-    { entity: L("Users, roles, hierarchy", "User, role, hierarki"), store: "Cekat CRM User Settings", writers: "CX Admin (Cekat UI)", readers: "BFF via CP-03 (interim: mapping config)" },
+    { entity: L("Users, roles, hierarchy", "User, role, hierarki"), store: "Cekat CRM User Settings", writers: "CX Admin (Cekat UI)", readers: "Cekat Product (CP-01/02/03) — app reads role via BFF" },
     { entity: L("Product catalog & stock", "Katalog produk & stok"), store: "Not stored — Shopify / Odoo are the source", writers: "—", readers: "BFF (cache)" },
-    { entity: L("Session / cache"), store: "BFF cache (Redis) — not business data", writers: "BFF", readers: "BFF" },
+    { entity: L("Catalog cache"), store: "BFF cache (Redis) — not business data", writers: "BFF", readers: "BFF" },
   ],
 };
 

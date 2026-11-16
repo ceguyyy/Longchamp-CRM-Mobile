@@ -76,10 +76,10 @@ const model = {
     { id: "shopify", name: "Shopify", sub: "Webhook + REST Admin API", owner: "external" },
     { id: "odoo", name: "Odoo POS", sub: "base.automation webhook + REST", owner: "external" },
     { id: "cekatWh", name: "Cekat Webhook", sub: "Devtools → Webhooks", owner: "itdev" },
-    { id: "n8n", name: "n8n + BFF", sub: "Orchestration · Scheduler · RBAC", owner: "itdev" },
+    { id: "n8n", name: "n8n + BFF", sub: "Orchestration · Scheduler · Proxy", owner: "itdev" },
     { id: "cekatApi", name: "Cekat CRM API", sub: "Contact · Board (docs)", owner: "itdev" },
     { id: "cekatChat", name: "Cekat Chat API", sub: "Message · Broadcast · Tickets", owner: "itdev" },
-    { id: "cekatNew", name: "Cekat Product (new)", sub: "CP-01 … CP-06 — not in docs", owner: "product" },
+    { id: "cekatNew", name: "Cekat Product (new)", sub: "Login · RBAC · CP-01 … CP-06", owner: "product" },
     { id: "push", name: "Push Service", sub: "FCM / APNs", owner: "itdev" },
   ],
 
@@ -104,8 +104,7 @@ const model = {
       rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
         { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/contacts?limit=&page=", status: "available" },
-        { sys: "n8n", type: "Workflow", dir: "read", ref: "BFF filters by assigned SA ∈ user scope (interim RBAC)", status: "internal" },
-        { sys: "cekatNew", type: "API", dir: "read", ref: "Role-scoped contacts query", status: "product", cp: "CP-02" },
+        { sys: "cekatNew", type: "API", dir: "read", ref: "RBAC check on contacts query (user token)", status: "product", cp: "CP-02" },
       ],
     },
     {
@@ -375,14 +374,13 @@ const model = {
       id: "UC-21", module: "access", actors: ["sa", "hq"],
       name: { en: "Sign in & resolve role", id: "Login & tentukan role" },
       desc: {
-        en: "Sign in with the Cekat CRM account; the app resolves role (SA / SM / Admin), boutique and data scope.",
-        id: "Login dengan akun Cekat CRM; app menentukan role (SA / SM / Admin), boutique, dan scope data.",
+        en: "Sign in with the Cekat CRM account; Cekat returns the user token, role (SA / SM / Admin), boutique and data scope. Built by Cekat Product.",
+        id: "Login dengan akun Cekat CRM; Cekat mengembalikan token user, role (SA / SM / Admin), boutique, dan scope data. Dibangun Cekat Product.",
       },
       rbac: { sa: "use", sm: "use", hq: "use" },
       sources: [
         { sys: "cekatNew", type: "API", dir: "read", ref: "Third-party app sign-in / per-user token", status: "product", cp: "CP-01" },
         { sys: "cekatNew", type: "API", dir: "read", ref: "Users & Role Hierarchy API (role, reports-to, authority)", status: "product", cp: "CP-03" },
-        { sys: "n8n", type: "Workflow", dir: "read", ref: "BFF session + role → boutique → SA scope mapping", status: "internal" },
       ],
     },
     {
@@ -394,9 +392,9 @@ const model = {
       },
       rbac: { sa: "none", sm: "boutique", hq: "manage" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "write", ref: "Contact API — update assignee", status: "available", verify: true },
+        { sys: "cekatNew", type: "API", dir: "write", ref: "Update Contact Owner with RBAC check (403 outside boutique)", status: "product", cp: "CP-02" },
         { sys: "cekatNew", type: "API", dir: "read", ref: "Users & Role Hierarchy API", status: "product", cp: "CP-03" },
-        { sys: "cekatNew", type: "Webhook", dir: "in", ref: "Assignment changed → notify new SA", status: "product", cp: "CP-05" },
+        { sys: "cekatWh", type: "Webhook", dir: "in", ref: "Contact updated (owner changed) → n8n notifies new SA", status: "available", verify: true },
       ],
     },
   ],
@@ -419,12 +417,12 @@ const model = {
       id: "Dua implementor di sisi Cekat: IT Dev membangun dengan yang ada di dokumentasi API Cekat (plus n8n, BFF, dan aplikasi mobile); Cekat Product membangun yang belum ada di docs (CP-01 … CP-06).",
     },
     {
-      en: "RBAC mirrors the Cekat CRM Role Hierarchy (SA reports to SM reports to CX Admin, peer sharing off for SA). Until CP-01/02/03 exist, the BFF holds the api_key and enforces scope by assigned SA.",
-      id: "RBAC mengikuti Role Hierarchy Cekat CRM (SA lapor ke SM lapor ke CX Admin, peer sharing mati untuk SA). Sebelum CP-01/02/03 ada, BFF memegang api_key dan membatasi scope berdasarkan SA yang di-assign.",
+      en: "Login, users and RBAC are owned by Cekat Product (CP-01, CP-02, CP-03), based on the Cekat CRM Role Hierarchy (SA reports to SM reports to CX Admin, peer sharing off for SA). IT Dev does not build any auth or scope filtering — the BFF only forwards the user token.",
+      id: "Login, user, dan RBAC dimiliki Cekat Product (CP-01, CP-02, CP-03), berbasis Role Hierarchy Cekat CRM (SA lapor ke SM lapor ke CX Admin, peer sharing mati untuk SA). IT Dev tidak membangun auth maupun filter scope — BFF hanya meneruskan token user."
     },
     {
-      en: "The mobile app never holds the Cekat api_key. All calls go through the BFF.",
-      id: "Aplikasi mobile tidak menyimpan api_key Cekat. Semua panggilan lewat BFF.",
+      en: "The mobile app never holds the Cekat api_key. User requests go through the BFF with the Cekat user token; only n8n uses the workspace api_key for system jobs.",
+      id: "Aplikasi mobile tidak menyimpan api_key Cekat. Request user lewat BFF dengan token user Cekat; hanya n8n yang memakai api_key workspace untuk job sistem.",
     },
     {
       en: "\"Verify path\" = the API section exists in the docs, but the exact endpoint / payload must be checked by IT Dev. Auth header also differs between doc sites (`api_key` vs `Authorization: Bearer`).",

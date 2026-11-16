@@ -5,6 +5,7 @@ import UseCasePage from "./pages/UseCasePage";
 import ActivityPage from "./pages/ActivityPage";
 import ArchitecturePage from "./pages/ArchitecturePage";
 import ErdPage from "./pages/ErdPage";
+import SequencePage from "./pages/SequencePage";
 import { T } from "./i18n";
 
 const NAV = [
@@ -12,7 +13,7 @@ const NAV = [
   { key: "activity", to: "/activity", ready: true },
   { key: "architecture", to: "/architecture", ready: true },
   { key: "erd", to: "/erd", ready: true },
-  { key: "sequence", to: "/sequence" },
+  { key: "sequence", to: "/sequence", ready: true },
   { key: "mockup", to: "/mockup" },
 ];
 
@@ -99,6 +100,7 @@ export default function App() {
         <Header lang={lang} setLang={changeLang} t={t} />
         <Routes>
           <Route path="/use-case" element={<UseCasePage lang={lang} t={t} />} />
+          <Route path="/sequence" element={<SequencePage lang={lang} t={t} />} />
           <Route path="/erd" element={<ErdPage lang={lang} t={t} />} />
           <Route path="/architecture" element={<ArchitecturePage lang={lang} t={t} />} />
           <Route path="/activity" element={<ActivityPage lang={lang} t={t} />} />

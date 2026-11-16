@@ -20,17 +20,17 @@ npm run build    # static build in dist/ (relative paths, works on GitHub Pages)
 | Activity diagrams (5 flows, swimlanes per implementor) | ✅ v0.2 |
 | Solution architecture (Cekat CRM as database) | ✅ v0.2 |
 | ERD + field-level data dictionary (CSV export, JSON samples) | ✅ v0.2 |
-| Sequence diagram | planned |
+| Sequence diagrams (6 flows, request/response variables, endpoint inventory) | ✅ v0.2 |
 | App mockup (HeroUI) | planned |
 
 ### Implementors (Cekat side)
 
 - **Cekat IT Dev** — builds with what is in the Cekat API docs (Contact, Board, Message, Broadcast, Tickets, Webhooks) plus the n8n workflows, the Backend API (BFF) and the mobile app.
-- **Cekat Product** — builds what is **not** in the docs: `CP-01` app sign-in, `CP-02` role-scoped API, `CP-03` Users & Role Hierarchy API, `CP-04` server-side item filter, `CP-05` board item webhook, `CP-06` recipient-level message status. See `src/data/cekatProduct.js`.
+- **Cekat Product** — owns **login, users and RBAC** end to end (the BFF only forwards the Cekat user token; IT Dev builds no auth or scope logic), and builds everything else **not** in the docs: `CP-01` app sign-in, `CP-02` role-scoped API, `CP-03` Users & Role Hierarchy API, `CP-04` server-side item filter, `CP-05` board item webhook, `CP-06` recipient-level message status. See `src/data/cekatProduct.js`.
 
 ### Architecture in one line
 
-Mobile app (HeroUI) → Backend API (BFF, RBAC, holds the Cekat api_key) → Cekat CRM (the database). Shopify, Odoo and Cekat webhooks → n8n → Cekat CRM.
+Mobile app (HeroUI) → Backend API (BFF, forwards the Cekat user token) → Cekat CRM (the database); login and RBAC enforced by Cekat Product. Shopify, Odoo and Cekat webhooks → n8n → Cekat CRM.
 
 ### Use Case diagram
 
@@ -57,6 +57,7 @@ src/
   data/activities.js            activity diagrams (lanes, nodes, edges)
   data/architecture.js          architecture components, interfaces, data ownership
   data/cekatProduct.js          implementors + Cekat Product backlog
+  data/sequences.js             sequence diagrams with payload variables
   data/erd.js                   entities → Cekat Contacts / Boards / Tickets, every field
   components/diagram/layout.js  coordinates for nodes & edges
   components/diagram/UseCaseSvg.jsx

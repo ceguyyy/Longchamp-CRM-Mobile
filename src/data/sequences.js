@@ -1,0 +1,300 @@
+/*
+ * Sequence diagrams with variable-level payloads.
+ * Field names match src/data/erd.js.
+ *
+ * message: M(from, to, kind, label, ref, payload, opts)
+ *   kind:  sync | async | reply | self
+ *   opts:  { cp, verify, note }
+ * fragment: { type: "alt" | "opt" | "loop", from, to, label, branches: [{ at, label }] }
+ *   from / to are message indexes (0-based, inclusive).
+ */
+const L = (en, id = en) => ({ en, id });
+const M = (from, to, kind, label, ref = "", payload = null, opts = {}) => ({ from, to, kind, label, ref, payload, ...opts });
+
+export const PARTICIPANTS = {
+  user: { name: L("Actor", "Aktor"), sub: "SA · SM", owner: "user" },
+  app: { name: L("Mobile App", "Aplikasi Mobile"), sub: "HeroUI", owner: "itdev" },
+  bff: { name: L("Backend API"), sub: "BFF · proxy", owner: "itdev" },
+  n8n: { name: L("n8n"), sub: "workflows", owner: "itdev" },
+  crm: { name: L("Cekat CRM API"), sub: "Contact · Board", owner: "itdev" },
+  chat: { name: L("Cekat Chat API"), sub: "Message · Broadcast", owner: "itdev" },
+  wh: { name: L("Cekat Webhook"), sub: "Devtools", owner: "itdev" },
+  cp: { name: L("Cekat Product", "Cekat Product"), sub: "Login · RBAC · CP-xx", owner: "product" },
+  shopify: { name: L("Shopify"), sub: "REST Admin", owner: "external" },
+  odoo: { name: L("Odoo POS"), sub: "webhook · REST", owner: "external" },
+  fcm: { name: L("FCM / APNs"), sub: "push", owner: "external" },
+};
+
+const UTOKEN = "Authorization: Bearer <Cekat user token>";
+const KEY = "api_key: <workspace key>";
+
+const sequences = [
+  /* ================================================================ SD-01 */
+  {
+    id: "SD-01",
+    title: L("Sign in & role resolution", "Login & penentuan role"),
+    desc: L(
+      "Cekat Product authenticates the CRM user and returns role and data scope. The backend holds no credentials and builds no scope — it only forwards the Cekat user token.",
+      "Cekat Product mengautentikasi user CRM dan mengembalikan role serta scope data. Backend tidak menyimpan kredensial dan tidak membangun scope — hanya meneruskan token user Cekat."
+    ),
+    refs: ["UC-21", "AD-01"],
+    participants: ["user", "app", "bff", "cp", "crm"],
+    messages: [
+      M("user", "app", "sync", L("Enter email & password", "Isi email & password")),
+      M("app", "bff", "sync", L("Sign in", "Login"), "POST /v1/auth/login", {
+        email: "andi@longchamp.co.id", password: "••••••••", device_id: "dev_7f3a9c", platform: "ios", push_token: "fcm:APA91b…", app_version: "1.0.3",
+      }),
+      M("bff", "cp", "sync", L("Authenticate CRM user", "Autentikasi user CRM"), "POST /auth/token (new)", {
+        email: "andi@longchamp.co.id", password: "••••••••", client_id: "longchamp-clienteling",
+      }, { cp: "CP-01" }),
+      M("cp", "bff", "reply", L("Invalid credentials", "Kredensial salah"), "401", { error: "invalid_credentials" }, { cp: "CP-01" }),
+      M("bff", "app", "reply", L("Sign-in error", "Error login"), "401", { error: "invalid_credentials" }),
+      M("cp", "bff", "reply", L("User token", "Token user"), "200", {
+        access_token: "ck_usr_…", refresh_token: "ck_ref_…", expires_in: 3600, cekat_user_id: "agt_5521", email: "andi@longchamp.co.id",
+      }, { cp: "CP-01" }),
+      M("bff", "cp", "sync", L("Get me: role & scope", "Ambil me: role & scope"), "GET /users/me (new)", { headers: UTOKEN }, { cp: "CP-03" }),
+      M("cp", "bff", "reply", L("Role & scope", "Role & scope"), "200", {
+        cekat_user_id: "agt_5521", full_name: "Andi Pratama", cekat_role_name: "SA – Plaza Indonesia", app_role: "sa",
+        reports_to: "SM – Plaza Indonesia", authority: "Basic User", share_with_peers: false,
+        scope: { boutique_ids: [3], visible_owner_ids: ["agt_5521"], include_unassigned: true },
+      }, { cp: "CP-03" }),
+      M("bff", "crm", "async", L("Upsert App Devices item", "Upsert item App Devices"), "POST /api/crm/boards/{appDevicesBoardId}/items", {
+        device_id: "dev_7f3a9c", cekat_user_id: "agt_5521", platform: "ios", push_token: "fcm:APA91b…", app_version: "1.0.3", last_seen_at: "2026-11-16T09:12:00+07:00",
+      }, { verify: true, note: "System write with workspace api_key — device tokens are for push (IT Dev)." }),
+      M("bff", "app", "reply", L("Session", "Sesi"), "200", {
+        access_token: "ck_usr_…", refresh_token: "ck_ref_…", expires_in: 3600,
+        user: { cekat_user_id: "agt_5521", full_name: "Andi Pratama", app_role: "sa", boutique_id: 3 },
+        modules: ["search", "lists", "actions", "catalog", "performance"],
+      }),
+      M("app", "user", "reply", L("Home with modules for the role", "Home dengan modul sesuai role")),
+    ],
+    fragments: [
+      { type: "alt", from: 3, to: 9, label: L("invalid", "tidak valid"), branches: [{ at: 5, label: L("valid", "valid") }] },
+    ],
+  },
+
+  /* ================================================================ SD-02 */
+  {
+    id: "SD-02",
+    title: L("Search client & open profile", "Cari klien & buka profil"),
+    desc: L(
+      "The backend forwards the user token; Cekat Product applies RBAC on every read, so only clients in the user's scope come back.",
+      "Backend meneruskan token user; Cekat Product menerapkan RBAC di setiap pembacaan, jadi hanya klien dalam scope user yang dikembalikan."
+    ),
+    refs: ["UC-01", "UC-02", "UC-03"],
+    participants: ["user", "app", "bff", "cp", "crm"],
+    messages: [
+      M("user", "app", "sync", L("Type phone / name", "Ketik HP / nama")),
+      M("app", "bff", "sync", L("Search clients", "Cari klien"), "GET /v1/clients?q=0812345&limit=20", { headers: UTOKEN }),
+      M("bff", "cp", "sync", L("Contacts query with user token", "Query kontak dengan token user"), "GET /api/contacts?q=0812345&limit=20", { headers: UTOKEN }, { cp: "CP-02", note: "Same Contact API, but evaluated as the signed-in user (RBAC)." }),
+      M("cp", "crm", "sync", L("Read within Role Hierarchy visibility", "Baca sesuai visibilitas Role Hierarchy"), "own · subordinates · unassigned", null, { cp: "CP-02" }),
+      M("crm", "cp", "reply", L("Visible contacts", "Kontak yang terlihat"), "200"),
+      M("cp", "bff", "reply", L("Scoped contacts", "Kontak sesuai scope"), "200", {
+        success: true, data: [{ id: 100245, contact_name: "Sari Dewi", phone: "+6281234567890", contact_owner: "agt_5521", additional_fields: { current_tier_name: "FAN", last_reach_out_at: "2026-10-02T14:20:00+07:00" } }],
+      }, { cp: "CP-02" }),
+      M("bff", "app", "reply", L("Results", "Hasil"), "200", {
+        items: [{ customer_id: 100245, full_name: "Sari Dewi", phone_masked: "+62812•••7890", current_tier_name: "FAN", assigned_user_name: "Andi Pratama", last_reach_out_at: "2026-10-02T14:20:00+07:00" }],
+        next_cursor: null,
+      }),
+      M("user", "app", "sync", L("Open client", "Buka klien")),
+      M("app", "bff", "sync", L("Get profile", "Ambil profil"), "GET /v1/clients/100245", { headers: UTOKEN }),
+      M("bff", "cp", "sync", L("Get contact (RBAC)", "Ambil kontak (RBAC)"), "GET /api/contacts/100245", { headers: UTOKEN }, { cp: "CP-02" }),
+      M("cp", "bff", "reply", L("Not in scope", "Di luar scope"), "403", { error: "forbidden" }, { cp: "CP-02" }),
+      M("bff", "cp", "sync", L("Get transactions (RBAC)", "Ambil transaksi (RBAC)"), "GET /api/crm/boards/{transactionsBoardId}/items", { headers: UTOKEN, filter: { customer_id: 100245 }, sort: "-transaction_datetime", limit: 10 }, { cp: "CP-02" }),
+      M("bff", "cp", "sync", L("Get Love Tags (RBAC)", "Ambil Love Tags (RBAC)"), "GET /api/crm/boards/{loveTagsBoardId}/items", { headers: UTOKEN, filter: { customer_id: 100245 } }, { cp: "CP-02" }),
+      M("cp", "bff", "reply", L("Contact + items", "Kontak + item"), "200", null, { cp: "CP-02" }),
+      M("bff", "app", "reply", L("Client card", "Kartu klien"), "200", {
+        customer_id: 100245, full_name: "Sari Dewi", current_tier_name: "FAN", total_spent_idr: 64500000, purchase_count: 7,
+        consent_wa: true, birthdate: "1990-12-02", love_tags: ["le_pliage", "leather", "gifting"], client_note: "Prefers navy…",
+        purchases: [{ receipt_number: "PI-0055231", transaction_datetime: "2026-10-28T16:30:00+07:00", amount_net_idr: 4750000, channel: "offline" }],
+        reach_out: { eligible: true, days_since_last_contact: 45 },
+      }),
+    ],
+    fragments: [
+      { type: "opt", from: 10, to: 10, label: L("client outside scope", "klien di luar scope") },
+    ],
+  },
+
+  /* ================================================================ SD-03 */
+  {
+    id: "SD-03",
+    title: L("POS order → Golden Record → push", "Order POS → Golden Record → push"),
+    desc: L(
+      "Odoo pushes the paid POS order; n8n updates the contact and transactions in Cekat CRM and, on a tier change, creates the push, the Agenda task and the device notification.",
+      "Odoo mengirim order POS yang sudah dibayar; n8n meng-update kontak dan transaksi di Cekat CRM, dan bila tier berubah, membuat push, task Agenda, serta notifikasi perangkat."
+    ),
+    refs: ["UC-03", "UC-10", "AD-02"],
+    participants: ["odoo", "n8n", "crm", "fcm", "app"],
+    messages: [
+      M("odoo", "n8n", "async", L("Webhook: POS order paid", "Webhook: order POS dibayar"), "POST /webhook/odoo/pos-order", {
+        event: "pos.order.paid", odoo_order_id: 55231, receipt_number: "PI-0055231", transaction_type: "sale",
+        partner: { odoo_partner_id: 10432, name: "Sari Dewi", phone: "+6281234567890", email: "sari.dewi@mail.com" },
+        boutique_id: 3, salesperson_id: 87, transaction_datetime: "2026-10-28T16:30:00+07:00", currency: "IDR", amount_net: 4750000,
+        line_items: [{ sku: "L1899089P59", product_name: "Le Pliage Original M", category: "Handbag", qty: 1, unit_price: 2450000 }],
+      }),
+      M("n8n", "n8n", "self", L("Verify secret · idempotency_key = sha256(source+id+event)", "Verifikasi secret · idempotency_key = sha256(source+id+event)")),
+      M("n8n", "odoo", "reply", L("Duplicate — ignored", "Duplikat — diabaikan"), "200", { status: "duplicate_ignored" }),
+      M("n8n", "crm", "sync", L("Find contact by phone", "Cari kontak berdasarkan HP"), "GET /api/contacts?phone=%2B6281234567890", { headers: KEY }, { verify: true }),
+      M("crm", "n8n", "reply", L("Contact (or none)", "Kontak (atau kosong)"), "200", { data: [{ id: 100245 }] }),
+      M("n8n", "crm", "sync", L("Upsert contact", "Upsert kontak"), "PATCH /api/contacts/100245", {
+        last_purchase_date: "2026-10-28", purchase_count: 7, total_spent_idr: 64500000, product_categories: "Handbag,Le Pliage",
+      }, { verify: true }),
+      M("n8n", "crm", "sync", L("Create Transactions item", "Buat item Transactions"), "POST /api/crm/boards/{transactionsBoardId}/items", {
+        source_system: "odoo", source_order_id: "55231", receipt_number: "PI-0055231", customer_id: 100245, transaction_type: "sale",
+        boutique_id: 3, salesperson_user_id: 87, channel: "offline", transaction_datetime: "2026-10-28T16:30:00+07:00",
+        currency: "IDR", amount_net_idr: 4750000, idempotency_key: "9f2c…e81a",
+      }, { verify: true }),
+      M("n8n", "crm", "sync", L("Create Transaction Lines", "Buat Transaction Lines"), "POST /api/crm/boards/{transactionLinesBoardId}/items", {
+        transaction_id: 7781, sku: "L1899089P59", product_name: "Le Pliage Original M", category: "Handbag", qty: 1, unit_price_idr: 2450000, line_total_idr: 2450000,
+      }, { verify: true }),
+      M("n8n", "n8n", "self", L("Recompute tier from total_spent_idr", "Hitung ulang tier dari total_spent_idr")),
+      M("n8n", "crm", "sync", L("Update tier on contact", "Update tier di kontak"), "PATCH /api/contacts/100245", { current_tier_id: 4, current_tier_name: "FAN" }, { verify: true }),
+      M("n8n", "crm", "sync", L("Create Segment History", "Buat Segment History"), "POST /api/crm/boards/{segmentHistoryBoardId}/items", {
+        customer_id: 100245, from_tier_id: 3, to_tier_id: 4, direction: "upgrade", trigger_transaction_id: 7781, total_spent_idr_at_change: 64500000,
+      }, { verify: true }),
+      M("n8n", "crm", "sync", L("Create Clienteling Push", "Buat Clienteling Push"), "POST /api/crm/boards/{pushesBoardId}/items", {
+        push_type: "high_value_upgrade", rule_id: 2, customer_id: 100245, assigned_user_id: 87, boutique_id: 3, trigger_history_id: 9001, due_date: "2026-11-04", status: "sent",
+      }, { verify: true }),
+      M("n8n", "crm", "sync", L("Create Agenda task", "Buat task Agenda"), "POST /api/crm/boards/{agendaBoardId}/items", {
+        item_type: "task", subtype: "call", title: "Call Sari — FAN upgrade", customer_id: 100245, owner_user_id: 87, boutique_id: 3, schedule: "2026-11-04", source: "push", push_id: 6120,
+      }, { verify: true }),
+      M("n8n", "fcm", "sync", L("Send push", "Kirim push"), "POST /v1/projects/{project}/messages:send", {
+        message: { token: "fcm:APA91b…", notification: { title: "High Value Upgrade", body: "Sari Dewi is now FAN — call before 4 Nov" }, data: { push_id: "6120", customer_id: "100245" } },
+      }),
+      M("fcm", "app", "async", L("Notification on SA device", "Notifikasi di perangkat SA")),
+      M("n8n", "crm", "sync", L("Update totals only", "Update total saja"), "PATCH /api/contacts/100245", { total_spent_idr: 64500000, purchase_count: 7 }, { verify: true }),
+      M("n8n", "odoo", "reply", L("Processed", "Diproses"), "200", { status: "processed", transaction_id: 7781 }),
+    ],
+    fragments: [
+      { type: "opt", from: 2, to: 2, label: L("duplicate event", "event duplikat") },
+      { type: "alt", from: 9, to: 15, label: L("tier changed", "tier berubah"), branches: [{ at: 15, label: L("no change", "tidak berubah") }] },
+    ],
+  },
+
+  /* ================================================================ SD-04 */
+  {
+    id: "SD-04",
+    title: L("Reach Out via WhatsApp", "Reach Out via WhatsApp"),
+    desc: L(
+      "30-day check, send through Cekat (session message or approved template), webhook updates the contact, then the SA logs reason and channel.",
+      "Cek 30 hari, kirim lewat Cekat (pesan sesi atau template approved), webhook meng-update kontak, lalu SA mencatat alasan dan channel."
+    ),
+    refs: ["UC-11", "UC-12", "UC-13", "AD-03"],
+    participants: ["user", "app", "bff", "crm", "chat", "wh", "n8n"],
+    messages: [
+      M("user", "app", "sync", L("Tap Reach Out", "Tekan Reach Out")),
+      M("app", "bff", "sync", L("Check eligibility", "Cek kelayakan"), "GET /v1/clients/100245/reach-out", { headers: UTOKEN }),
+      M("bff", "crm", "sync", L("Get contact (user token)", "Ambil kontak (token user)"), "GET /api/contacts/100245", { headers: UTOKEN }, { verify: true, note: "RBAC enforced by Cekat Product (CP-02)." }),
+      M("crm", "bff", "reply", L("Contact", "Kontak"), "200", { last_reach_out_at: "2026-10-02T14:20:00+07:00", consent_wa: true, last_contact_from_agent: "2026-10-02T14:19:00+07:00" }),
+      M("bff", "app", "reply", L("Not eligible", "Tidak layak"), "200", { eligible: false, days_since_last_contact: 12, reason: "contacted_within_30_days" }),
+      M("bff", "app", "reply", L("Eligible + templates", "Layak + template"), "200", {
+        eligible: true, days_since_last_contact: 45, session_open: false,
+        templates: [{ template_id: 14, code: "vip_upgrade_thanks", title: "Thank you — new tier", wa_template_name: "lc_vip_upgrade_id" }],
+      }),
+      M("user", "app", "sync", L("Pick template, personalise, send", "Pilih template, personalisasi, kirim")),
+      M("app", "bff", "sync", L("Send message", "Kirim pesan"), "POST /v1/messages", {
+        customer_id: 100245, channel: "whatsapp", template_id: 14, variables: { first_name: "Sari", sa_name: "Andi", boutique_name: "Plaza Indonesia" }, push_id: 6120,
+      }),
+      M("bff", "chat", "sync", L("Send session message", "Kirim pesan sesi"), "POST Message API (send text)", { inbox_id: "<GET /api/inboxes>", phone: "+6281234567890", text: "Halo Sari, …" }, { verify: true }),
+      M("bff", "chat", "sync", L("Send approved template", "Kirim template approved"), "POST Message API (send template)", {
+        inbox_id: "<GET /api/inboxes>", phone: "+6281234567890", template_name: "lc_vip_upgrade_id", language: "id", parameters: ["Sari", "Andi"],
+      }, { verify: true }),
+      M("chat", "bff", "reply", L("Message id", "Id pesan"), "200", { message_id: "msg_77ab…", status: "sent" }),
+      M("bff", "app", "reply", L("Sent", "Terkirim"), "200", { cekat_message_id: "msg_77ab…", status: "sent" }),
+      M("wh", "n8n", "async", L("Webhook: Message Sent", "Webhook: Message Sent"), "POST /webhook/cekat/message", { event: "message_sent", message_id: "msg_77ab…", contact_id: 100245, sent_at: "2026-11-16T10:30:05+07:00" }, { verify: true, note: "Event exists; payload fields to verify." }),
+      M("n8n", "crm", "sync", L("Update last_reach_out_at", "Update last_reach_out_at"), "PATCH /api/contacts/100245", { last_reach_out_at: "2026-11-16T10:30:05+07:00", last_reach_out_channel: "whatsapp" }, { verify: true }),
+      M("app", "user", "reply", L("Reach-out form", "Form reach-out")),
+      M("user", "app", "sync", L("Select reason & channel, validate", "Pilih alasan & channel, validasi")),
+      M("app", "bff", "sync", L("Log reach-out", "Catat reach-out"), "POST /v1/reach-outs", {
+        customer_id: 100245, contact_reason: "push", channel: "whatsapp", push_id: 6120, template_id: 14, cekat_message_id: "msg_77ab…", contacted_at: "2026-11-16T10:30:00+07:00",
+      }),
+      M("bff", "crm", "sync", L("Create Reach Out item", "Buat item Reach Out"), "POST /api/crm/boards/{reachOutBoardId}/items", {
+        customer_id: 100245, user_id: 87, boutique_id: 3, contact_reason: "push", channel: "whatsapp", push_id: 6120, template_id: 14,
+        cekat_message_id: "msg_77ab…", contacted_at: "2026-11-16T10:30:00+07:00", validated_at: "2026-11-16T10:31:00+07:00",
+        days_since_last_contact: 45, attribution_end_date: "2026-12-16",
+      }, { verify: true }),
+      M("bff", "crm", "sync", L("Mark push executed", "Tandai push executed"), "PATCH /api/crm/boards/{pushesBoardId}/items/6120", { status: "executed", reach_out_id: 4410, executed_at: "2026-11-16T10:31:00+07:00" }, { verify: true }),
+      M("bff", "app", "reply", L("Logged", "Tercatat"), "201", { reach_out_id: 4410, attribution_end_date: "2026-12-16" }),
+    ],
+    fragments: [
+      { type: "alt", from: 4, to: 5, label: L("contacted < 30 days", "dihubungi < 30 hari"), branches: [{ at: 5, label: L("eligible", "layak") }] },
+      { type: "alt", from: 8, to: 9, label: L("24h session open", "sesi 24 jam terbuka"), branches: [{ at: 9, label: L("else", "lainnya") }] },
+      { type: "opt", from: 18, to: 18, label: L("push_id present", "ada push_id") },
+    ],
+  },
+
+  /* ================================================================ SD-05 */
+  {
+    id: "SD-05",
+    title: L("Catalog, stock & wishlist", "Katalog, stok & wishlist"),
+    desc: L(
+      "Catalog from Shopify (cached), live stock from Odoo, wishlist stored in Cekat CRM and sent on WhatsApp; delivery status needs CP-06, conversion checked daily for 30 days.",
+      "Katalog dari Shopify (cache), stok live dari Odoo, wishlist disimpan di Cekat CRM dan dikirim lewat WhatsApp; status terkirim butuh CP-06, konversi dicek harian selama 30 hari."
+    ),
+    refs: ["UC-15", "UC-16", "UC-17", "AD-04"],
+    participants: ["user", "app", "bff", "shopify", "odoo", "crm", "chat", "cp", "n8n"],
+    messages: [
+      M("user", "app", "sync", L("Browse catalog", "Lihat katalog")),
+      M("app", "bff", "sync", L("List products", "Daftar produk"), "GET /v1/products?collection=roseau", { headers: UTOKEN }),
+      M("bff", "shopify", "sync", L("Products (cache miss)", "Produk (cache miss)"), "GET /admin/api/{version}/products.json?collection_id=…", { headers: "X-Shopify-Access-Token" }),
+      M("shopify", "bff", "reply", L("Products", "Produk"), "200", { products: [{ id: 8812, title: "Roseau Shoulder Bag", variants: [{ sku: "L10165HFP", price: "9900000.00" }], handle: "roseau" }] }),
+      M("bff", "app", "reply", L("Catalog", "Katalog"), "200", { items: [{ sku: "L10165HFP", product_name: "Roseau Shoulder Bag", price_idr: 9900000, product_url: "https://longchamp.co.id/products/roseau", image_url: "…" }] }),
+      M("user", "app", "sync", L("Check stock", "Cek stok")),
+      M("app", "bff", "sync", L("Stock by boutique", "Stok per boutique"), "GET /v1/stock?sku=L10165HFP", { headers: UTOKEN }),
+      M("bff", "odoo", "sync", L("stock.quant search_read", "stock.quant search_read"), "Odoo JSON-RPC · stock.quant.search_read", {
+        domain: [["product_id.default_code", "=", "L10165HFP"], ["location_id", "in", [41, 42, 43, 44, 45]]], fields: ["location_id", "quantity", "reserved_quantity"],
+      }),
+      M("odoo", "bff", "reply", L("Quants", "Quant"), "200", { result: [{ location_id: [41, "PI/Stock"], quantity: 2, reserved_quantity: 0 }] }),
+      M("bff", "app", "reply", L("Stock", "Stok"), "200", { sku: "L10165HFP", stock: [{ boutique_id: 3, boutique_name: "Plaza Indonesia", qty: 2 }, { boutique_id: 4, boutique_name: "Pondok Indah Mall 3", qty: 0 }] }),
+      M("user", "app", "sync", L("Add to wishlist & send", "Tambah ke wishlist & kirim")),
+      M("app", "bff", "sync", L("Create wishlist", "Buat wishlist"), "POST /v1/wishlists", {
+        customer_id: 100245, items: [{ sku: "L10165HFP", product_name: "Roseau Shoulder Bag", price_idr: 9900000, product_url: "https://longchamp.co.id/products/roseau", stock_boutique_qty: 2 }],
+      }),
+      M("bff", "crm", "sync", L("Create Wishlist items", "Buat item Wishlist"), "POST /api/crm/boards/{wishlistBoardId}/items", {
+        wishlist_ref: "WL-20261116-0087-01", customer_id: 100245, created_by_user_id: 87, boutique_id: 3, sku: "L10165HFP", product_name: "Roseau Shoulder Bag", price_idr: 9900000, product_url: "https://longchamp.co.id/products/roseau",
+      }, { verify: true }),
+      M("bff", "chat", "sync", L("Send WA with links", "Kirim WA dengan link"), "POST Message API (send)", { inbox_id: "<id>", phone: "+6281234567890", text: "Halo Sari, ini pilihan dari Andi: …" }, { verify: true }),
+      M("chat", "bff", "reply", L("Message id", "Id pesan"), "200", { message_id: "msg_91c0…" }),
+      M("bff", "app", "reply", L("Wishlist sent", "Wishlist terkirim"), "201", { wishlist_ref: "WL-20261116-0087-01", sent_at: "2026-11-16T11:02:00+07:00" }),
+      M("cp", "n8n", "async", L("Webhook: message status", "Webhook: status pesan"), "POST /webhook/cekat/message-status (new)", { message_id: "msg_91c0…", contact_id: 100245, status: "read", at: "2026-11-16T11:20:00+07:00" }, { cp: "CP-06" }),
+      M("n8n", "crm", "sync", L("Update delivery_status", "Update delivery_status"), "PATCH Wishlist items", { wishlist_ref: "WL-20261116-0087-01", delivery_status: "read" }, { verify: true }),
+      M("n8n", "crm", "sync", L("Find purchases of wishlist SKUs", "Cari pembelian SKU wishlist"), "GET Transaction Lines + Transactions", { filter: { customer_id: 100245, sku: ["L10165HFP"], since: "2026-11-16" } }),
+      M("n8n", "crm", "sync", L("Set converted_transaction_id", "Set converted_transaction_id"), "PATCH Wishlist items", { converted_transaction_id: 7802 }, { verify: true }),
+    ],
+    fragments: [
+      { type: "loop", from: 18, to: 19, label: L("daily, 30 days", "harian, 30 hari") },
+    ],
+  },
+
+  /* ================================================================ SD-06 */
+  {
+    id: "SD-06",
+    title: L("Store Manager reassigns a client", "Store Manager memindahkan klien"),
+    desc: L(
+      "The permission check is done by Cekat Product on the user token (an SM may only reassign inside their boutique). The documented Contact updated webhook lets n8n notify the new SA — also when the change is made in the Cekat UI.",
+      "Pengecekan izin dilakukan Cekat Product lewat token user (SM hanya boleh memindahkan di dalam boutique-nya). Webhook Contact updated yang terdokumentasi membuat n8n bisa memberi tahu SA baru — juga saat perubahan dilakukan di UI Cekat."
+    ),
+    refs: ["UC-22", "AD-05"],
+    participants: ["user", "app", "bff", "cp", "crm", "wh", "n8n", "fcm"],
+    messages: [
+      M("user", "app", "sync", L("Reassign to another SA", "Pindahkan ke SA lain")),
+      M("app", "bff", "sync", L("Change assignee", "Ubah assignee"), "PATCH /v1/clients/100245/assignee", { headers: UTOKEN, new_owner_id: "agt_5590", reason: "sa_resigned" }),
+      M("bff", "cp", "sync", L("Update Contact Owner (RBAC)", "Update Contact Owner (RBAC)"), "PATCH /api/contacts/100245", { headers: UTOKEN, contact_owner: "agt_5590" }, { cp: "CP-02" }),
+      M("cp", "bff", "reply", L("Forbidden — outside scope", "Ditolak — di luar scope"), "403", { error: "forbidden", reason: "target_owner_not_in_scope" }, { cp: "CP-02" }),
+      M("bff", "app", "reply", L("Show error", "Tampilkan error"), "403", { error: "outside_scope" }),
+      M("cp", "crm", "sync", L("Apply update", "Terapkan update"), "contact_owner = agt_5590", null, { cp: "CP-02" }),
+      M("cp", "bff", "reply", L("Updated", "Ter-update"), "200", { id: 100245, contact_owner: "agt_5590" }, { cp: "CP-02" }),
+      M("bff", "app", "reply", L("Done", "Selesai"), "200", { customer_id: 100245, assigned_user_name: "Maya Lestari" }),
+      M("wh", "n8n", "async", L("Webhook: Contact updated", "Webhook: Contact updated"), "POST /webhook/cekat/contact", { event: "contact_updated", contact_id: 100245, changed: ["contact_owner"] }, { verify: true, note: "Confirm the payload says which field changed." }),
+      M("n8n", "crm", "sync", L("Move open Agenda items to new SA", "Pindahkan item Agenda terbuka ke SA baru"), "PATCH /api/crm/boards/{agendaBoardId}/items/*", { headers: KEY, filter: { customer_id: 100245, status: "open" }, set: { owner_user_id: "agt_5590" } }, { verify: true }),
+      M("n8n", "fcm", "sync", L("Push to new SA", "Push ke SA baru"), "POST /v1/projects/{project}/messages:send", { message: { token: "fcm:…maya", notification: { title: "New client", body: "Sari Dewi is now in your Client Book" } } }),
+      M("fcm", "app", "async", L("Notification", "Notifikasi")),
+    ],
+    fragments: [
+      { type: "alt", from: 3, to: 7, label: L("not allowed", "tidak diizinkan"), branches: [{ at: 5, label: L("allowed", "diizinkan") }] },
+    ],
+  },
+
+];
+
+export default sequences;

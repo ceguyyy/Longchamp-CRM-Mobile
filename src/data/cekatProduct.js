@@ -17,16 +17,16 @@ export const IMPLEMENTORS = {
     name: { en: "Cekat IT Dev", id: "Cekat IT Dev" },
     short: "IT Dev",
     desc: {
-      en: "Integrates the documented Cekat API, builds n8n workflows, the BFF and the mobile app.",
-      id: "Integrasi API Cekat yang sudah terdokumentasi, membangun workflow n8n, BFF, dan aplikasi mobile.",
+      en: "Integrates the documented Cekat API, builds n8n workflows, the BFF and the mobile app. Does not implement login or RBAC.",
+      id: "Integrasi API Cekat yang sudah terdokumentasi, membangun workflow n8n, BFF, dan aplikasi mobile. Tidak mengimplementasikan login maupun RBAC.",
     },
   },
   product: {
     name: { en: "Cekat Product", id: "Cekat Product" },
     short: "Cekat Product",
     desc: {
-      en: "Builds platform capabilities that do not exist in the Cekat API docs yet.",
-      id: "Membangun kapabilitas platform yang belum ada di dokumentasi API Cekat.",
+      en: "Owns sign-in, users and RBAC end to end, and builds every capability not in the Cekat API docs yet.",
+      id: "Memegang login, user, dan RBAC dari ujung ke ujung, serta membangun semua kapabilitas yang belum ada di dokumentasi API Cekat.",
     },
   },
   external: {
@@ -55,10 +55,10 @@ export const CP_BACKLOG = [
   {
     id: "CP-02",
     priority: "Must",
-    title: { en: "Role-scoped Contacts & Board API", id: "Contacts & Board API yang mengikuti role" },
+    title: { en: "RBAC on Contacts & Board API", id: "RBAC pada Contacts & Board API" },
     desc: {
-      en: "API results honour Role Hierarchy visibility for the calling user: own, subordinates, peers (if shared) and unassigned contacts.",
-      id: "Hasil API mengikuti visibilitas Role Hierarchy untuk user pemanggil: milik sendiri, bawahan, peer (jika di-share), dan kontak tanpa assignee.",
+      en: "Reads AND writes are checked against Role Hierarchy for the calling user (own, subordinates, peers if shared, unassigned); out-of-scope calls return 403.",
+      id: "Baca DAN tulis dicek terhadap Role Hierarchy untuk user pemanggil (sendiri, bawahan, peer jika di-share, tanpa assignee); panggilan di luar scope mengembalikan 403.",
     },
   },
   {
