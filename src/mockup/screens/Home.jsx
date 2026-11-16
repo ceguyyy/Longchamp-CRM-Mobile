@@ -72,7 +72,7 @@ export default function Home() {
           <div className="mt-3 grid grid-cols-2 gap-3 px-4">
             <BlackTile label={tx("All customers", "Semua pelanggan")} onClick={() => reset("clients")} />
             <BlackTile label={tx("Country KPI", "KPI negara")} sub={`conv. ${k.conversion_rate}`} onClick={() => reset("performance")} />
-            <BlackTile label={tx("Template library", "Template library")} onClick={() => nav("templates")} />
+            <BlackTile label={tx("WhatsApp templates", "Template WhatsApp")} onClick={() => nav("templates")} />
             <BlackTile label={tx("Push rules", "Aturan push")} onClick={() => nav("push_rules")} />
           </div>
           <div className="px-4">
@@ -114,6 +114,14 @@ export default function Home() {
           <BlackTile label={tx("Actions", "Aksi")} sub={`${myPushes.length} push · ${open.length} agenda`} onClick={() => reset("actions")} />
           <BlackTile label={tx("Product catalog", "Katalog produk")} onClick={() => reset("catalog")} />
         </div>
+        {role === "supervisor" && (
+          <div className="mt-3 grid grid-cols-1 gap-3 px-4">
+            <button onClick={() => reset("templates")} className="flex w-full items-center justify-between border border-black px-4 py-3">
+              <span className="text-[13px] font-bold uppercase tracking-[0.03em]">{tx("WhatsApp templates", "Template WhatsApp")}</span>
+              <span className="text-[11.5px]">{tx("1 pending, 1 rejected", "1 pending, 1 ditolak")}</span>
+            </button>
+          </div>
+        )}
         {role === "supervisor" && (
           <div className="mt-3 px-4">
             <button onClick={() => reset("team")} className="flex w-full items-center justify-between border border-black px-4 py-3">

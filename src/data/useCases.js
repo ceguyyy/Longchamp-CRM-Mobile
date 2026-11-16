@@ -357,15 +357,31 @@ const model = {
     },
     {
       id: "UC-20", module: "perf", actors: ["hq"],
-      name: { en: "Manage templates & push rules", id: "Kelola template & aturan push" },
+      name: { en: "Manage push rules", id: "Kelola aturan push" },
       desc: {
-        en: "Maintain the Template Library and the localised clienteling push rules.",
-        id: "Kelola Template Library dan aturan clienteling push yang dilokalkan.",
+        en: "Maintain the localised clienteling push rules read by the n8n scheduler.",
+        id: "Kelola aturan clienteling push yang dilokalkan dan dibaca scheduler n8n.",
       },
       rbac: { sa: "none", sm: "none", hq: "manage" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "write", ref: "Board API — Templates / Push Rules boards", status: "available", verify: true },
+        { sys: "cekatApi", type: "API", dir: "write", ref: "Board API — Push Rules board", status: "available", verify: true },
         { sys: "n8n", type: "Workflow", dir: "read", ref: "Push scheduler reads active rules", status: "internal" },
+      ],
+    },
+    {
+      id: "UC-23", module: "perf", actors: ["sm", "hq"],
+      name: { en: "Create WhatsApp template", id: "Buat template WhatsApp" },
+      desc: {
+        en: "Supervisor (own boutique) and Super Admin (all boutiques) create WhatsApp templates — category, language, header, body with variables, buttons — submit them to Meta and track Pending / Approved / Rejected. Sales Agents only use approved ones.",
+        id: "Supervisor (boutique sendiri) dan Super Admin (semua boutique) membuat template WhatsApp — kategori, bahasa, header, body dengan variabel, tombol — mengajukannya ke Meta dan memantau Pending / Approved / Rejected. Sales Agent hanya memakai yang sudah approved.",
+      },
+      rbac: { sa: "use", sm: "boutique", hq: "manage" },
+      sources: [
+        { sys: "cekatChat", type: "API", dir: "write", ref: "Open API — create template message (submitted to Meta)", status: "available", verify: true,
+          note: "Cekat Open API lists 'membuat template message'; exact endpoint to verify." },
+        { sys: "n8n", type: "Scheduler", dir: "read", ref: "Poll template status every 15 min → Template Library board", status: "internal" },
+        { sys: "cekatApi", type: "API", dir: "write", ref: "Board API — Template Library item (scope, owner, status)", status: "available", verify: true },
+        { sys: "cekatNew", type: "API", dir: "write", ref: "RBAC: Supervisor may create for own boutique only", status: "product", cp: "CP-02" },
       ],
     },
 

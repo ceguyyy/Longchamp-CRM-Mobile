@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Button, Chip, Input, Label, SearchField, Switch, Tabs, TextField } from "@heroui/react";
 import { useApp, AppBar, Body, SectionTitle, Tile, TierBadge, Initials, Pill, Row, ContactBar } from "../core";
-import { CLIENTS, LISTS, LOVE_TAGS, PUSHES, PUSH_LABEL, TEAM, TEMPLATES, REACH_REASONS, BOUTIQUES, idr, tag } from "../data";
+import { CLIENTS, LISTS, LOVE_TAGS, PUSHES, PUSH_LABEL, TEAM, TEMPLATES, REACH_REASONS, BOUTIQUES, idr, tag, usableTemplates } from "../data";
 
 /* RBAC as returned by Cekat Product (CP-02) — the app only renders what comes back */
 export function visibleClients(role) {
@@ -446,7 +446,7 @@ export function ReachOut({ customer_id, push_id, channel: startChannel }) {
               {channel === "whatsapp" && (
                 <>
                   <SectionTitle>{tx("Template library", "Template library")}</SectionTitle>
-                  {TEMPLATES.filter((t) => t.wa_template_name).map((t) => (
+                  {usableTemplates(3).map((t) => (
                     <button key={t.template_id} onClick={() => setTpl(t)} className="flex w-full items-center justify-between border-b border-[var(--lc-line)] py-2.5 text-left">
                       <span className={`text-[12.5px] ${tpl.template_id === t.template_id ? "font-bold" : ""}`}>{t.title}</span>
                       {tpl.template_id === t.template_id && <span className="h-2.5 w-2.5 bg-[var(--lc-lime)]" />}

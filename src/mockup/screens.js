@@ -5,7 +5,8 @@
 import { Login, Register, Forgot } from "./screens/Auth";
 import Home, { Profile } from "./screens/Home";
 import { ClientSearch, ClientProfile, ClientNew, ReachOut, Lists, ListBuilder, ListDetail, TicketNew } from "./screens/Clients";
-import { Actions, AgendaNew, Catalog, Product, WishlistSend, Performance, Team, Unassigned, Admin, Users, Templates, PushRules } from "./screens/Work";
+import { Actions, AgendaNew, Catalog, Product, WishlistSend, Performance, Team, Unassigned, Admin, Users, PushRules } from "./screens/Work";
+import { Templates, TemplateNew } from "./screens/Templates";
 
 const ALL = ["sales_agent", "supervisor", "super_admin"];
 const FIELD = ["sales_agent", "supervisor"];
@@ -191,12 +192,20 @@ export const SCREENS = {
     note: L("Read-only in the app: users and roles are managed in Cekat by Cekat Product features.", "Hanya baca di app: user dan role dikelola di Cekat lewat fitur Cekat Product."),
   },
   templates: {
-    C: Templates, roles: ["super_admin"], group: "admin",
-    title: L("Template Library", "Template Library"),
-    refs: ["UC-13", "UC-20"],
-    api: ["Template Library board", "Meta template names"],
+    C: Templates, roles: ["supervisor", "super_admin"], group: "admin",
+    title: L("Template library", "Template library"),
+    refs: ["UC-23", "UC-13", "AD-06", "SD-07"],
+    api: ["Template Library board (scope, owner, meta_status)", "n8n polls Meta status via Cekat Open API"],
     owner: "itdev",
-    note: L("Templates are starting points — Sales Agents personalise before sending.", "Template adalah titik awal — Sales Agent mempersonalisasi sebelum kirim."),
+    note: L("Supervisor sees global templates plus their boutique's; Super Admin sees all. Status comes from Meta: pending, approved, rejected with reason.", "Supervisor melihat template global plus milik boutique-nya; Super Admin melihat semua. Status dari Meta: pending, approved, rejected beserta alasannya."),
+  },
+  template_new: {
+    C: TemplateNew, roles: ["supervisor", "super_admin"], group: "admin",
+    title: L("New WhatsApp template", "Template WhatsApp baru"),
+    refs: ["UC-23", "AD-06", "SD-07"],
+    api: ["POST /v1/templates → RBAC check (CP-02)", "Cekat Open API — create template message (verify path)", "Template Library board item"],
+    owner: "itdev",
+    note: L("Fields follow Cekat's template form: name, language, category, optional header, body with variables, optional buttons (website max 2, call max 1, max 10). Supervisors are locked to their boutique.", "Field mengikuti form template Cekat: nama, bahasa, kategori, header opsional, body dengan variabel, tombol opsional (website maks 2, telepon maks 1, maks 10). Supervisor terkunci ke boutique-nya."),
   },
   push_rules: {
     C: PushRules, roles: ["super_admin"], group: "admin",
@@ -230,5 +239,5 @@ export const GROUPS = {
 export const ROOT_OF = {
   client: "clients", client_new: "clients", reach_out: "clients", lists: "home", list_builder: "home", list_detail: "home", ticket_new: "clients",
   agenda_new: "actions", product: "catalog", catalog_pick: "clients", wishlist_send: "catalog",
-  clients_unassigned: "team", users: "admin", templates: "admin", push_rules: "admin", profile: "home",
+  clients_unassigned: "team", users: "admin", templates: "admin", template_new: "templates", push_rules: "admin", profile: "home",
 };

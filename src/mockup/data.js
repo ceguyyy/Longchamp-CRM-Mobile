@@ -143,14 +143,32 @@ export const PRODUCTS = [
 
 export const TEMPLATES = [
   { template_id: 14, code: "vip_upgrade_thanks", title: "Thank you — new tier", moment: "upgrade", wa_template_name: "lc_vip_upgrade_id",
+    scope: "global", boutique_id: null, created_by: "Dimas Hartono", wa_category: "marketing", language: "id", meta_status: "approved",
     body: "Halo {{first_name}}, terima kasih telah menjadi bagian dari Longchamp. Kini Anda berada di tier {{tier}}. Saya {{sa_name}} dari {{boutique_name}} siap membantu." },
   { template_id: 9, code: "birthday_greeting", title: "Birthday greeting", moment: "birthday", wa_template_name: "lc_birthday_id",
+    scope: "global", boutique_id: null, created_by: "Dimas Hartono", wa_category: "marketing", language: "id", meta_status: "approved",
     body: "Selamat ulang tahun, {{first_name}}! Semoga hari Anda menyenangkan. Salam hangat dari {{sa_name}} dan tim {{boutique_name}}." },
-  { template_id: 21, code: "event_invite", title: "Event invitation", moment: "event", wa_template_name: "lc_event_invite_id",
+  { template_id: 21, code: "event_invite", title: "Event invitation — Re-Play preview", moment: "event", wa_template_name: "lc_pi_event_replay_id",
+    scope: "boutique", boutique_id: 3, created_by: "Rina Wijaya", wa_category: "marketing", language: "id", meta_status: "approved",
     body: "Halo {{first_name}}, kami mengundang Anda ke preview koleksi terbaru di {{boutique_name}}. Balas YA untuk konfirmasi." },
+  { template_id: 33, code: "repair_ready", title: "Repair ready for pick-up", moment: "after_sales", wa_template_name: "lc_pi_repair_ready_id",
+    scope: "boutique", boutique_id: 3, created_by: "Rina Wijaya", wa_category: "utility", language: "id", meta_status: "pending",
+    body: "Halo {{first_name}}, produk Anda sudah selesai diperbaiki dan siap diambil di {{boutique_name}}." },
+  { template_id: 35, code: "flash_offer", title: "Private sale access", moment: "general", wa_template_name: "lc_pi_private_sale_id",
+    scope: "boutique", boutique_id: 3, created_by: "Rina Wijaya", wa_category: "marketing", language: "id", meta_status: "rejected",
+    rejection_reason: "Promotional content needs a clear opt-out and no misleading urgency.",
+    body: "Halo {{first_name}}, HANYA HARI INI diskon untuk Anda!" },
+  { template_id: 40, code: "gi_welcome", title: "Welcome — Grand Indonesia", moment: "new_client", wa_template_name: "lc_gi_welcome_id",
+    scope: "boutique", boutique_id: 5, created_by: "Sinta Halim", wa_category: "marketing", language: "id", meta_status: "approved",
+    body: "Halo {{first_name}}, terima kasih telah berkunjung ke {{boutique_name}}." },
   { template_id: 30, code: "wishlist_share", title: "Wishlist selection", moment: "wishlist", wa_template_name: null,
+    scope: "global", boutique_id: null, created_by: "Dimas Hartono", wa_category: null, language: "id", meta_status: "session",
     body: "Halo {{first_name}}, berikut pilihan dari saya untuk Anda: {{links}}" },
 ];
+
+/* templates a Sales Agent of boutique 3 can use */
+export const usableTemplates = (boutiqueId = 3) =>
+  TEMPLATES.filter((t) => t.meta_status === "approved" && (t.scope === "global" || t.boutique_id === boutiqueId));
 
 export const PUSH_RULES = [
   { rule_id: 1, push_type: "vip_birthday", is_active: true, tiers: "FAN, FRIEND, FAMILY", lead_days: 7 },

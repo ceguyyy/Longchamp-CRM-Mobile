@@ -504,7 +504,7 @@ export function Admin() {
       <Body>
         {[
           ["users", tx("Users & roles", "User & role"), tx("Super Admin · Supervisor · Sales Agent — from Cekat", "Super Admin · Supervisor · Sales Agent — dari Cekat")],
-          ["templates", tx("Template Library", "Template Library"), `${TEMPLATES.length} ${tx("templates", "template")}`],
+          ["templates", tx("WhatsApp templates", "Template WhatsApp"), `${TEMPLATES.length} ${tx("templates", "template")}`],
           ["push_rules", tx("Clienteling push rules", "Aturan clienteling push"), `${PUSH_RULES.filter((r) => r.is_active).length} ${tx("active", "aktif")}`],
         ].map(([id, t, s]) => (
           <Tile key={id} onClick={() => nav(id)} className="mb-2 flex items-center justify-between p-4">
@@ -566,7 +566,7 @@ export function Users() {
   );
 }
 
-export function Templates() {
+export function LegacyTemplates() {
   const { tx, back } = useApp();
   return (
     <>

@@ -23,6 +23,7 @@ export const PARTICIPANTS = {
   shopify: { name: L("Shopify"), sub: "REST Admin", owner: "external" },
   odoo: { name: L("Odoo POS"), sub: "webhook · REST", owner: "external" },
   fcm: { name: L("FCM / APNs"), sub: "push", owner: "external" },
+  meta: { name: L("Meta WhatsApp"), sub: "template review", owner: "external" },
 };
 
 const UTOKEN = "Authorization: Bearer <Cekat user token>";
@@ -295,6 +296,56 @@ const sequences = [
     ],
   },
 
+  /* ================================================================ SD-07 */
+  {
+    id: "SD-07",
+    title: L("Create a WhatsApp template", "Buat template WhatsApp"),
+    desc: L(
+      "Supervisor creates a template for their boutique (Super Admin: global). Cekat Product checks the permission, the template is created through the Cekat Open API and reviewed by Meta; n8n polls the status and notifies the creator.",
+      "Supervisor membuat template untuk boutique-nya (Super Admin: global). Cekat Product mengecek izin, template dibuat lewat Cekat Open API dan direview Meta; n8n memantau status dan memberi tahu pembuat."
+    ),
+    refs: ["UC-23", "AD-06"],
+    participants: ["user", "app", "bff", "cp", "chat", "meta", "n8n", "crm", "fcm"],
+    messages: [
+      M("user", "app", "sync", L("Build template & submit", "Susun template & ajukan")),
+      M("app", "bff", "sync", L("Create template", "Buat template"), "POST /v1/templates", {
+        headers: UTOKEN, scope: "boutique", boutique_id: 3, title: "VIP upgrade — Plaza Indonesia", wa_template_name: "lc_pi_vip_upgrade_id",
+        wa_category: "marketing", language: "id", header_type: "image", header_content: "https://cdn…/roseau.jpg",
+        body: "Halo {{1}}, kini Anda berada di tier {{2}}. Saya {{3}} siap membantu di Plaza Indonesia.",
+        variables: [{ n: 1, field: "first_name", sample: "Sari" }, { n: 2, field: "current_tier_name", sample: "FAN" }, { n: 3, field: "sa_name", sample: "Andi" }],
+        footer: "Longchamp Plaza Indonesia", buttons: [{ type: "url", text: "Lihat koleksi", url: "https://longchamp.co.id/…" }, { type: "quick_reply", text: "Buat janji" }],
+      }),
+      M("bff", "cp", "sync", L("Permission check (user token)", "Cek izin (token user)"), "POST /permissions/check (new)", { action: "template.create", scope: "boutique", boutique_id: 3 }, { cp: "CP-02" }),
+      M("cp", "bff", "reply", L("Forbidden", "Ditolak"), "403", { error: "forbidden", reason: "boutique_not_in_scope" }, { cp: "CP-02" }),
+      M("bff", "app", "reply", L("Show error", "Tampilkan error"), "403", { error: "outside_scope" }),
+      M("cp", "bff", "reply", L("Allowed", "Diizinkan"), "200", { allowed: true }, { cp: "CP-02" }),
+      M("bff", "chat", "sync", L("Create template message", "Buat template message"), "POST Open API · template (verify path)", {
+        inbox_id: "<GET /api/inboxes>", name: "lc_pi_vip_upgrade_id", language: "id", category: "MARKETING",
+        components: [
+          { type: "HEADER", format: "IMAGE", example: { header_handle: ["https://cdn…/roseau.jpg"] } },
+          { type: "BODY", text: "Halo {{1}}, kini Anda berada di tier {{2}}. Saya {{3}} siap membantu di Plaza Indonesia.", example: { body_text: [["Sari", "FAN", "Andi"]] } },
+          { type: "FOOTER", text: "Longchamp Plaza Indonesia" },
+          { type: "BUTTONS", buttons: [{ type: "URL", text: "Lihat koleksi", url: "https://longchamp.co.id/…" }, { type: "QUICK_REPLY", text: "Buat janji" }] },
+        ],
+      }, { verify: true, note: "Payload shape follows Meta's template components; confirm Cekat's exact format." }),
+      M("chat", "meta", "async", L("Submit for review", "Ajukan untuk review")),
+      M("chat", "bff", "reply", L("Created — pending", "Dibuat — pending"), "201", { cekat_template_id: "tpl_8f21…", status: "PENDING" }),
+      M("bff", "crm", "sync", L("Save Template Library item", "Simpan item Template Library"), "POST /api/crm/boards/{templatesBoardId}/items", {
+        title: "VIP upgrade — Plaza Indonesia", scope: "boutique", boutique_id: 3, created_by_user_id: 12, wa_template_name: "lc_pi_vip_upgrade_id",
+        cekat_template_id: "tpl_8f21…", wa_category: "marketing", language: "id", meta_status: "pending", submitted_at: "2026-11-16T22:30:00+07:00", is_active: false,
+      }, { verify: true }),
+      M("bff", "app", "reply", L("Pending review", "Menunggu review"), "201", { template_id: 41, meta_status: "pending" }),
+      M("n8n", "chat", "sync", L("Get template status", "Ambil status template"), "GET Open API · templates (verify path)", { status: "PENDING", since: "2026-11-16" }, { verify: true }),
+      M("chat", "n8n", "reply", L("Status from Meta", "Status dari Meta"), "200", { data: [{ cekat_template_id: "tpl_8f21…", status: "APPROVED", rejected_reason: null }] }),
+      M("n8n", "crm", "sync", L("Update item status", "Update status item"), "PATCH /api/crm/boards/{templatesBoardId}/items/41", { meta_status: "approved", approved_at: "2026-11-17T09:10:00+07:00", is_active: true }, { verify: true }),
+      M("n8n", "fcm", "sync", L("Notify creator", "Beri tahu pembuat"), "POST /v1/projects/{project}/messages:send", { message: { token: "fcm:…rina", notification: { title: "Template approved", body: "VIP upgrade — Plaza Indonesia is ready to use" } } }),
+      M("fcm", "app", "async", L("Notification", "Notifikasi")),
+    ],
+    fragments: [
+      { type: "alt", from: 3, to: 10, label: L("not allowed", "tidak diizinkan"), branches: [{ at: 5, label: L("allowed", "diizinkan") }] },
+      { type: "loop", from: 11, to: 15, label: L("every 15 min until approved or rejected", "tiap 15 menit sampai approved atau rejected") },
+    ],
+  },
 ];
 
 export default sequences;
