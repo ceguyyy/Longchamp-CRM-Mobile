@@ -102,9 +102,9 @@
     "semantic_hash": ""
   },
   "src/data/apiSpec.js": {
-    "mtime": 1794884280.3133883,
-    "seen": 1794884282.3638299,
-    "ast_hash": "eb72daa447830a69a10bc917aa1a0eb3",
+    "mtime": 1794884621.5818777,
+    "seen": 1794884623.7927823,
+    "ast_hash": "f58a62f7580b160dcaf83911f7f6c094",
     "semantic_hash": ""
   },
   "src/data/architecture.js": {
@@ -120,9 +120,9 @@
     "semantic_hash": ""
   },
   "src/data/components.js": {
-    "mtime": 1794884248.5997994,
-    "seen": 1794884276.2352695,
-    "ast_hash": "87c45926aaca0f8b883b2ad4f555f8f3",
+    "mtime": 1794884374.9902205,
+    "seen": 1794884623.792786,
+    "ast_hash": "8780730407857629f78504a90f40be93",
     "semantic_hash": ""
   },
   "src/data/coverage.js": {

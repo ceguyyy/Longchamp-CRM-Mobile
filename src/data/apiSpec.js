@@ -198,7 +198,7 @@ export const ENDPOINTS = [
     logic: [
       "Normalisasi telepon ke E.164; tolak bila tidak valid.",
       "Cek duplikat dengan aturan Golden Record yang sama (phone_e164 → mobile_e164 → email). Bila ada dan terlihat → 409 dengan customer_id; bila ada tapi milik SA lain → 409 owned_by_other (tanpa data pribadi).",
-      "Buat item Golden Record: assigned_user = user pembuat, registration_boutique = boutique user, source_primary = app, lifecycle_status = Active, is_anonymous = false, is_reachable dihitung dari consent.",
+      "Buat item Golden Record: assigned_user = user pembuat, registration_boutique = boutique user, source_primary = app, lifecycle_status = Active, is_anonymous = false, is_reachable dihitung dari consent. Kolom tier, total_spent_idr, purchase_count, dan tanggal pembelian tidak ditulis app; pipeline Golden Record yang mengisinya saat ada transaksi.",
       "consent_wa / consent_email wajib dikirim eksplisit (UU PDP) beserta consent_at.",
       "Tambahkan ke Client Book milik user dengan follow_up_status = welcome_pending.",
     ],
@@ -343,9 +343,9 @@ export const ENDPOINTS = [
   },
   {
     id: "L-05", group: "lists", method: "GET · POST · DELETE", path: "/lists/{list_id}/members[/{customer_id}]", title: "Member list", roles: FIELD, uc: ["UC-06", "UC-07", "UC-08"], cp: ["CP-02", "CP-04"],
-    upstream: ["Board List Members", "Contacts (data baris)"],
+    upstream: ["Board List Members", "Board Golden Record (data baris)"],
     logic: [
-      "GET: member + data baris (nama, tier, ulang tahun, last contact, follow_up_status, consent) untuk ikon kontak.",
+      "GET: member + data baris dari board Golden Record (nama, tier, ulang tahun, last contact, follow_up_status, consent) untuk ikon kontak.",
       "Sort sesuai sort_by list atau query sort.",
       "POST/DELETE hanya untuk list manual dan client_book.",
       "Member di luar scope user tidak dikembalikan (CP-02).",
@@ -638,7 +638,7 @@ export const ENDPOINTS = [
   },
   {
     id: "M-02", group: "kpi", method: "GET", path: "/team", title: "Tim boutique", roles: LEAD, uc: ["UC-19", "UC-22"], cp: ["CP-02", "CP-03"],
-    upstream: ["Users API (CP-03)", "KPI Snapshot level sa", "Contacts tanpa assignee (count)"],
+    upstream: ["Users API (CP-03)", "KPI Snapshot level sa", "Golden Record tanpa assigned_user (count)"],
     logic: ["Satu baris per Sales Agent dengan KPI bulan berjalan dan push completion.", "Jumlah pelanggan tanpa assignee untuk tombol reassign."],
     query: [V("boutique_id", "int", false, "Super Admin saja.", 3)],
     response: { boutique_id: 3, unassigned_customers: 6, data: [{ user_id: 87, full_name: "Andi Pratama", customers: 142, actions: 62, conversion_rate: 9, sales_idr: 48500000, push_sent: 12, push_executed: 11 }] },
@@ -709,7 +709,7 @@ export const WRITE_RULES = [
   "Data Shopify dan Odoo (transaksi, total belanja, tier) sudah masuk ke Cekat CRM lewat pipeline Golden Record yang berjalan. Clienteling API dan n8n app tidak mendengarkan webhook transaksi Shopify/Odoo; keduanya membaca board Golden Record dan Transactions.",
   "Pelanggan = item board Golden Record (bukan Contacts). App menulis kolom yang sama dengan pipeline (phone_e164, email, consent, registration_boutique, dll.) dan kolom baru clienteling (assigned_user, last_reach_out_at, love_tags).",
   "Setiap insert, update, dan delete dari app ditulis ke Cekat CRM / Cekat API oleh Clienteling API. Tidak ada data yang hanya disimpan di app atau Redis.",
-  "Penulisan sinkron: API membalas 2xx hanya setelah Cekat mengonfirmasi, dan response memuat ID dari Cekat (contact id, board item id, template id).",
+  "Penulisan sinkron: API membalas 2xx hanya setelah Cekat mengonfirmasi, dan response memuat ID dari Cekat (item id Golden Record, board item id, template id).",
   "Token user diteruskan ke Cekat pada setiap tulis, sehingga RBAC Cekat (CP-02) ikut memeriksa; API tidak memakai api_key workspace untuk aksi user.",
   "Bila satu request menulis lebih dari satu objek di Cekat, urutannya tetap (objek utama dulu). Bila langkah berikutnya gagal, API mengulang 3 kali dengan Idempotency-Key yang sama; bila tetap gagal, objek utama dikembalikan dengan warnings dan n8n menyelesaikan sisanya dari dead-letter.",
   "Gagal di langkah pertama = tidak ada yang tersimpan; API membalas 502 upstream_error dan app menampilkan pesan coba lagi.",
@@ -720,7 +720,7 @@ const W = (endpoint, title, steps, highlight = false) => ({ endpoint, title, ste
 const S = (target, call, payload, verify = true) => ({ target, call, payload, verify });
 export const WRITES = [
   W("C-03", "Pelanggan baru", [
-    S("Cekat CRM · Board Golden Record", "POST /api/crm/boards/{goldenRecordBoardId}/items", { name: "Laura Santoso", values: { phone_e164: "+6281298765432", mobile_e164: null, email: "laura@mail.com", birthdate: "1994-03-08", gender: "F", city: "Jakarta", province: "DKI Jakarta", country: "Indonesia", language_pref: "id", registration_boutique_id: "Plaza Senayan", registration_boutique_name: "Plaza Senayan", assigned_user: 87, current_tier_id: "Liker", current_tier_name: "Liker", total_spent_idr: 0, purchase_count: 0, lifecycle_status: "Active", consent_wa: true, consent_email: false, is_anonymous: false, is_reachable: true, source_primary: "app" } }),
+    S("Cekat CRM · Board Golden Record", "POST /api/crm/boards/{goldenRecordBoardId}/items", { name: "Laura Santoso", values: { phone_e164: "+6281298765432", mobile_e164: null, email: "laura@mail.com", birthdate: "1994-03-08", gender: "F", city: "Jakarta", province: "DKI Jakarta", country: "Indonesia", language_pref: "id", registration_boutique_id: "Plaza Senayan", registration_boutique_name: "Plaza Senayan", assigned_user: 87, lifecycle_status: "Active", consent_wa: true, consent_email: false, is_anonymous: false, is_reachable: true, source_primary: "app" } }),
     S("Cekat CRM · Board Consent Log", "POST /api/crm/boards/{consentLogBoardId}/items", { customer_id: "<item id dari langkah 1>", channel: "wa", consent_status: true, consent_source: "app", captured_by_user_id: 87 }),
     S("Cekat CRM · Board List Members", "POST /api/crm/boards/{listMembersBoardId}/items", { list_id: 510, customer_id: "<item id dari langkah 1>", added_by_user_id: 87, follow_up_status: "welcome_pending" }),
     S("Cekat CRM · Board Love Tags (opsional)", "POST /api/crm/boards/{loveTagsBoardId}/items", { customer_id: "<item id>", tag_code: "fashion", added_by_user_id: 87 }),
