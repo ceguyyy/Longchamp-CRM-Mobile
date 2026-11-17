@@ -31,7 +31,7 @@ export const COMPONENTS = [
   C("V-07", "vendor", "Aksi & agenda", "Push, agenda, slot waktu, boutique selector", "P-01, P-02, G-01..G-04"),
   C("V-08", "vendor", "Katalog, produk, scan barcode, stok", "Kamera ML Kit, kartu produk, stok per boutique, tiket dari produk", "K-01..K-04, C-11"),
   C("V-09", "vendor", "Wishlist pelanggan", "Pilih pelanggan, simpan, hapus, kirim", "W-01..W-04"),
-  C("V-10", "vendor", "KPI & tim", "KPI per level, channel, wishlist, push completion, tim", "M-01, M-02"),
+  C("V-10", "vendor", "KPI & tim", "KPI per level, WhatsApp (tanpa telepon/SMS/email karena tidak tercatat di Cekat), alasan, wishlist, push completion, tim", "M-01, M-02"),
   C("V-11", "vendor", "Admin: template WhatsApp, aturan push, tracking rules, user, CMS & pengaturan", "Builder template + preview, status Meta, push rules, builder tracking rule + pratinjau, user, CMS konten Beranda + pengaturan + master data + status integrasi", "T-01..T-04, X-01..X-10"),
   C("V-12", "vendor", "Push notification & rilis", "Registrasi token, deep link, build iOS/Android, store listing", "A-06"),
   C("D-01", "itdelivery", "Clienteling API (Go)", "62 endpoint + OpenAPI spec + mock server untuk Vendor", "CP-01..CP-04"),

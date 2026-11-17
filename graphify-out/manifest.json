@@ -120,9 +120,9 @@
     "semantic_hash": ""
   },
   "src/data/components.js": {
-    "mtime": 1794887858.3814602,
-    "seen": 1794887937.137178,
-    "ast_hash": "1d14b123607775ec9ce9e8cb90ab2e40",
+    "mtime": 1794887965.447714,
+    "seen": 1794888060.0354602,
+    "ast_hash": "398e436e899ef1680978dbcde3ec1dd2",
     "semantic_hash": ""
   },
   "src/data/coverage.js": {
