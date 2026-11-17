@@ -412,8 +412,8 @@ const model = {
       id: "UC-29", module: "access", actors: ["hq"],
       name: { en: "Manage transaction tracking rules", id: "Kelola aturan tracking transaksi" },
       desc: {
-        en: "Super Admin defines rules on the Golden Record from transaction data (e.g. Silverspoon: bought a SKU priced ≥ Rp40 jt and a transaction total ≥ Rp50 jt). n8n tags matching customers on every new transaction; tags show on the profile, in filters and lists, and can push the assigned SA.",
-        id: "Super Admin membuat aturan di Golden Record dari data transaksi (mis. Silverspoon: pernah membeli SKU berharga ≥ Rp40 jt dan total transaksi ≥ Rp50 jt). n8n memberi tag pada pelanggan yang cocok di setiap transaksi baru; tag tampil di profil, filter, dan list, dan bisa memicu push ke SA.",
+        en: "Super Admin defines rules on the Golden Record from transaction data (e.g. Silverspoon: bought SKU LONGCHAMP001, OR bought A/B/C with a SKU priced ≥ Rp40 jt and a transaction total ≥ Rp50 jt). Rules are groups of conditions: any group matches, all conditions inside a group. n8n tags matching customers on every new transaction; tags show on the profile, in filters and lists, and can push the assigned SA.",
+        id: "Super Admin membuat aturan di Golden Record dari data transaksi (mis. Silverspoon: beli SKU LONGCHAMP001, ATAU beli A/B/C dengan SKU berharga ≥ Rp40 jt dan total transaksi ≥ Rp50 jt). Rule berupa grup kondisi: salah satu grup cocok, semua kondisi di dalam grup. n8n memberi tag pada pelanggan yang cocok di setiap transaksi baru; tag tampil di profil, filter, dan list, dan bisa memicu push ke SA.",
       },
       rbac: { sa: "use", sm: "use", hq: "manage" },
       sources: [

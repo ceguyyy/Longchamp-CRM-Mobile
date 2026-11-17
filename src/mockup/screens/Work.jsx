@@ -893,19 +893,46 @@ export function LegacyTemplates() {
   );
 }
 
-const fmtVal = (f, v) => (f.endsWith("_idr") ? idrShort(v) : String(v));
+const fmtVal = (f, v) => (Array.isArray(v) ? v.join(", ") : f.endsWith("_idr") ? idrShort(Number(v)) : String(v));
+const defaultOp = (f) => (TRACK_FIELDS[f].list ? "in" : ">=");
+function GroupView({ g, gi, lang, tx }) {
+  return (
+    <div className="mt-2 border-l-2 border-[var(--lc-lime)] pl-2">
+      <p className="caps text-[9.5px] text-[var(--lc-muted)]">{tx("Group", "Grup")} {gi + 1}</p>
+      <ul className="space-y-0.5 text-[12px]">
+        {g.conditions.map((c, i) => (
+          <li key={i}>
+            {i > 0 && <span className="caps mr-1 text-[9.5px] text-[var(--lc-muted)]">{tx("and", "dan")}</span>}
+            {TRACK_FIELDS[c.field][lang]} <b>{c.op}</b> {fmtVal(c.field, c.value)}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
 export function TrackingRules() {
   const { tx, back, lang, notify } = useApp();
   const [rules, setRules] = useState(TRACKING_RULES);
   const [draft, setDraft] = useState(null);
-  const newDraft = () => setDraft({ label: "", combine: "all", window_days: 365, notify_sa: true, conditions: [{ field: "sku_unit_price_idr", op: ">=", value: 40000000 }, { field: "transaction_total_idr", op: ">=", value: 50000000 }] });
-  const setCond = (i, k, v) => setDraft({ ...draft, conditions: draft.conditions.map((c, j) => (j === i ? { ...c, [k]: v } : c)) });
+  const newDraft = () =>
+    setDraft({
+      label: "",
+      window_days: 365,
+      notify_sa: true,
+      groups: [
+        { conditions: [{ field: "sku_any_of", op: "in", value: "LONGCHAMP001" }] },
+        { conditions: [{ field: "sku_any_of", op: "in", value: "LONGCHAMP-A, LONGCHAMP-B, LONGCHAMP-C" }, { field: "sku_unit_price_idr", op: ">=", value: 40000000 }, { field: "transaction_total_idr", op: ">=", value: 50000000 }] },
+      ],
+    });
+  const setGroups = (groups) => setDraft({ ...draft, groups });
+  const setCond = (gi, i, k, v) =>
+    setGroups(draft.groups.map((g, x) => (x !== gi ? g : { conditions: g.conditions.map((c, j) => (j !== i ? c : k === "field" ? { field: v, op: defaultOp(v), value: "" } : { ...c, [k]: v })) })));
   return (
     <>
       <AppBar title={tx("Tracking rules", "Aturan tracking")} sub={tx("Evaluated by n8n on every new transaction in Cekat", "Dievaluasi n8n di setiap transaksi baru di Cekat")} onBack={back} />
       <Body>
         <p className="mb-3 text-[12px] text-[var(--lc-muted)]">
-          {tx("When a customer's transactions match a rule, the tag is written to the Golden Record and shown on the profile and in filters.", "Bila transaksi pelanggan memenuhi rule, tag ditulis ke Golden Record dan tampil di profil serta filter.")}
+          {tx("A customer gets the tag when ANY group matches; inside a group ALL conditions must match.", "Pelanggan mendapat tag bila SALAH SATU grup cocok; di dalam grup SEMUA kondisi harus terpenuhi.")}
         </p>
         {rules.map((r) => (
           <div key={r.rule_id} className="mb-2 border border-[var(--lc-line)] p-3">
@@ -920,14 +947,12 @@ export function TrackingRules() {
                 </Switch.Control>
               </Switch>
             </div>
-            <ul className="mt-2 space-y-0.5 text-[12px]">
-              {r.conditions.map((c, i) => (
-                <li key={i}>
-                  {i > 0 && <span className="caps mr-1 text-[9.5px] text-[var(--lc-muted)]">{r.combine === "all" ? tx("and", "dan") : tx("or", "atau")}</span>}
-                  {TRACK_FIELDS[c.field][lang]} <b>{c.op}</b> {fmtVal(c.field, c.value)}
-                </li>
-              ))}
-            </ul>
+            {r.groups.map((g, gi) => (
+              <div key={gi}>
+                {gi > 0 && <p className="caps mt-1.5 text-center text-[9.5px]">{tx("or", "atau")}</p>}
+                <GroupView g={g} gi={gi} lang={lang} tx={tx} />
+              </div>
+            ))}
             <p className="mt-1.5 text-[11px] text-[var(--lc-muted)]">
               {tx("Window", "Periode")} {r.window_days} {tx("days", "hari")}
               {r.notify_sa ? ` · ${tx("push to assigned SA", "push ke SA")}` : ""}
@@ -943,42 +968,54 @@ export function TrackingRules() {
           <div className="mt-3 border-[1.25px] border-black p-3">
             <p className="caps text-[10.5px]">{tx("New rule", "Rule baru")}</p>
             <input value={draft.label} onChange={(e) => setDraft({ ...draft, label: e.target.value })} placeholder={tx("Tag name, e.g. Silverspoon", "Nama tag, mis. Silverspoon")} className="mt-2 w-full border-b border-black py-1.5 text-[14px] outline-none" />
-            <div className="mt-3 flex gap-1.5">
-              {[["all", tx("All conditions", "Semua kondisi")], ["any", tx("Any condition", "Salah satu")]].map(([k, l]) => (
-                <Pill key={k} active={draft.combine === k} onClick={() => setDraft({ ...draft, combine: k })}>{l}</Pill>
-              ))}
-            </div>
-            {draft.conditions.map((c, i) => (
-              <div key={i} className="mt-2 grid grid-cols-[minmax(0,1fr)_48px_76px_14px] items-center gap-1">
-                <select value={c.field} onChange={(e) => setCond(i, "field", e.target.value)} className="w-full min-w-0 border border-[var(--lc-line)] px-1 py-1.5 text-[11.5px]">
-                  {Object.entries(TRACK_FIELDS).map(([k, v]) => (
-                    <option key={k} value={k}>{v[lang]}</option>
+            {draft.groups.map((g, gi) => (
+              <div key={gi}>
+                {gi > 0 && <p className="caps my-1.5 text-center text-[10px]">{tx("or", "atau")}</p>}
+                <div className="mt-2 border border-[var(--lc-line)] p-2">
+                  <div className="flex items-center justify-between">
+                    <p className="caps text-[9.5px] text-[var(--lc-muted)]">{tx("Group", "Grup")} {gi + 1} · {tx("all conditions", "semua kondisi")}</p>
+                    {draft.groups.length > 1 && (
+                      <button className="text-[11px] underline" onClick={() => setGroups(draft.groups.filter((_, x) => x !== gi))}>{tx("Remove", "Hapus")}</button>
+                    )}
+                  </div>
+                  {g.conditions.map((c, i) => (
+                    <div key={i} className="mt-1.5 grid grid-cols-[minmax(0,1fr)_40px_96px_14px] items-center gap-1">
+                      <select value={c.field} onChange={(e) => setCond(gi, i, "field", e.target.value)} className="w-full min-w-0 border border-[var(--lc-line)] px-1 py-1.5 text-[11px]">
+                        {Object.entries(TRACK_FIELDS).map(([k, v]) => (
+                          <option key={k} value={k}>{v[lang]}</option>
+                        ))}
+                      </select>
+                      <select value={c.op} onChange={(e) => setCond(gi, i, "op", e.target.value)} className="w-full min-w-0 border border-[var(--lc-line)] px-0.5 py-1.5 text-[11px]">
+                        {(TRACK_FIELDS[c.field].list ? ["in"] : [">=", ">", "="]).map((o) => <option key={o}>{o}</option>)}
+                      </select>
+                      <input value={c.value} onChange={(e) => setCond(gi, i, "value", e.target.value)} placeholder={TRACK_FIELDS[c.field].list ? "SKU, SKU" : "0"} className="w-full min-w-0 border border-[var(--lc-line)] px-1.5 py-1.5 text-[11px]" />
+                      <button aria-label="remove" onClick={() => setGroups(draft.groups.map((x, y) => (y !== gi ? x : { conditions: x.conditions.filter((_, j) => j !== i) })))} className="text-[14px]">×</button>
+                    </div>
                   ))}
-                </select>
-                <select value={c.op} onChange={(e) => setCond(i, "op", e.target.value)} className="w-full min-w-0 border border-[var(--lc-line)] px-1 py-1.5 text-[11.5px]">
-                  {[">=", ">", "=", "in"].map((o) => <option key={o}>{o}</option>)}
-                </select>
-                <input value={c.value} onChange={(e) => setCond(i, "value", e.target.value)} className="w-full min-w-0 border border-[var(--lc-line)] px-1.5 py-1.5 text-[11.5px]" />
-                <button aria-label="remove" onClick={() => setDraft({ ...draft, conditions: draft.conditions.filter((_, j) => j !== i) })} className="text-[14px]">×</button>
+                  <button className="mt-1.5 text-[11px] underline" onClick={() => setGroups(draft.groups.map((x, y) => (y !== gi ? x : { conditions: [...x.conditions, { field: "transaction_total_idr", op: ">=", value: 50000000 }] })))}>
+                    + {tx("Condition (and)", "Kondisi (dan)")}
+                  </button>
+                </div>
               </div>
             ))}
-            <button className="mt-2 text-[11.5px] underline" onClick={() => setDraft({ ...draft, conditions: [...draft.conditions, { field: "purchase_count", op: ">=", value: 1 }] })}>
-              + {tx("Condition", "Kondisi")}
+            <button className="mt-2 text-[11.5px] underline" onClick={() => setGroups([...draft.groups, { conditions: [{ field: "sku_any_of", op: "in", value: "" }] }])}>
+              + {tx("Group (or)", "Grup (atau)")}
             </button>
             <div className="mt-3 flex items-center justify-between text-[12px]">
-              <span>{tx("Window", "Periode")}</span>
+              <span>{tx("Window (days)", "Periode (hari)")}</span>
               <input value={draft.window_days} onChange={(e) => setDraft({ ...draft, window_days: e.target.value })} className="w-20 border border-[var(--lc-line)] px-1.5 py-1 text-right" />
             </div>
             <label className="mt-2 flex items-center gap-2 text-[12px]">
               <input type="checkbox" checked={draft.notify_sa} onChange={(e) => setDraft({ ...draft, notify_sa: e.target.checked })} className="h-4 w-4 accent-black" />
               {tx("Push to the assigned SA when a customer gets the tag", "Push ke SA saat pelanggan mendapat tag")}
             </label>
-            <p className="mt-3 bg-[var(--lc-lime-soft)] p-2 text-[11.5px]">{tx("Preview: 23 customers match today", "Pratinjau: 23 pelanggan cocok hari ini")}</p>
+            <p className="mt-3 bg-[var(--lc-lime-soft)] p-2 text-[11.5px]">{tx("Preview: 23 customers match today (group 1: 9, group 2: 15, both: 1)", "Pratinjau: 23 pelanggan cocok hari ini (grup 1: 9, grup 2: 15, keduanya: 1)")}</p>
             <LcButton
               className="mt-3"
               onClick={() => {
                 if (!draft.label) return notify(tx("Give the tag a name", "Isi nama tag"));
-                setRules([...rules, { ...draft, rule_id: rules.length + 1, code: draft.label.toLowerCase().replace(/\s+/g, "_"), color: "#a3e363", is_active: true, matched: 23 }]);
+                const groups = draft.groups.map((g) => ({ conditions: g.conditions.map((c) => ({ ...c, value: TRACK_FIELDS[c.field].list ? String(c.value).split(",").map((x) => x.trim()).filter(Boolean) : Number(c.value) })) }));
+                setRules([...rules, { ...draft, groups, rule_id: rules.length + 1, code: draft.label.toLowerCase().replace(/\s+/g, "_"), color: "#a3e363", is_active: true, matched: 23 }]);
                 setDraft(null);
                 notify(tx("Rule saved in Cekat CRM; backfill runs tonight", "Rule tersimpan di Cekat CRM; backfill jalan malam ini"));
               }}

@@ -49,7 +49,7 @@ export const COMPONENTS = [
   C("D-13", "itdelivery", "Sender push FCM", "Notifikasi push, reminder agenda (J-06)", "A-06"),
   C("D-14", "itdelivery", "Data quality data dari app (J-07)", "Duplikat dari app, pelanggan tanpa assigned_user, dead-letter", "D-03"),
   C("D-15", "itdelivery", "Observability", "Log, trace, alert", "D-01"),
-  C("D-17", "itdelivery", "Tracking rule engine di Golden Record (J-08)", "Rule berbasis transaksi (mis. Silverspoon: SKU ≥ Rp40 jt dan total transaksi ≥ Rp50 jt) → kolom tracking_tags + Customer Tag History + push ke SA; backfill saat rule berubah", "EX-01, CP-05, X-05"),
+  C("D-17", "itdelivery", "Tracking rule engine di Golden Record (J-08)", "Rule berbasis transaksi berupa grup kondisi (ATAU antar grup, DAN di dalam grup): daftar SKU (beli salah satu / semua), harga SKU, total transaksi, total belanja, koleksi, jumlah pembelian. Contoh Silverspoon: LONGCHAMP001, atau A/B/C + SKU ≥ Rp40 jt + total ≥ Rp50 jt → kolom tracking_tags + Customer Tag History + push ke SA; backfill saat rule berubah", "EX-01, CP-05, X-05"),
   C("D-16", "itdelivery", "Isi assigned_user awal", "Penugasan SA ke pelanggan Golden Record yang sudah ada (dari data Longchamp)", "D-02"),
   C("CP-01", "product", "Login pihak ketiga + token user", "Login, refresh, revoke, undangan, reset password", "—"),
   C("CP-02", "product", "RBAC di Board API (Golden Record + board clienteling)", "Filter baca + 403 tulis dari Role Hierarchy + kolom Agents assigned_user", "CP-01, CP-03"),

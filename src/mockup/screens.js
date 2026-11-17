@@ -237,7 +237,7 @@ export const SCREENS = {
     refs: ["UC-29", "AD-07", "SD-08"],
     api: ["GET / POST / PATCH /v1/tracking-rules (X-05) → Cekat CRM: Board Tracking Rules", "POST /v1/tracking-rules/preview (X-06) → count over Golden Record + Transactions", "n8n (J-08) on each new Transactions item → Golden Record tracking_tags + Customer Tag History"],
     owner: "itdev",
-    note: L("Built by Cekat IT Delivery on the Golden Record. Example: Silverspoon = bought a SKU priced ≥ Rp40 jt AND a transaction total ≥ Rp50 jt.", "Dibangun Cekat IT Delivery di Golden Record. Contoh: Silverspoon = pernah membeli SKU berharga ≥ Rp40 jt DAN total transaksi ≥ Rp50 jt."),
+    note: L("Built by Cekat IT Delivery on the Golden Record. A rule is a set of groups: any group matches (OR), all conditions in a group (AND). Silverspoon = bought SKU LONGCHAMP001, OR bought A/B/C AND a SKU priced ≥ Rp40 jt AND transaction total ≥ Rp50 jt.", "Dibangun Cekat IT Delivery di Golden Record. Rule berupa grup: salah satu grup cocok (ATAU), semua kondisi di dalam grup (DAN). Silverspoon = beli SKU LONGCHAMP001, ATAU beli A/B/C DAN SKU berharga ≥ Rp40 jt DAN total transaksi ≥ Rp50 jt."),
   },
   profile: {
     C: Profile, roles: ALL, group: "main",

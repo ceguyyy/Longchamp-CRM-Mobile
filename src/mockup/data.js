@@ -244,28 +244,32 @@ export const tag = (t) => t.replace(/_/g, " ");
 
 /* Transaction tracking rules on the Golden Record (built by Cekat IT Delivery, evaluated by n8n on each new Transactions item) */
 export const TRACK_FIELDS = {
-  sku_unit_price_idr: { en: "Any SKU unit price (IDR)", id: "Harga satuan SKU mana pun (IDR)" },
+  sku_any_of: { en: "Bought any of SKU", id: "Beli salah satu SKU", list: true },
+  sku_all_of: { en: "Bought all of SKU", id: "Beli semua SKU", list: true },
+  sku_unit_price_idr: { en: "Any SKU unit price (IDR)", id: "Harga satuan SKU (IDR)" },
   transaction_total_idr: { en: "Transaction total (IDR)", id: "Total transaksi (IDR)" },
   cumulative_spent_idr: { en: "Cumulative spend in window (IDR)", id: "Total belanja dalam periode (IDR)" },
-  sku_in: { en: "SKU / collection", id: "SKU / koleksi" },
+  collection_in: { en: "Collection", id: "Koleksi", list: true },
   purchase_count: { en: "Number of purchases in window", id: "Jumlah pembelian dalam periode" },
 };
+/* A rule matches when ANY group matches; a group matches when ALL its conditions match. */
 export const TRACKING_RULES = [
   {
-    rule_id: 1, code: "silverspoon", label: "Silverspoon", color: "#a3e363", is_active: true, combine: "all", window_days: 365, matched: 23,
-    conditions: [
-      { field: "sku_unit_price_idr", op: ">=", value: 40000000 },
-      { field: "transaction_total_idr", op: ">=", value: 50000000 },
+    rule_id: 1, code: "silverspoon", label: "Silverspoon", color: "#a3e363", is_active: true, window_days: 365, matched: 23, notify_sa: true,
+    groups: [
+      { conditions: [{ field: "sku_any_of", op: "in", value: ["LONGCHAMP001"] }] },
+      {
+        conditions: [
+          { field: "sku_any_of", op: "in", value: ["LONGCHAMP-A", "LONGCHAMP-B", "LONGCHAMP-C"] },
+          { field: "sku_unit_price_idr", op: ">=", value: 40000000 },
+          { field: "transaction_total_idr", op: ">=", value: 50000000 },
+        ],
+      },
     ],
-    notify_sa: true,
   },
   {
-    rule_id: 2, code: "pliage_collector", label: "Le Pliage collector", color: "#000000", is_active: true, combine: "all", window_days: 730, matched: 61,
-    conditions: [
-      { field: "sku_in", op: "in", value: "Le Pliage" },
-      { field: "purchase_count", op: ">=", value: 5 },
-    ],
-    notify_sa: false,
+    rule_id: 2, code: "pliage_collector", label: "Le Pliage collector", color: "#000000", is_active: true, window_days: 730, matched: 61, notify_sa: false,
+    groups: [{ conditions: [{ field: "collection_in", op: "in", value: ["Le Pliage"] }, { field: "purchase_count", op: ">=", value: 5 }] }],
   },
 ];
 export const trackLabel = (code) => (TRACKING_RULES.find((r) => r.code === code) || { label: code }).label;

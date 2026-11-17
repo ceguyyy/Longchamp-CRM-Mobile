@@ -1,23 +1,23 @@
 # Graph Report - longchamp-crm-mobile  (2026-11-17)
 
 ## Corpus Check
-- 49 files · ~65,320 words
+- 49 files · ~68,357 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 4 file(s) not represented in the graph (top: (none) 3, .css 1)
 
 ## Summary
-- 348 nodes · 994 edges · 20 communities (18 shown, 2 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 29 edges (avg confidence: 0.85)
+- 353 nodes · 1011 edges · 17 communities (15 shown, 2 thin omitted)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 30 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5ccf8311`
+- Built from commit: `527f5c2a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - UseCasePage.jsx
-- package.json
+- CoveragePage.jsx
 - Work.jsx
 - ApiPage.jsx
 - screens.js
@@ -32,79 +32,76 @@
 - .claude/CLAUDE.md
 - ActivitySvg.jsx
 - ActivityPage.jsx
-- ArchitecturePage.jsx
-- SequencePage.jsx
-- CoveragePage.jsx
 - App.jsx
 
 ## God Nodes (most connected - your core abstractions)
-1. `useApp()` - 56 edges
-2. `AppBar()` - 34 edges
-3. `Body()` - 30 edges
+1. `useApp()` - 57 edges
+2. `AppBar()` - 35 edges
+3. `Body()` - 31 edges
 4. `@heroui/react` - 22 edges
 5. `react` - 22 edges
 6. `Icon()` - 20 edges
-7. `OwnerChip()` - 18 edges
-8. `SectionTitle()` - 18 edges
-9. `ClientProfile()` - 16 edges
-10. `Home()` - 15 edges
+7. `SectionTitle()` - 18 edges
+8. `OwnerChip()` - 18 edges
+9. `ClientProfile()` - 17 edges
+10. `Tile()` - 15 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `StatusChip()` --calls--> `ownerOf()`  [EXTRACTED]
-  src/components/SourceBadges.jsx → src/data/cekatProduct.js
-- `App()` --calls--> `ApiPage()`  [EXTRACTED]
-  src/App.jsx → src/pages/ApiPage.jsx
-- `App()` --calls--> `UseCasePage()`  [EXTRACTED]
-  src/App.jsx → src/pages/UseCasePage.jsx
-- `UseCasePage()` --calls--> `CpBacklog()`  [EXTRACTED]
-  src/pages/UseCasePage.jsx → src/components/CpBacklog.jsx
-- `UseCasePage()` --calls--> `UseCaseSvg`  [EXTRACTED]
-  src/pages/UseCasePage.jsx → src/components/diagram/UseCaseSvg.jsx
+- `Forgot()` --calls--> `useApp()`  [EXTRACTED]
+  src/mockup/screens/Auth.jsx → src/mockup/core.jsx
+- `Login()` --calls--> `useApp()`  [EXTRACTED]
+  src/mockup/screens/Auth.jsx → src/mockup/core.jsx
+- `Register()` --calls--> `useApp()`  [EXTRACTED]
+  src/mockup/screens/Auth.jsx → src/mockup/core.jsx
+- `ClientNew()` --calls--> `useApp()`  [EXTRACTED]
+  src/mockup/screens/Clients.jsx → src/mockup/core.jsx
+- `ClientProfile()` --calls--> `useApp()`  [EXTRACTED]
+  src/mockup/screens/Clients.jsx → src/mockup/core.jsx
 
 ## Import Cycles
 - None detected.
 
-## Communities (20 total, 2 thin omitted)
+## Communities (17 total, 2 thin omitted)
 
 ### Community 0 - "UseCasePage.jsx"
-Cohesion: 0.27
-Nodes (15): @heroui/react, DataSourceMatrix(), DetailPanel(), SourceRow(), RbacMatrix(), RoleTable(), IMPL_COLOR, SCOPE_STYLE (+7 more)
+Cohesion: 0.07
+Nodes (55): @heroui/react, App(), Header(), NAV, ActivitySvg, CpBacklog(), usage(), DataSourceMatrix() (+47 more)
 
-### Community 1 - "package.json"
-Cohesion: 0.12
-Nodes (20): react-router-dom, App(), Header(), NAV, AREAS, COVERAGE, RACI, RACI_PARTIES (+12 more)
+### Community 1 - "CoveragePage.jsx"
+Cohesion: 0.24
+Nodes (9): AREAS, COVERAGE, RACI, RACI_PARTIES, SCREENS, CoveragePage(), RACI_STYLE, Refs() (+1 more)
 
 ### Community 2 - "Work.jsx"
-Cohesion: 0.15
-Nodes (27): Announcement(), BlackTile(), LcButton(), TierBadge(), AGENDA, BOUTIQUES, BY_BOUTIQUE, BY_CHANNEL (+19 more)
+Cohesion: 0.11
+Nodes (22): Announcement(), BlackTile(), AGENDA, BOUTIQUES, BY_BOUTIQUE, BY_CHANNEL, CLIENTS, KPI (+14 more)
 
 ### Community 3 - "ApiPage.jsx"
 Cohesion: 0.11
 Nodes (21): ALL, API_GROUPS, CONVENTIONS, ENDPOINTS, FIELD, JOBS, LEAD, WEBHOOKS (+13 more)
 
 ### Community 4 - "screens.js"
-Cohesion: 0.27
-Nodes (23): AppBar(), Body(), Initials(), SectionTitle(), Tile(), useApp(), ALL, CreateListSheet() (+15 more)
+Cohesion: 0.25
+Nodes (20): AppBar(), Body(), Initials(), SectionTitle(), Stat(), Tile(), ALL, ListBuilder() (+12 more)
 
 ### Community 5 - "ErdPage.jsx"
 Cohesion: 0.12
 Nodes (20): ERD, layoutErd(), visibleFields(), DOMAIN_COLOR, ErdSvg, KEY_COLOR, DOMAINS, entities (+12 more)
 
 ### Community 6 - "Clients.jsx"
-Cohesion: 0.15
-Nodes (22): ContactBar(), Row(), LISTS, LOVE_TAGS, loveLabel(), REACH_REASONS, tag(), usableTemplates() (+14 more)
+Cohesion: 0.17
+Nodes (21): ContactBar(), Row(), loveLabel(), tag(), trackLabel(), usableTemplates(), CHANNELS, ClientNew() (+13 more)
 
 ### Community 7 - "Icon"
-Cohesion: 0.33
-Nodes (10): Icon(), MoreSheet(), Pill(), Field(), Preview(), STATUS, StatusTag(), TemplateNew() (+2 more)
+Cohesion: 0.38
+Nodes (9): Icon(), Pill(), Field(), Preview(), STATUS, StatusTag(), TemplateNew(), Templates() (+1 more)
 
 ### Community 8 - "UseCaseSvg.jsx"
-Cohesion: 0.35
-Nodes (9): computeLayout(), DIM, relatedSet(), SOURCE_COLORS, spread(), cls(), IMPL_FILL, StickFigure() (+1 more)
+Cohesion: 0.38
+Nodes (8): computeLayout(), DIM, relatedSet(), spread(), cls(), IMPL_FILL, StickFigure(), UseCaseSvg
 
 ### Community 9 - "useApp"
-Cohesion: 0.40
-Nodes (5): Attendance(), ClientRow(), ClientSearch(), ListDetail(), visibleClients()
+Cohesion: 0.29
+Nodes (12): TierBadge(), useApp(), Attendance(), ClientRow(), ClientSearch(), CreateListSheet(), ListDetail(), Hello() (+4 more)
 
 ### Community 10 - "Longchamp CRM Mobile — Solution Design"
 Cohesion: 0.18
@@ -112,31 +109,19 @@ Nodes (10): Architecture in one line, Editing the model, Implementors (Cekat sid
 
 ### Community 11 - "core.jsx"
 Cohesion: 0.12
-Nodes (28): BoutiqueArt(), Ctx, FullBody(), Hero(), MENU, P, Phone(), Sheet() (+20 more)
+Nodes (28): BoutiqueArt(), Ctx, FullBody(), Hero(), MENU, MoreSheet(), P, Phone() (+20 more)
 
 ### Community 14 - "ActivitySvg.jsx"
 Cohesion: 0.33
 Nodes (7): AD, box(), layoutActivity(), wrap(), NODE_FILL, OWNER_COLOR, OWNER_LABEL
 
 ### Community 15 - "ActivityPage.jsx"
-Cohesion: 0.10
-Nodes (25): dependencies, @heroui/react@^3.2.7, @heroui/styles@^3.2.7, react@^19.3.1, react-dom@^19.3.1, react-router-dom@^7.18.5, devDependencies, tailwindcss@^4.3.5 (+17 more)
-
-### Community 16 - "ArchitecturePage.jsx"
-Cohesion: 0.19
-Nodes (13): ActivitySvg, CpBacklog(), usage(), activities, LANES, CP_BACKLOG, IMPLEMENTORS, ownerOf() (+5 more)
-
-### Community 17 - "SequencePage.jsx"
-Cohesion: 0.23
-Nodes (11): react, layout(), OWNER_COLOR, SequenceSvg, PARTICIPANTS, sequences, EndpointTable(), MessageDetail() (+3 more)
-
-### Community 18 - "CoveragePage.jsx"
-Cohesion: 0.24
-Nodes (10): ArchitectureSvg, Cylinder(), OWNER_COLOR, OWNER_LABEL, OwnerChip(), arch, ArchitecturePage(), compName() (+2 more)
+Cohesion: 0.07
+Nodes (31): dependencies, @heroui/react@^3.2.7, @heroui/styles@^3.2.7, react@^19.3.1, react-dom@^19.3.1, react-router-dom@^7.18.5, devDependencies, tailwindcss@^4.3.5 (+23 more)
 
 ### Community 19 - "App.jsx"
-Cohesion: 0.33
-Nodes (10): BagArt(), idr(), addToClientWishlist(), Catalog(), ClientWishlist(), ConnectedChip(), PickClientSheet(), Product() (+2 more)
+Cohesion: 0.24
+Nodes (18): BagArt(), LcButton(), idr(), idrShort(), visibleClients(), addToClientWishlist(), BUSY, Catalog() (+10 more)
 
 ## Knowledge Gaps
 - **2 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
@@ -144,17 +129,17 @@ Nodes (10): BagArt(), idr(), addToClientWishlist(), Catalog(), ClientWishlist(),
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `react` connect `SequencePage.jsx` to `UseCasePage.jsx`, `package.json`, `Work.jsx`, `ApiPage.jsx`, `ErdPage.jsx`, `Clients.jsx`, `Icon`, `UseCaseSvg.jsx`, `core.jsx`, `ActivitySvg.jsx`, `ActivityPage.jsx`, `ArchitecturePage.jsx`, `CoveragePage.jsx`?**
-  _High betweenness centrality (0.310) - this node is a cross-community bridge._
-- **Should `package.json` be split into smaller, more focused modules?**
-  _Cohesion score 0.1164021164021164 - nodes in this community are weakly interconnected._
-- **Why does `@heroui/react` connect `UseCasePage.jsx` to `package.json`, `Work.jsx`, `ApiPage.jsx`, `ErdPage.jsx`, `Clients.jsx`, `Icon`, `core.jsx`, `ActivityPage.jsx`, `ArchitecturePage.jsx`, `SequencePage.jsx`, `CoveragePage.jsx`?**
-  _High betweenness centrality (0.249) - this node is a cross-community bridge._
+- **Why does `react` connect `ActivityPage.jsx` to `UseCasePage.jsx`, `ApiPage.jsx`, `ErdPage.jsx`, `Clients.jsx`, `Icon`, `UseCaseSvg.jsx`, `core.jsx`, `ActivitySvg.jsx`, `App.jsx`?**
+  _High betweenness centrality (0.309) - this node is a cross-community bridge._
+- **Should `UseCasePage.jsx` be split into smaller, more focused modules?**
+  _Cohesion score 0.07059607059607059 - nodes in this community are weakly interconnected._
+- **Why does `@heroui/react` connect `UseCasePage.jsx` to `CoveragePage.jsx`, `Work.jsx`, `ApiPage.jsx`, `ErdPage.jsx`, `Clients.jsx`, `Icon`, `core.jsx`, `ActivityPage.jsx`, `App.jsx`?**
+  _High betweenness centrality (0.248) - this node is a cross-community bridge._
 - **Should `Work.jsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.1471264367816092 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.11231884057971014 - nodes in this community are weakly interconnected._
 - **Should `ApiPage.jsx` be split into smaller, more focused modules?**
   _Cohesion score 0.1111111111111111 - nodes in this community are weakly interconnected._
 - **Should `ErdPage.jsx` be split into smaller, more focused modules?**
   _Cohesion score 0.12333333333333334 - nodes in this community are weakly interconnected._
 - **Should `core.jsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.11612903225806452 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.11827956989247312 - nodes in this community are weakly interconnected._

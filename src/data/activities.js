@@ -342,7 +342,7 @@ const activities = {
       lanes: ["user", "app", "bff", "cekat", "product"],
       nodes: [
         { id: "s0", lane: "user", row: 0, type: "start" },
-        { id: "r1", lane: "user", row: 1, type: "action", label: L("Super Admin defines rule: SKU ≥ Rp40 jt AND total ≥ Rp50 jt", "Super Admin membuat rule: SKU ≥ Rp40 jt DAN total ≥ Rp50 jt") },
+        { id: "r1", lane: "user", row: 1, type: "action", label: L("Super Admin defines rule groups: SKU LONGCHAMP001 OR (A/B/C AND SKU ≥ Rp40 jt AND total ≥ Rp50 jt)", "Super Admin membuat grup rule: SKU LONGCHAMP001 ATAU (A/B/C DAN SKU ≥ Rp40 jt DAN total ≥ Rp50 jt)") },
         { id: "r2", lane: "app", row: 2, type: "action", label: L("Preview matching customers", "Pratinjau pelanggan yang cocok"), ref: "X-06" },
         { id: "r3", lane: "cekat", row: 3, type: "action", label: L("Save Tracking Rules item", "Simpan item Tracking Rules"), ref: "Board API (X-05)" },
         { id: "e0", lane: "cekat", row: 4, type: "end" },
@@ -350,7 +350,7 @@ const activities = {
         { id: "a1", lane: "bff", row: 4, type: "action", label: L("Existing pipeline writes a Transactions item", "Pipeline menulis item Transactions") },
         { id: "a2", lane: "product", row: 5, type: "action", label: L("Board item webhook to n8n", "Webhook board item ke n8n"), cp: "CP-05" },
         { id: "a3", lane: "bff", row: 6, type: "action", label: L("Load customer transactions in window + lines", "Ambil transaksi pelanggan dalam window + lines") },
-        { id: "d1", lane: "bff", row: 7, type: "decision", label: L("Rule matched, tag not set?", "Rule cocok, tag belum ada?") },
+        { id: "d1", lane: "bff", row: 7, type: "decision", label: L("Any group matched, tag not set?", "Ada grup cocok, tag belum ada?") },
         { id: "e1", lane: "app", row: 7, type: "end" },
         { id: "a4", lane: "cekat", row: 8, type: "action", label: L("Add code to tracking_tags on Golden Record", "Tambah code ke tracking_tags di Golden Record"), ref: "Board API" },
         { id: "a5", lane: "cekat", row: 9, type: "action", label: L("Create Customer Tag History item", "Buat item Customer Tag History"), ref: "Board API" },
