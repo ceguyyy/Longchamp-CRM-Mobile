@@ -102,9 +102,9 @@
     "semantic_hash": ""
   },
   "src/data/apiSpec.js": {
-    "mtime": 1794885476.6413734,
-    "seen": 1794885499.9565976,
-    "ast_hash": "cf22cd048cde01e63f6583d889db839a",
+    "mtime": 1794885599.2450376,
+    "seen": 1794885602.037199,
+    "ast_hash": "ca783faa1b0c875e24ece55edac6010a",
     "semantic_hash": ""
   },
   "src/data/architecture.js": {
@@ -120,9 +120,9 @@
     "semantic_hash": ""
   },
   "src/data/components.js": {
-    "mtime": 1794885476.6431072,
-    "seen": 1794885499.9566007,
-    "ast_hash": "8e765ca7df149ba5b309bfaf4a56accd",
+    "mtime": 1794885599.244243,
+    "seen": 1794885602.037204,
+    "ast_hash": "b2eeaa34a51eef165a2975314ecb8989",
     "semantic_hash": ""
   },
   "src/data/coverage.js": {
@@ -174,15 +174,15 @@
     "semantic_hash": ""
   },
   "src/mockup/data.js": {
-    "mtime": 1794885434.1152115,
-    "seen": 1794885499.9566095,
-    "ast_hash": "2b3e61375ed99a2ca17fd6a931661e4c",
+    "mtime": 1794885599.2421706,
+    "seen": 1794885602.0372152,
+    "ast_hash": "89b540374825a05c6998e058bc7a67b6",
     "semantic_hash": ""
   },
   "src/mockup/screens.js": {
-    "mtime": 1794885476.6432872,
-    "seen": 1794885499.9566102,
-    "ast_hash": "21fdf7cc15550ce995b918788670112b",
+    "mtime": 1794885599.244071,
+    "seen": 1794885602.0372162,
+    "ast_hash": "63cde130422e84709a78609ab3d2f849",
     "semantic_hash": ""
   },
   "src/mockup/screens/Auth.jsx": {
@@ -210,9 +210,9 @@
     "semantic_hash": ""
   },
   "src/mockup/screens/Work.jsx": {
-    "mtime": 1794885434.117105,
-    "seen": 1794885499.9566147,
-    "ast_hash": "ffaebc70e4a435ec66e92a39ee54db29",
+    "mtime": 1794885599.2435582,
+    "seen": 1794885602.037222,
+    "ast_hash": "7ca5ad3a27ce244f07c536542f521cc1",
     "semantic_hash": ""
   },
   "src/pages/ActivityPage.jsx": {

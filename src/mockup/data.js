@@ -255,7 +255,7 @@ export const TRACK_FIELDS = {
 /* A rule matches when ANY group matches; a group matches when ALL its conditions match. */
 export const TRACKING_RULES = [
   {
-    rule_id: 1, code: "silverspoon", label: "Silverspoon", color: "#a3e363", is_active: true, window_days: 365, matched: 23, notify_sa: true,
+    rule_id: 1, code: "silverspoon", label: "Silverspoon", tbc: true, color: "#a3e363", is_active: true, window_days: 365, matched: 23, notify_sa: true,
     groups: [
       { conditions: [{ field: "sku_any_of", op: "in", value: ["LONGCHAMP001"] }] },
       {

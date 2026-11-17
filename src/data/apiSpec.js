@@ -676,7 +676,7 @@ export const ENDPOINTS = [
     logic: [
       "GET: semua role boleh membaca daftar tag (untuk filter); hanya Super Admin yang membuat dan mengubah rule.",
       "Validasi: minimal 1 grup, tiap grup minimal 1 kondisi; field dari daftar yang didukung; op in hanya untuk daftar SKU/koleksi; kode SKU dicek ada di katalog (peringatan, bukan error, untuk SKU lama); nilai IDR > 0; window_days 1–1095.",
-      "Evaluasi: rule cocok bila salah satu grup cocok; grup cocok bila semua kondisinya terpenuhi. Contoh Silverspoon: grup 1 beli LONGCHAMP001, ATAU grup 2 beli A/B/C DAN harga satuan SKU ≥ Rp40 jt DAN total transaksi ≥ Rp50 jt.",
+      "Evaluasi: rule cocok bila salah satu grup cocok; grup cocok bila semua kondisinya terpenuhi. Contoh Silverspoon (parameter TBC): grup 1 beli LONGCHAMP001, ATAU grup 2 beli A/B/C DAN harga satuan SKU ≥ Rp40 jt DAN total transaksi ≥ Rp50 jt.",
       "code dibuat dari label (huruf kecil, underscore) dan unik; code dipakai di kolom tracking_tags Golden Record.",
       "Simpan sebagai item Board Tracking Rules. Rule baru atau berubah memicu backfill malam (J-08 mode backfill) atas transaksi dalam window.",
       "Menonaktifkan rule tidak menghapus tag yang sudah ada; tag dicabut hanya bila remove_when_unmatched = true.",

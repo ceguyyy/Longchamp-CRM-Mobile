@@ -940,6 +940,7 @@ export function TrackingRules() {
               <span className="flex items-center gap-2">
                 <span className="caps px-1.5 py-0.5 text-[10px]" style={{ background: r.color, color: r.color === "#000000" ? "#fff" : "#000" }}>{r.label}</span>
                 <span className="text-[11px] text-[var(--lc-muted)]">{r.matched} {tx("customers", "pelanggan")}</span>
+                {r.tbc && <span className="caps border border-black px-1 text-[8.5px]">TBC</span>}
               </span>
               <Switch defaultSelected={r.is_active} aria-label="active">
                 <Switch.Control>
