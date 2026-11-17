@@ -149,10 +149,10 @@ export const ENDPOINTS = [
   /* ================================================================ CUSTOMERS */
   {
     id: "C-01", group: "customers", method: "GET", path: "/customers", title: "Cari & filter pelanggan", roles: ALL, uc: ["UC-01", "UC-06"], cp: ["CP-02", "CP-04"],
-    upstream: ["GET /api/contacts (search + filter, token user)"],
+    upstream: ["GET /api/crm/boards/{goldenRecordBoardId}/items (Golden Record, search + filter, token user)"],
     logic: [
       "q dinormalisasi: angka → nomor E.164 (+62…), mengandung @ → email, selain itu nama.",
-      "Filter diterjemahkan ke filter Contacts (CP-04); RBAC diterapkan Cekat (CP-02) — Sales Agent hanya melihat miliknya + tanpa assignee.",
+      "Filter diterjemahkan ke filter board Golden Record (CP-04); RBAC diterapkan Cekat (CP-02) lewat kolom assigned_user — Sales Agent hanya melihat miliknya + tanpa assignee.",
       "Nomor telepon dan email di-mask untuk pelanggan di luar kepemilikan user (Supervisor melihat lengkap).",
       "Default sort: -last_contact_at untuk SA, full_name untuk lainnya.",
     ],
@@ -176,10 +176,10 @@ export const ENDPOINTS = [
   },
   {
     id: "C-02", group: "customers", method: "GET", path: "/customers/{customer_id}", title: "Profil pelanggan (Golden Record)", roles: ALL, uc: ["UC-02", "UC-25"], cp: ["CP-02"],
-    upstream: ["GET /api/contacts/{id}", "Board Love Tags (customer_id)", "Board Wishlist (count)", "Tickets API (count open)"],
+    upstream: ["GET /api/crm/boards/{goldenRecordBoardId}/items/{id} (Golden Record item)", "Board Love Tags (customer_id)", "Board Wishlist (count)", "Tickets API (count open)"],
     logic: [
-      "Ambil contact; 404 bila tidak terlihat oleh user (CP-02 menyembunyikan, tidak 403, agar keberadaan data tidak bocor).",
-      "Gabungkan field native + additional fields Golden Record.",
+      "Ambil item Golden Record; 404 bila tidak terlihat oleh user (CP-02 menyembunyikan, tidak 403, agar keberadaan data tidak bocor).",
+      "Petakan properti item Golden Record (current_tier_name, total_spent_idr, purchase_count, first/last_purchase_date, registration_boutique, consent, dll.) ke response; purchase_frequency dihitung API.",
       "Hitung days_since_last_contact dan reach_out_allowed (≥ 30 hari atau null).",
       "Sertakan ringkasan: jumlah wishlist per status, tiket after-sales terbuka, love tags.",
     ],
@@ -194,11 +194,11 @@ export const ENDPOINTS = [
   },
   {
     id: "C-03", group: "customers", method: "POST", path: "/customers", title: "Daftarkan pelanggan baru", roles: FIELD, uc: ["UC-05"], cp: ["CP-02"],
-    upstream: ["GET /api/contacts?phone= (cek duplikat)", "POST Contact API (create + owner)", "Board List Members (Client Book)"],
+    upstream: ["GET /api/crm/boards/{goldenRecordBoardId}/items?phone_e164= (cek duplikat)", "POST /api/crm/boards/{goldenRecordBoardId}/items (item Golden Record baru)", "Board List Members (Client Book)"],
     logic: [
       "Normalisasi telepon ke E.164; tolak bila tidak valid.",
-      "Identity waterfall: cari telepon → email. Bila ada dan terlihat → 409 dengan customer_id; bila ada tapi milik SA lain → 409 owned_by_other (tanpa data pribadi).",
-      "Buat contact; Contact Owner = user pembuat; boutique_id = boutique user.",
+      "Cek duplikat dengan aturan Golden Record yang sama (phone_e164 → mobile_e164 → email). Bila ada dan terlihat → 409 dengan customer_id; bila ada tapi milik SA lain → 409 owned_by_other (tanpa data pribadi).",
+      "Buat item Golden Record: assigned_user = user pembuat, registration_boutique = boutique user, source_primary = app, lifecycle_status = Active, is_anonymous = false, is_reachable dihitung dari consent.",
       "consent_wa / consent_email wajib dikirim eksplisit (UU PDP) beserta consent_at.",
       "Tambahkan ke Client Book milik user dengan follow_up_status = welcome_pending.",
     ],
@@ -218,15 +218,15 @@ export const ENDPOINTS = [
   },
   {
     id: "C-04", group: "customers", method: "PATCH", path: "/customers/{customer_id}", title: "Ubah data pelanggan", roles: FIELD, uc: ["UC-02"], cp: ["CP-02"],
-    upstream: ["PATCH Contact API"],
+    upstream: ["PATCH /api/crm/boards/{goldenRecordBoardId}/items/{id}"],
     logic: ["Hanya field yang dikirim yang diubah.", "Perubahan consent menyimpan consent_at dan changed_by.", "Telepon baru diperiksa duplikat seperti C-03."],
     body: [V("email / birthdate / city / gender", "…", false, "Field yang boleh diubah.", "laura@mail.com"), V("consent_wa / consent_email", "bool", false, "Consent.", true)],
     response: { customer_id: 100733, updated_fields: ["email"] },
     errors: ["403 forbidden", "409 duplicate_customer"],
   },
   {
-    id: "C-05", group: "customers", method: "PATCH", path: "/customers/{customer_id}/owner", title: "Reassign pelanggan", roles: LEAD, uc: ["UC-22"], cp: ["CP-02", "CP-03"],
-    upstream: ["PATCH Contact Owner (CP-02 menolak di luar boutique)", "Webhook Contact updated → n8n notifikasi SA baru"],
+    id: "C-05", group: "customers", method: "PATCH", path: "/customers/{customer_id}/owner", title: "Reassign pelanggan", roles: LEAD, uc: ["UC-22"], cp: ["CP-02", "CP-03", "CP-05"],
+    upstream: ["PATCH /api/crm/boards/{goldenRecordBoardId}/items/{id} assigned_user (CP-02 menolak di luar boutique)", "Webhook board item updated (CP-05) → n8n notifikasi SA baru"],
     logic: [
       "Supervisor hanya ke Sales Agent di boutique yang sama (dicek Cekat, 403 bila tidak).",
       "Push yang masih open untuk pelanggan ini dipindah ke assignee baru oleh n8n setelah webhook.",
@@ -286,7 +286,7 @@ export const ENDPOINTS = [
   },
   {
     id: "C-12", group: "customers", method: "GET", path: "/customers/{customer_id}/reach-out-eligibility", title: "Cek aturan 30 hari", roles: FIELD, uc: ["UC-11"], cp: ["CP-02"],
-    upstream: ["GET contact (last_reach_out_at, consent)"],
+    upstream: ["GET Golden Record item (last_reach_out_at, consent_wa, consent_email, is_reachable)"],
     logic: [
       "allowed = last_reach_out_at null atau ≥ 30 hari (Asia/Jakarta).",
       "Usulan pengecualian: push_id aktif untuk pelanggan ini selalu boleh (perlu konfirmasi Longchamp).",
@@ -327,7 +327,7 @@ export const ENDPOINTS = [
   },
   {
     id: "L-03", group: "lists", method: "POST", path: "/lists/preview", title: "Hitung calon member", roles: FIELD, uc: ["UC-06"], cp: ["CP-04"],
-    upstream: ["GET /api/contacts dengan filter (count only)"],
+    upstream: ["GET /api/crm/boards/{goldenRecordBoardId}/items dengan filter (count only)"],
     logic: ["Dipakai builder untuk angka 'matching clients' saat filter berubah.", "Debounce 400 ms di app; cache 60 detik per kombinasi filter."],
     body: [V("filters", "object", true, "Sama dengan L-02.", { tier: ["FAN"] })],
     response: { count: 18 },
@@ -428,11 +428,11 @@ export const ENDPOINTS = [
   },
   {
     id: "R-02", group: "actions", method: "POST", path: "/reach-outs", title: "Catat reach out (VALIDATE)", roles: FIELD, uc: ["UC-12"], cp: ["CP-02"],
-    upstream: ["Board Reach Out create", "PATCH contact last_reach_out_at", "Board Pushes (executed bila push_id)", "Board List Members (welcomed bila motive welcome)"],
+    upstream: ["Board Reach Out create", "PATCH Golden Record item last_reach_out_at", "Board Pushes (executed bila push_id)", "Board List Members (welcomed bila motive welcome)"],
     logic: [
       "Wajib reason + channel. message_id wajib untuk channel whatsapp.",
       "Idempotent per Idempotency-Key.",
-      "Set last_reach_out_at = occurred_at di contact.",
+      "Set last_reach_out_at = occurred_at di item Golden Record.",
       "Bila push_id → push executed dan task agenda terkait ditutup.",
       "Bila reason new_client_welcome → follow_up_status di Client Book menjadi welcomed.",
       "Atribusi konversi 30 hari dijalankan n8n (J-02), bukan di request ini.",
@@ -671,7 +671,7 @@ export const ENDPOINTS = [
   },
   {
     id: "X-04", group: "admin", method: "GET", path: "/customers/unassigned", title: "Pelanggan tanpa assignee", roles: LEAD, uc: ["UC-22"], cp: ["CP-02", "CP-04"],
-    upstream: ["GET /api/contacts?owner=none&boutique_id="],
+    upstream: ["GET /api/crm/boards/{goldenRecordBoardId}/items?assigned_user=none&registration_boutique_id="],
     logic: ["Sama dengan C-01 dengan assigned_user_id=none; dipakai layar reassign."],
     query: [V("boutique_id", "int", false, "Super Admin.", 3), V("limit / cursor", "paging", false, "", 20)],
     response: { data: [{ customer_id: 100402, full_name: "Ayu Kartika", tier: "LOVER", last_purchase_at: "2026-11-02" }] },
@@ -681,24 +681,22 @@ export const ENDPOINTS = [
 
 /* Inbound webhooks (n8n, Cekat IT Delivery) — not called by the app */
 export const WEBHOOKS = [
-  { id: "WH-01", source: "Shopify", event: "orders/create · orders/updated · orders/cancelled · refunds/create", path: "POST /hooks/shopify/orders", logic: "Verifikasi HMAC → idempotency key → identity resolution (telepon → email) → Transactions + Lines → hitung ulang tier (D-06) → atribusi (D-08)." },
-  { id: "WH-02", source: "Shopify", event: "products/update", path: "POST /hooks/shopify/products", logic: "Invalidasi cache katalog Redis untuk SKU terkait." },
-  { id: "WH-03", source: "Odoo", event: "pos.order create / refund (base.automation)", path: "POST /hooks/odoo/pos-order", logic: "Verifikasi shared secret → idempotency → salesperson via odoo_salesperson_id → Transactions → tier → atribusi." },
+  { id: "WH-02", source: "Shopify", event: "products/update (katalog, bukan transaksi)", path: "POST /hooks/shopify/products", logic: "Invalidasi cache katalog Redis untuk SKU terkait. Opsional: tanpa ini cache katalog kedaluwarsa sendiri dalam 15 menit." },
   { id: "WH-04", source: "Cekat", event: "Message Sent · Message Received", path: "POST /hooks/cekat/message", logic: "Update last_reach_out_at (sent) dan penanda sesi 24 jam (received)." },
-  { id: "WH-05", source: "Cekat", event: "Contact updated (owner changed)", path: "POST /hooks/cekat/contact", logic: "Pindahkan push open ke owner baru, kirim FCM ke SA baru." },
-  { id: "WH-06", source: "Cekat Product", event: "Board item created/updated (CP-05)", path: "POST /hooks/cekat/board-item", logic: "Agenda/task yang dibuat di UI Cekat → FCM ke assignee." },
+  { id: "WH-05", source: "Cekat Product", event: "Golden Record item updated: assigned_user berubah (CP-05)", path: "POST /hooks/cekat/board-item", logic: "Pindahkan push open ke SA baru, kirim FCM ke SA baru." },
+  { id: "WH-06", source: "Cekat Product", event: "Board item created (CP-05): Segment History, Agenda", path: "POST /hooks/cekat/board-item", logic: "Segment History baru (tier berubah oleh pipeline Golden Record) → cocokkan Push Rules → Pushes + Agenda + FCM. Agenda yang dibuat di UI Cekat → FCM ke assignee." },
   { id: "WH-07", source: "Cekat Product", event: "Message status per penerima (CP-06)", path: "POST /hooks/cekat/message-status", logic: "Update delivery_status Wishlist, Event Guests, Reach Out." },
 ];
 
 /* Scheduled jobs (n8n, Cekat IT Delivery) */
 export const JOBS = [
-  { id: "J-01", name: "Clienteling push scheduler", schedule: "Harian 06:00 WIB + event tier", logic: "Baca Push Rules aktif → pilih pelanggan → buat Pushes + Agenda task → FCM. Satu push aktif per (pelanggan, push_type)." },
-  { id: "J-02", name: "Atribusi konversi 30 hari", schedule: "Harian 01:00 WIB", logic: "Untuk tiap Reach Out & Wishlist sent dalam 30 hari: cari transaksi pelanggan setelahnya (wishlist: SKU sama) → isi converted_transaction_id; wishlist → purchased. Satu transaksi diatribusikan ke reach out terakhir sebelum transaksi." },
+  { id: "J-01", name: "Clienteling push scheduler", schedule: "Harian 06:00 WIB + WH-06", logic: "Baca Push Rules aktif → VIP birthday dari Golden Record + Segment History baru (cadangan bila CP-05 belum ada) → Pushes + Agenda task → FCM. Satu push aktif per (pelanggan, push_type)." },
+  { id: "J-02", name: "Atribusi konversi 30 hari", schedule: "Harian 01:00 WIB", logic: "Baca board Transactions (sudah diisi pipeline Golden Record dari Shopify + Odoo). Untuk tiap Reach Out & Wishlist sent dalam 30 hari: cari transaksi pelanggan setelahnya (wishlist: SKU sama) → isi converted_transaction_id; wishlist → purchased. Satu transaksi diatribusikan ke reach out terakhir sebelum transaksi." },
   { id: "J-03", name: "Agregasi KPI", schedule: "Harian 02:00 WIB", logic: "Hitung actions, conversion_rate, sales_idr, avg_conversion_days, channel, reason, wishlist, push per sa/pos/country → KPI Snapshot (upsert per period+level+dimension)." },
   { id: "J-04", name: "Evaluasi list dinamis", schedule: "Harian 02:30 WIB", logic: "Jalankan filter_json tiap list dinamis → member_count, refreshed_at." },
   { id: "J-05", name: "Status template Meta", schedule: "Tiap 15 menit", logic: "Template pending → cek status → approved/rejected + rejection_reason → FCM ke pembuat." },
   { id: "J-06", name: "Reminder agenda", schedule: "Tiap 5 menit", logic: "Appointment/task mulai dalam 30 menit → FCM." },
-  { id: "J-07", name: "Data quality report", schedule: "Mingguan Senin 07:00", logic: "Duplikat telepon/email, nomor invalid, transaksi tanpa pelanggan, dead-letter > 0 → email ke IT Delivery & CRM Longchamp." },
+  { id: "J-07", name: "Data quality report (data dari app)", schedule: "Mingguan Senin 07:00", logic: "Pelanggan baru dari app yang kemungkinan duplikat dengan Golden Record, nomor invalid, pelanggan tanpa assigned_user, dead-letter > 0 → email ke IT Delivery & CRM Longchamp." },
 ];
 
 /*
@@ -708,6 +706,8 @@ export const JOBS = [
  * Paths marked verify must be checked against docs.cekat.ai before build.
  */
 export const WRITE_RULES = [
+  "Data Shopify dan Odoo (transaksi, total belanja, tier) sudah masuk ke Cekat CRM lewat pipeline Golden Record yang berjalan. Clienteling API dan n8n app tidak mendengarkan webhook transaksi Shopify/Odoo; keduanya membaca board Golden Record dan Transactions.",
+  "Pelanggan = item board Golden Record (bukan Contacts). App menulis kolom yang sama dengan pipeline (phone_e164, email, consent, registration_boutique, dll.) dan kolom baru clienteling (assigned_user, last_reach_out_at, love_tags).",
   "Setiap insert, update, dan delete dari app ditulis ke Cekat CRM / Cekat API oleh Clienteling API. Tidak ada data yang hanya disimpan di app atau Redis.",
   "Penulisan sinkron: API membalas 2xx hanya setelah Cekat mengonfirmasi, dan response memuat ID dari Cekat (contact id, board item id, template id).",
   "Token user diteruskan ke Cekat pada setiap tulis, sehingga RBAC Cekat (CP-02) ikut memeriksa; API tidak memakai api_key workspace untuk aksi user.",
@@ -720,12 +720,13 @@ const W = (endpoint, title, steps, highlight = false) => ({ endpoint, title, ste
 const S = (target, call, payload, verify = true) => ({ target, call, payload, verify });
 export const WRITES = [
   W("C-03", "Pelanggan baru", [
-    S("Cekat CRM · Contacts", "POST /api/contacts", { name: "Laura Santoso", phone: "+6281298765432", email: "laura@mail.com", owner_id: 87, additional_fields: { birthdate: "1994-03-08", gender: "F", city: "Jakarta Pusat", boutique_id: 3, consent_wa: true, consent_email: false, consent_at: "2026-11-17T10:05:00+07:00", source_primary: "app" } }),
-    S("Cekat CRM · Board List Members", "POST /api/crm/boards/{listMembersBoardId}/items", { list_id: 510, customer_id: "<contact id dari langkah 1>", added_by_user_id: 87, follow_up_status: "welcome_pending" }),
-    S("Cekat CRM · Board Love Tags (opsional)", "POST /api/crm/boards/{loveTagsBoardId}/items", { customer_id: "<contact id>", tag_code: "fashion", added_by_user_id: 87 }),
+    S("Cekat CRM · Board Golden Record", "POST /api/crm/boards/{goldenRecordBoardId}/items", { name: "Laura Santoso", values: { phone_e164: "+6281298765432", mobile_e164: null, email: "laura@mail.com", birthdate: "1994-03-08", gender: "F", city: "Jakarta", province: "DKI Jakarta", country: "Indonesia", language_pref: "id", registration_boutique_id: "Plaza Senayan", registration_boutique_name: "Plaza Senayan", assigned_user: 87, current_tier_id: "Liker", current_tier_name: "Liker", total_spent_idr: 0, purchase_count: 0, lifecycle_status: "Active", consent_wa: true, consent_email: false, is_anonymous: false, is_reachable: true, source_primary: "app" } }),
+    S("Cekat CRM · Board Consent Log", "POST /api/crm/boards/{consentLogBoardId}/items", { customer_id: "<item id dari langkah 1>", channel: "wa", consent_status: true, consent_source: "app", captured_by_user_id: 87 }),
+    S("Cekat CRM · Board List Members", "POST /api/crm/boards/{listMembersBoardId}/items", { list_id: 510, customer_id: "<item id dari langkah 1>", added_by_user_id: 87, follow_up_status: "welcome_pending" }),
+    S("Cekat CRM · Board Love Tags (opsional)", "POST /api/crm/boards/{loveTagsBoardId}/items", { customer_id: "<item id>", tag_code: "fashion", added_by_user_id: 87 }),
   ], true),
-  W("C-04", "Ubah data pelanggan", [S("Cekat CRM · Contacts", "PATCH /api/contacts/{id}", { email: "laura.s@mail.com", additional_fields: { consent_email: true, consent_at: "2026-11-17T10:20:00+07:00" } })]),
-  W("C-05", "Reassign pelanggan", [S("Cekat CRM · Contacts (RBAC CP-02)", "PATCH /api/contacts/{id}", { owner_id: 91 })]),
+  W("C-04", "Ubah data pelanggan", [S("Cekat CRM · Board Golden Record", "PATCH /api/crm/boards/{goldenRecordBoardId}/items/{id}", { values: { email: "laura.s@mail.com", consent_email: true } }), S("Cekat CRM · Board Consent Log", "POST /api/crm/boards/{consentLogBoardId}/items", { customer_id: 100733, channel: "email", consent_status: true, consent_source: "app" })]),
+  W("C-05", "Reassign pelanggan", [S("Cekat CRM · Board Golden Record (RBAC CP-02)", "PATCH /api/crm/boards/{goldenRecordBoardId}/items/{id}", { values: { assigned_user: 91 } })]),
   W("C-07", "Love Tags", [S("Cekat CRM · Board Love Tags", "POST / DELETE /api/crm/boards/{loveTagsBoardId}/items", { customer_id: 100245, tag_code: "gift", added_by_user_id: 87 })]),
   W("C-08", "Komentar", [S("Cekat CRM · Board Comments", "POST / PATCH /api/crm/boards/{commentsBoardId}/items", { customer_id: 100245, text: "Suka warna netral", author_user_id: 87 })]),
   W("C-11", "Tiket servis", [S("Cekat Chat · Tickets API", "POST Tickets API (create)", { contact_id: 100245, type: "repair", sku: "L1899089P59", description: "Jahitan tali longgar", boutique_id: 3 })]),
@@ -735,7 +736,7 @@ export const WRITES = [
   W("E-03", "Undangan event", [S("Cekat Chat · Broadcast API", "POST Broadcast API (template)", { template: "lc_event_invite_id", contacts: [100245] }), S("Cekat CRM · Board Event Guests", "PATCH /api/crm/boards/{eventGuestsBoardId}/items/{id}", { rsvp_status: "invited", invited_at: "2026-11-17T11:00:00+07:00" })]),
   W("P-02", "Push selesai / batal", [S("Cekat CRM · Board Pushes + Agenda", "PATCH /api/crm/boards/{pushesBoardId}/items/{id}", { status: "cancelled", cancel_reason: "client_unreachable" })]),
   W("R-01", "Kirim WhatsApp", [S("Cekat Chat · Message API", "POST Message API (send)", { inbox_id: "ibx_pi_wa", phone: "+6281234567890", template: "lc_birthday_id", language: "id", variables: ["Sari"] })]),
-  W("R-02", "Catat reach out", [S("Cekat CRM · Board Reach Out", "POST /api/crm/boards/{reachOutBoardId}/items", { customer_id: 100245, user_id: 87, channel: "whatsapp", reason: "birthday", occurred_at: "2026-11-17T11:03:00+07:00", message_id: "msg_91c0…" }), S("Cekat CRM · Contacts", "PATCH /api/contacts/{id}", { additional_fields: { last_reach_out_at: "2026-11-17T11:03:00+07:00" } })]),
+  W("R-02", "Catat reach out", [S("Cekat CRM · Board Reach Out", "POST /api/crm/boards/{reachOutBoardId}/items", { customer_id: 100245, user_id: 87, channel: "whatsapp", reason: "birthday", occurred_at: "2026-11-17T11:03:00+07:00", message_id: "msg_91c0…" }), S("Cekat CRM · Board Golden Record", "PATCH /api/crm/boards/{goldenRecordBoardId}/items/{id}", { values: { last_reach_out_at: "2026-11-17T11:03:00+07:00", last_reach_out_channel: "whatsapp" } })]),
   W("G-03 · G-04", "Agenda", [S("Cekat CRM · Board Agenda", "POST / PATCH /api/crm/boards/{agendaBoardId}/items", { item_type: "appointment", subtype: "one_to_one", title: "One-to-one · Michelle Tan", start_at: "2026-11-23T15:30:00+07:00", end_at: "2026-11-23T16:30:00+07:00", customer_id: 100311, assigned_user_id: 87 })]),
   W("T-02", "Template WhatsApp baru", [
     S("Cekat Chat · Open API template (dikirim ke Meta)", "POST Open API — create template message", { name: "lc_undangan_preview_koleksi_id", category: "MARKETING", language: "id", components: [{ type: "HEADER", format: "TEXT", text: "Le Pliage Re-Play" }, { type: "BODY", text: "Halo {{1}}, Anda diundang ke preview pada {{2}}.", example: { body_text: [["Sari", "5 Desember"]] } }, { type: "FOOTER", text: "Longchamp Plaza Indonesia" }, { type: "BUTTONS", buttons: [{ type: "QUICK_REPLY", text: "Saya hadir" }] }] }),

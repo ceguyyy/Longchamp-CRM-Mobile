@@ -105,7 +105,7 @@ export const T = {
       cols: { entity: "Entity", field: "Field", type: "Logical type", cekat: "Cekat column", key: "Key", req: "Req.", writer: "Writer", desc: "Description", example: "Example" },
       notesTitle: "Mapping notes for IT Dev",
       notes: [
-        "Golden Record = Cekat Contacts. Contact Owner holds the assigned SA, so Cekat Role Hierarchy visibility (own, subordinates, unassigned) applies natively.",
+        "Golden Record = a Cekat board (already filled from Shopify + Odoo by the existing pipeline). A new Agents column assigned_user holds the SA; CP-02 applies Role Hierarchy visibility (own, subordinates, unassigned) to its items.",
         "Contact Additional Fields only support Text, Number, Select Options, Date and Boolean — multi-value data (Love Tags) lives in its own board and is mirrored as comma text on the contact.",
         "Foreign keys between boards use the References column; links to clients use the Contacts column; links to staff use the Agents column.",
         "Cekat CRM has no formula columns: totals, tiers, attribution and KPI are computed by n8n and written back.",
@@ -246,7 +246,7 @@ export const T = {
       cols: { entity: "Entitas", field: "Field", type: "Tipe logis", cekat: "Kolom Cekat", key: "Key", req: "Wajib", writer: "Penulis", desc: "Deskripsi", example: "Contoh" },
       notesTitle: "Catatan pemetaan untuk IT Dev",
       notes: [
-        "Golden Record = Cekat Contacts. Contact Owner berisi SA yang di-assign, sehingga visibilitas Role Hierarchy Cekat (sendiri, bawahan, tanpa assignee) berlaku otomatis.",
+        "Golden Record = board Cekat (sudah terisi dari Shopify + Odoo oleh pipeline yang berjalan). Kolom Agents baru assigned_user berisi SA; CP-02 menerapkan visibilitas Role Hierarchy (sendiri, bawahan, tanpa assignee) pada item-nya.",
         "Additional Field di Contacts hanya mendukung Text, Number, Select Options, Date, dan Boolean — data multi-nilai (Love Tags) disimpan di board sendiri dan dicerminkan sebagai teks dipisah koma di kontak.",
         "Foreign key antar board memakai kolom References; link ke klien memakai kolom Contacts; link ke staf memakai kolom Agents.",
         "Cekat CRM tidak punya kolom formula: total, tier, atribusi, dan KPI dihitung n8n lalu ditulis balik.",

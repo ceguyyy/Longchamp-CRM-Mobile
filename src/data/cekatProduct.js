@@ -55,10 +55,10 @@ export const CP_BACKLOG = [
   {
     id: "CP-02",
     priority: "Must",
-    title: { en: "RBAC on Contacts & Board API", id: "RBAC pada Contacts & Board API" },
+    title: { en: "RBAC on Board API (Golden Record + clienteling boards)", id: "RBAC pada Board API (Golden Record + board clienteling)" },
     desc: {
-      en: "Reads AND writes are checked against Role Hierarchy for the calling user (own, subordinates, peers if shared, unassigned); out-of-scope calls return 403.",
-      id: "Baca DAN tulis dicek terhadap Role Hierarchy untuk user pemanggil (sendiri, bawahan, peer jika di-share, tanpa assignee); panggilan di luar scope mengembalikan 403.",
+      en: "Reads AND writes on board items are checked against Role Hierarchy for the calling user, using the Agents column assigned_user on the Golden Record (own, subordinates, peers if shared, unassigned); items of other boards follow their customer. Out-of-scope calls return 403.",
+      id: "Baca DAN tulis item board dicek terhadap Role Hierarchy untuk user pemanggil, memakai kolom Agents assigned_user di Golden Record (sendiri, bawahan, peer jika di-share, tanpa assignee); item board lain mengikuti pelanggannya. Panggilan di luar scope mengembalikan 403.",
     },
   },
   {
@@ -84,8 +84,8 @@ export const CP_BACKLOG = [
     priority: "Should",
     title: { en: "Webhook for CRM board item created / updated", id: "Webhook untuk board item dibuat / diubah" },
     desc: {
-      en: "Documented events today: conversation, message, contact updated. Needed so tasks or reassignments made in the Cekat CRM UI reach the app.",
-      id: "Event yang terdokumentasi saat ini: conversation, message, contact updated. Dibutuhkan agar task atau reassignment dari UI Cekat CRM sampai ke app.",
+      en: "Documented events today: conversation, message, contact updated. Needed for Golden Record changes (assigned_user, tier via Segment History from the existing pipeline) and tasks made in the Cekat CRM UI to reach the app.",
+      id: "Event yang terdokumentasi saat ini: conversation, message, contact updated. Dibutuhkan agar perubahan Golden Record (assigned_user, tier lewat Segment History dari pipeline yang berjalan) dan task dari UI Cekat CRM sampai ke app.",
     },
   },
   {

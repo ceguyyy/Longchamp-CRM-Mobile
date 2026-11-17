@@ -1,0 +1,308 @@
+{
+  ".claude/settings.json": {
+    "mtime": 1794849156.069376,
+    "seen": 1794849607.3123446,
+    "ast_hash": "0a0ef578e59e2bb38c69f1dcb49a0e1a",
+    "semantic_hash": ""
+  },
+  "package.json": {
+    "mtime": 1794838670.095254,
+    "seen": 1794849607.3123531,
+    "ast_hash": "e81ba7e85b0f0ff404d124ed644d9779",
+    "semantic_hash": ""
+  },
+  "src/App.jsx": {
+    "mtime": 1794848651.3649058,
+    "seen": 1794849607.3123567,
+    "ast_hash": "1e0c525f7d605e0a48776622efaa515c",
+    "semantic_hash": ""
+  },
+  "src/components/CpBacklog.jsx": {
+    "mtime": 1794839387.9197838,
+    "seen": 1794849607.312359,
+    "ast_hash": "0c01f182ce214db99d8023f271d31fb4",
+    "semantic_hash": ""
+  },
+  "src/components/DataSourceMatrix.jsx": {
+    "mtime": 1794839371.557372,
+    "seen": 1794849607.3123615,
+    "ast_hash": "6bf9e096aaad5246613a8aac3bbe0583",
+    "semantic_hash": ""
+  },
+  "src/components/DetailPanel.jsx": {
+    "mtime": 1794839371.556984,
+    "seen": 1794849607.3123631,
+    "ast_hash": "7efd514dd6c0e9f20105013e0f0df016",
+    "semantic_hash": ""
+  },
+  "src/components/RbacMatrix.jsx": {
+    "mtime": 1794839381.9157836,
+    "seen": 1794849607.312365,
+    "ast_hash": "38473d489297d845da7580013abc943f",
+    "semantic_hash": ""
+  },
+  "src/components/SourceBadges.jsx": {
+    "mtime": 1794839351.6997817,
+    "seen": 1794849607.3123672,
+    "ast_hash": "7fbc08fc44c3f3441bacdbc7cb4cb37f",
+    "semantic_hash": ""
+  },
+  "src/components/activity/ActivitySvg.jsx": {
+    "mtime": 1794839564.5797944,
+    "seen": 1794849607.3123686,
+    "ast_hash": "17c7227bc405cc8182b2392e11f4d2c0",
+    "semantic_hash": ""
+  },
+  "src/components/activity/activityLayout.js": {
+    "mtime": 1794839692.6147819,
+    "seen": 1794849607.3123705,
+    "ast_hash": "24cf4dccf36460fc60e617c71fb793f4",
+    "semantic_hash": ""
+  },
+  "src/components/architecture/ArchitectureSvg.jsx": {
+    "mtime": 1794841568.72015,
+    "seen": 1794849607.312372,
+    "ast_hash": "b91e472391fe8233ea9edf551fa6ef40",
+    "semantic_hash": ""
+  },
+  "src/components/diagram/UseCaseSvg.jsx": {
+    "mtime": 1794839406.818756,
+    "seen": 1794849607.312374,
+    "ast_hash": "daa78e9190d00da9af0bd46523d3f987",
+    "semantic_hash": ""
+  },
+  "src/components/diagram/layout.js": {
+    "mtime": 1794839406.8196287,
+    "seen": 1794849607.3123758,
+    "ast_hash": "52d9c7ba96774183ab61e70aeca1eedd",
+    "semantic_hash": ""
+  },
+  "src/components/erd/ErdSvg.jsx": {
+    "mtime": 1794840270.9855866,
+    "seen": 1794849607.3123775,
+    "ast_hash": "40d2c881b1d9742a445a30402cfbcca2",
+    "semantic_hash": ""
+  },
+  "src/components/erd/erdLayout.js": {
+    "mtime": 1794840270.983654,
+    "seen": 1794849607.3123786,
+    "ast_hash": "da4e24d7d20d32f9d5447fcc6fb25351",
+    "semantic_hash": ""
+  },
+  "src/components/sequence/SequenceSvg.jsx": {
+    "mtime": 1794840785.2838717,
+    "seen": 1794849607.31238,
+    "ast_hash": "1169ef1f7ac2950502af26b85b54cb1a",
+    "semantic_hash": ""
+  },
+  "src/data/activities.js": {
+    "mtime": 1794844023.2214043,
+    "seen": 1794849607.3123815,
+    "ast_hash": "c29f87d8d238607761dc3a5cd3620907",
+    "semantic_hash": ""
+  },
+  "src/data/apiSpec.js": {
+    "mtime": 1794849586.9836707,
+    "seen": 1794849591.4684484,
+    "ast_hash": "0a8e85fca154061296ac747c1f2c4219",
+    "semantic_hash": ""
+  },
+  "src/data/architecture.js": {
+    "mtime": 1794841568.7209244,
+    "seen": 1794849607.312387,
+    "ast_hash": "c72a725daf31896b2a5a77133fb6c091",
+    "semantic_hash": ""
+  },
+  "src/data/cekatProduct.js": {
+    "mtime": 1794840580.800332,
+    "seen": 1794849607.3123894,
+    "ast_hash": "3923cc1650d5c9f31908cd7c93dda2ec",
+    "semantic_hash": ""
+  },
+  "src/data/components.js": {
+    "mtime": 1794848595.8836615,
+    "seen": 1794849607.3123908,
+    "ast_hash": "621bb533a314df13c38cce27bede0c93",
+    "semantic_hash": ""
+  },
+  "src/data/coverage.js": {
+    "mtime": 1794844034.2793374,
+    "seen": 1794849607.3123927,
+    "ast_hash": "bd2b9f442dfd37cd091d81ebe24e895e",
+    "semantic_hash": ""
+  },
+  "src/data/erd.js": {
+    "mtime": 1794844023.2207768,
+    "seen": 1794849607.3123949,
+    "ast_hash": "e385ab04ed910ad8f9b02cc51d69b84c",
+    "semantic_hash": ""
+  },
+  "src/data/sequences.js": {
+    "mtime": 1794844034.278867,
+    "seen": 1794849607.3123965,
+    "ast_hash": "a2d659ec455938fcbeea293fc428cf41",
+    "semantic_hash": ""
+  },
+  "src/data/useCases.js": {
+    "mtime": 1794844023.2198188,
+    "seen": 1794849607.3123982,
+    "ast_hash": "58c91a3d4e63e214f07a354bc5c5b836",
+    "semantic_hash": ""
+  },
+  "src/i18n.js": {
+    "mtime": 1794848651.365314,
+    "seen": 1794849607.3123999,
+    "ast_hash": "31b22e86ced9224825a8f18ecf8c633f",
+    "semantic_hash": ""
+  },
+  "src/main.jsx": {
+    "mtime": 1794838868.6152658,
+    "seen": 1794849607.3124013,
+    "ast_hash": "868980ec0d27595b1f8677385a4c5540",
+    "semantic_hash": ""
+  },
+  "src/mockup/MockApp.jsx": {
+    "mtime": 1794841938.152665,
+    "seen": 1794849607.312403,
+    "ast_hash": "dae8b7db97346ad49900dc17aa6a512b",
+    "semantic_hash": ""
+  },
+  "src/mockup/core.jsx": {
+    "mtime": 1794843992.3485975,
+    "seen": 1794849607.3124044,
+    "ast_hash": "237f54ad5ca19994066f2ddc29aa4a55",
+    "semantic_hash": ""
+  },
+  "src/mockup/data.js": {
+    "mtime": 1794843911.4764392,
+    "seen": 1794849607.3124058,
+    "ast_hash": "d842a2dd02bb3ebbe8405c326f94a92e",
+    "semantic_hash": ""
+  },
+  "src/mockup/screens.js": {
+    "mtime": 1794849496.8568416,
+    "seen": 1794849591.4684722,
+    "ast_hash": "9ba178535a9bd3a5b43e5a9202a777ee",
+    "semantic_hash": ""
+  },
+  "src/mockup/screens/Auth.jsx": {
+    "mtime": 1794841999.5935993,
+    "seen": 1794849607.3124094,
+    "ast_hash": "d9ac09d1a1c9daa55af09a55c2d04cae",
+    "semantic_hash": ""
+  },
+  "src/mockup/screens/Clients.jsx": {
+    "mtime": 1794843952.4196315,
+    "seen": 1794849607.3124106,
+    "ast_hash": "b954363488e6d99d26fada30781044a6",
+    "semantic_hash": ""
+  },
+  "src/mockup/screens/Home.jsx": {
+    "mtime": 1794843449.6607697,
+    "seen": 1794849607.3124123,
+    "ast_hash": "af35c6ab15b09cd902a7880b21b683ed",
+    "semantic_hash": ""
+  },
+  "src/mockup/screens/Templates.jsx": {
+    "mtime": 1794849506.2273688,
+    "seen": 1794849591.4684777,
+    "ast_hash": "86ca93de858d5d147725caec8539210f",
+    "semantic_hash": ""
+  },
+  "src/mockup/screens/Work.jsx": {
+    "mtime": 1794849506.2267199,
+    "seen": 1794849591.4684792,
+    "ast_hash": "52aff23298972c0b7d12d43e7b4c509e",
+    "semantic_hash": ""
+  },
+  "src/pages/ActivityPage.jsx": {
+    "mtime": 1794839589.0597959,
+    "seen": 1794849607.3124168,
+    "ast_hash": "85dba37f56a4ce99cc897b7d6fcb4a0c",
+    "semantic_hash": ""
+  },
+  "src/pages/ApiPage.jsx": {
+    "mtime": 1794849519.3877602,
+    "seen": 1794849591.468482,
+    "ast_hash": "e45026ad8016931a5b26bb3018310cf1",
+    "semantic_hash": ""
+  },
+  "src/pages/ArchitecturePage.jsx": {
+    "mtime": 1794839819.5718095,
+    "seen": 1794849607.3124197,
+    "ast_hash": "6aa5413900731609cbd0f4ee22c3f1ca",
+    "semantic_hash": ""
+  },
+  "src/pages/CoveragePage.jsx": {
+    "mtime": 1794843885.0270474,
+    "seen": 1794849607.3124206,
+    "ast_hash": "4523f5b6ae7d371a7a2de395137bb283",
+    "semantic_hash": ""
+  },
+  "src/pages/ErdPage.jsx": {
+    "mtime": 1794840313.7053967,
+    "seen": 1794849607.3124218,
+    "ast_hash": "f377b8565f336f4a7662de0810b7fd1d",
+    "semantic_hash": ""
+  },
+  "src/pages/MockupPage.jsx": {
+    "mtime": 1794841526.7137353,
+    "seen": 1794849607.312423,
+    "ast_hash": "edaf1a6e4fc67495334af075eb531943",
+    "semantic_hash": ""
+  },
+  "src/pages/SequencePage.jsx": {
+    "mtime": 1794840743.0682318,
+    "seen": 1794849607.312424,
+    "ast_hash": "a9cd64b46a674d96bea3485651dc9493",
+    "semantic_hash": ""
+  },
+  "src/pages/UseCasePage.jsx": {
+    "mtime": 1794839603.234298,
+    "seen": 1794849607.312425,
+    "ast_hash": "d8abe16ae0db17e6371194cd46a4558d",
+    "semantic_hash": ""
+  },
+  "src/utils/downloadSvg.js": {
+    "mtime": 1794839591.371796,
+    "seen": 1794849607.3124266,
+    "ast_hash": "9a65ceaa86876c7d898b89c7119991af",
+    "semantic_hash": ""
+  },
+  "vite.config.js": {
+    "mtime": 1794838697.663191,
+    "seen": 1794849607.3124278,
+    "ast_hash": "e0aaf11b1f04332c20b93bca291e9f25",
+    "semantic_hash": ""
+  },
+  ".claude/CLAUDE.md": {
+    "mtime": 1794849156.0681553,
+    "seen": 1794849607.3124287,
+    "ast_hash": "9b31786b637be3c13978bec4c2330752",
+    "semantic_hash": ""
+  },
+  "CLAUDE.md": {
+    "mtime": 1794849156.0690815,
+    "seen": 1794849607.3124301,
+    "ast_hash": "dfe5fa7939121e96d61b54077cc9ab84",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1794849180.6212754,
+    "seen": 1794849607.3124309,
+    "ast_hash": "bc2a7026269f273cc3ee4076420042c9",
+    "semantic_hash": ""
+  },
+  "index.html": {
+    "mtime": 1794841799.1689134,
+    "seen": 1794849607.312432,
+    "ast_hash": "ab60ac0b065768fd812defdf9cf5406d",
+    "semantic_hash": ""
+  },
+  "package-lock.json": {
+    "mtime": 1794838670.115254,
+    "seen": 1794849607.3124335,
+    "ast_hash": "c88816db0aac118805d51c53b8c6ee4f",
+    "semantic_hash": ""
+  }
+}

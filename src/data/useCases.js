@@ -73,8 +73,8 @@ const model = {
   ],
 
   systems: [
-    { id: "shopify", name: "Shopify", sub: "Webhook + REST Admin API", owner: "external" },
-    { id: "odoo", name: "Odoo POS", sub: "base.automation webhook + REST", owner: "external" },
+    { id: "shopify", name: "Shopify", sub: "REST Admin API (catalog) · orders via existing pipeline", owner: "external" },
+    { id: "odoo", name: "Odoo POS", sub: "REST (stock) · POS orders via existing pipeline", owner: "external" },
     { id: "cekatWh", name: "Cekat Webhook", sub: "Devtools → Webhooks", owner: "itdev" },
     { id: "n8n", name: "n8n + BFF", sub: "Orchestration · Scheduler · Proxy", owner: "itdev" },
     { id: "cekatApi", name: "Cekat CRM API", sub: "Contact · Board (docs)", owner: "itdev" },
@@ -103,8 +103,8 @@ const model = {
       },
       rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/contacts?limit=&page=", status: "available" },
-        { sys: "cekatNew", type: "API", dir: "read", ref: "RBAC check on contacts query (user token)", status: "product", cp: "CP-02" },
+        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/crm/boards/{goldenRecordBoardId}/items (Golden Record board)", status: "available" },
+        { sys: "cekatNew", type: "API", dir: "read", ref: "RBAC on Golden Record items by assigned_user (user token)", status: "product", cp: "CP-02" },
       ],
     },
     {
@@ -116,9 +116,8 @@ const model = {
       },
       rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/contacts (Golden Record fields)", status: "available" },
-        { sys: "cekatWh", type: "Webhook", dir: "in", ref: "Event: Contact updated → n8n", status: "available",
-          note: "Event is listed; payload fields are not documented yet.", verify: true },
+        { sys: "cekatApi", type: "API", dir: "read", ref: "GET Golden Record board items", status: "available" },
+        { sys: "cekatNew", type: "Webhook", dir: "in", ref: "Golden Record item updated → n8n", status: "product", cp: "CP-05" },
       ],
     },
     {
@@ -130,10 +129,7 @@ const model = {
       },
       rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "shopify", type: "Webhook", dir: "in", ref: "orders/create · orders/updated · orders/cancelled · refunds/create", status: "available" },
-        { sys: "odoo", type: "Webhook", dir: "in", ref: "base.automation on pos.order (create / refund)", status: "internal" },
-        { sys: "n8n", type: "Workflow", dir: "write", ref: "Upsert Transactions item (idempotency sha256(source+id+event))", status: "internal" },
-        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/crm/boards/{transactionsBoardId}/items", status: "available" },
+        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/crm/boards/{transactionsBoardId}/items — already filled from Shopify + Odoo by the existing Golden Record pipeline", status: "available" },
       ],
     },
     {
@@ -145,7 +141,7 @@ const model = {
       },
       rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "write", ref: "Contact API — update Golden Record fields + Love Tags board", status: "available", verify: true },
+        { sys: "cekatApi", type: "API", dir: "write", ref: "PATCH Golden Record board item + Love Tags board", status: "available", verify: true },
       ],
     },
     {
@@ -158,7 +154,7 @@ const model = {
       rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
         { sys: "n8n", type: "Workflow", dir: "write", ref: "Identity waterfall: phone → email → create", status: "internal" },
-        { sys: "cekatApi", type: "API", dir: "write", ref: "Contact API — create contact + assignee", status: "available", verify: true },
+        { sys: "cekatApi", type: "API", dir: "write", ref: "POST Golden Record board item (assigned_user = SA, source_primary = app)", status: "available", verify: true },
       ],
     },
 
@@ -172,7 +168,7 @@ const model = {
       },
       rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /api/contacts (Golden Record fields)", status: "available" },
+        { sys: "cekatApi", type: "API", dir: "read", ref: "GET Golden Record board items", status: "available" },
         { sys: "n8n", type: "Workflow", dir: "read", ref: "Interim: filter in BFF after paging items", status: "internal" },
         { sys: "cekatNew", type: "API", dir: "read", ref: "Server-side filter & search on items", status: "product", cp: "CP-04" },
       ],
@@ -186,7 +182,7 @@ const model = {
       },
       rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "read", ref: "Contacts, filter birthdate", status: "available" },
+        { sys: "cekatApi", type: "API", dir: "read", ref: "Golden Record items, filter birthdate", status: "available" },
         { sys: "cekatNew", type: "API", dir: "read", ref: "Date-range filter (birthday window)", status: "product", cp: "CP-04" },
       ],
     },
@@ -242,7 +238,7 @@ const model = {
       },
       rbac: { sa: "own", sm: "boutique", hq: "none" },
       sources: [
-        { sys: "cekatApi", type: "API", dir: "read", ref: "last_reach_out_at on contact (Golden Record)", status: "available" },
+        { sys: "cekatApi", type: "API", dir: "read", ref: "last_reach_out_at on Golden Record item", status: "available" },
         { sys: "cekatChat", type: "API", dir: "write", ref: "Message API — send session / template message to inbox_id", status: "available", verify: true,
           note: "inbox_id from GET /api/inboxes." },
         { sys: "cekatWh", type: "Webhook", dir: "in", ref: "Message Sent · Message Received → n8n updates last_reach_out_at", status: "available" },
@@ -473,9 +469,9 @@ const model = {
       },
       rbac: { sa: "none", sm: "boutique", hq: "manage" },
       sources: [
-        { sys: "cekatNew", type: "API", dir: "write", ref: "Update Contact Owner with RBAC check (403 outside boutique)", status: "product", cp: "CP-02" },
+        { sys: "cekatNew", type: "API", dir: "write", ref: "Update assigned_user on Golden Record with RBAC check (403 outside boutique)", status: "product", cp: "CP-02" },
         { sys: "cekatNew", type: "API", dir: "read", ref: "Users & Role Hierarchy API", status: "product", cp: "CP-03" },
-        { sys: "cekatWh", type: "Webhook", dir: "in", ref: "Contact updated (owner changed) → n8n notifies new SA", status: "available", verify: true },
+        { sys: "cekatNew", type: "Webhook", dir: "in", ref: "Golden Record item updated (assigned_user changed) → n8n notifies new SA", status: "product", cp: "CP-05" },
       ],
     },
   ],

@@ -8,7 +8,7 @@ import { COMPONENTS, PARTIES, TECH_STACK } from "../data/components";
 
 const ROLE_SHORT = { sales_agent: "SA", supervisor: "SPV", super_admin: "SAdm" };
 const METHOD_COLOR = { GET: "success", POST: "accent", PATCH: "warning", PUT: "warning", DELETE: "danger" };
-const PARTY_COLOR = { vendor: "default", itdelivery: "accent", product: "warning" };
+const PARTY_COLOR = { vendor: "default", itdelivery: "accent", product: "warning", existing: "success" };
 
 function Section({ title, desc, children }) {
   return (
@@ -143,7 +143,7 @@ export default function ApiPage() {
         Clienteling API (Go) adalah satu-satunya API yang dipanggil app; database-nya Cekat CRM lewat Cekat API. Halaman ini memuat tech stack, komponen per pihak, {ENDPOINTS.length} endpoint lengkap dengan logic, variabel, filter, dan response, serta webhook dan job n8n.
       </p>
 
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
+      <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {Object.entries(PARTIES).map(([k, p]) => (
           <div key={k} className="rounded-2xl border border-[var(--lc-line)] bg-white p-4">
             <div className="flex items-baseline justify-between">
@@ -178,9 +178,9 @@ export default function ApiPage() {
         </Table>
       </Section>
 
-      <Section title="Komponen per pihak" desc="Vendor hanya membangun mobile app; data integrity di engine Cekat dipegang Cekat IT Delivery; fitur platform yang belum ada di dokumentasi API dibangun Cekat Product.">
+      <Section title="Komponen per pihak" desc="Vendor hanya membangun mobile app; data integrity di engine Cekat dipegang Cekat IT Delivery; fitur platform yang belum ada di dokumentasi API dibangun Cekat Product. Pipeline Shopify + Odoo → Golden Record sudah berjalan dan hanya dipakai.">
         <div className="mb-3 flex flex-wrap gap-2">
-          {[["all", "Semua"], ["vendor", "Vendor"], ["itdelivery", "Cekat IT Delivery"], ["product", "Cekat Product"]].map(([k, l]) => (
+          {[["all", "Semua"], ["vendor", "Vendor"], ["itdelivery", "Cekat IT Delivery"], ["product", "Cekat Product"], ["existing", "Sudah berjalan"]].map(([k, l]) => (
             <button key={k} onClick={() => setParty(k)} className={`rounded-full px-3 py-1 text-xs font-semibold ${party === k ? "bg-[var(--lc-forest)] text-white" : "border border-[var(--lc-line)] bg-white"}`}>
               {l}
             </button>

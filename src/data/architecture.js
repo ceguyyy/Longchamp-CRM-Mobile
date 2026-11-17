@@ -59,7 +59,7 @@ const arch = {
       title: L("n8n Orchestration", "Orkestrasi n8n"),
       sub: L("Event-driven workflows · cron"),
       items: [
-        L("Webhook receivers: Shopify · Odoo · Cekat", "Penerima webhook: Shopify · Odoo · Cekat"),
+        L("Webhook receivers: Cekat (board item, message)", "Penerima webhook: Cekat (board item, pesan)"),
         L("Idempotency + identity waterfall"),
         L("Tier engine (IDR thresholds, refund aware)", "Tier engine (threshold IDR, sadar refund)"),
         L("Clienteling push scheduler (08:00 WIB)"),
@@ -67,16 +67,16 @@ const arch = {
         L("Error log (log-only)"),
       ],
       desc: L(
-        "Back-office automation. Receives webhooks, writes the Golden Record and transactions into Cekat CRM, computes tiers and KPI, and triggers pushes.",
-        "Otomasi back-office. Menerima webhook, menulis Golden Record dan transaksi ke Cekat CRM, menghitung tier dan KPI, serta memicu push."
+        "Clienteling automation. Reacts to Cekat webhooks (tier changes, owner changes, messages), creates pushes and agenda tasks, attributes conversions and aggregates KPI. Shopify and Odoo data already reach Cekat through the existing Golden Record pipeline.",
+        "Otomasi clienteling. Bereaksi pada webhook Cekat (perubahan tier, owner, pesan), membuat push dan task agenda, atribusi konversi, dan agregasi KPI. Data Shopify dan Odoo sudah masuk ke Cekat lewat pipeline Golden Record yang berjalan."
       ),
     },
     {
       id: "crm", x: 820, y: 110, w: 410, h: 320, owner: "itdev", database: true,
       title: L("Cekat CRM — system of record", "Cekat CRM — system of record"),
-      sub: L("The app's database (Contacts + Boards)", "Database aplikasi (Contacts + Boards)"),
+      sub: L("The app's database (Golden Record + boards)", "Database aplikasi (Golden Record + board)"),
       items: [
-        L("Contacts · Golden Record"),
+        L("Golden Record board"),
         L("Transactions (online + offline)", "Transactions (online + offline)"),
         L("Reach Out · Wishlist"),
         L("Agenda (tasks & appointments)", "Agenda (task & appointment)"),
@@ -162,14 +162,14 @@ const arch = {
       proto: "Shopify REST Admin API", auth: "Admin API token", trigger: L("Catalog request (cached)", "Request katalog (cache)"), owner: "itdev" },
     { id: 5, from: "bff", to: "odoo", pts: [[720, 110], [720, 92], [1580, 92], [1580, 243], [1556, 243]], label: null,
       proto: "Odoo REST / JSON-RPC", auth: "Odoo API key", trigger: L("Stock check (live)", "Cek stok (live)"), owner: "itdev" },
-    { id: 6, from: "shopify", to: "n8n", pts: [[1296, 150], [1262, 150], [1262, 453], [750, 453]], label: L("webhooks: orders/* · refunds/create · pos.order"), lx: 1000, ly: 446, center: true,
-      proto: "HTTPS webhook (HMAC)", auth: "Shared secret", trigger: L("Order / refund / POS order", "Order / refund / order POS"), owner: "external" },
+    { id: 6, from: "shopify", to: "n8n", pts: [[1296, 150], [1262, 150], [1262, 453], [750, 453]], label: L("existing Golden Record pipeline → Cekat CRM", "pipeline Golden Record (sudah berjalan) → Cekat CRM"), lx: 1000, ly: 446, center: true,
+      proto: "Existing pipeline (out of scope)", auth: "—", trigger: L("Order / refund / POS order — already in Cekat", "Order / refund / order POS — sudah ada di Cekat"), owner: "external" },
     { id: 7, from: "odoo", to: "n8n", pts: [[1296, 243], [1262, 243]], label: null, merge: true,
-      proto: "HTTPS webhook (base.automation)", auth: "Shared secret", trigger: L("POS order validated / refund", "Order POS divalidasi / refund"), owner: "external" },
+      proto: "Existing pipeline (out of scope)", auth: "—", trigger: L("POS order / refund — already in Cekat", "Order POS / refund — sudah ada di Cekat"), owner: "external" },
     { id: 8, from: "n8n", to: "crm", pts: [[750, 420], [820, 420]], label: L("upsert"), lx: 760, ly: 412,
       proto: "Cekat Open API (REST)", auth: "api_key", trigger: L("Every inbound event", "Setiap event masuk"), owner: "itdev" },
     { id: 9, from: "wh", to: "n8n", pts: [[820, 615], [750, 615]], label: L("events", "event"), lx: 815, ly: 607, anchor: "end",
-      proto: "HTTPS webhook", auth: "Webhook secret / URL", trigger: L("Message · conversation · contact updated"), owner: "itdev" },
+      proto: "HTTPS webhook", auth: "Webhook secret / URL", trigger: L("Message · board item (CP-05)", "Pesan · board item (CP-05)"), owner: "itdev" },
     { id: 10, from: "chat", to: "meta", pts: [[1230, 518], [1296, 518]], label: L("WABA"), lx: 1238, ly: 510,
       proto: "WhatsApp Cloud API", auth: "Managed by Cekat", trigger: L("Send message", "Kirim pesan"), owner: "itdev" },
     { id: 11, from: "n8n", to: "fcm", pts: [[520, 654], [520, 876], [1426, 876], [1426, 746]], label: L("push"), lx: 1100, ly: 868,
@@ -186,8 +186,8 @@ const arch = {
 
   /* What lives where — Cekat CRM as the database */
   dataOwnership: [
-    { entity: L("Client (Golden Record)", "Klien (Golden Record)"), store: "Contacts + Golden Record board", writers: "n8n (webhooks), App via BFF (register, Love Tags)", readers: "App via BFF · n8n" },
-    { entity: L("Transactions"), store: "Transactions board", writers: "n8n (Shopify, Odoo webhooks)", readers: "App via BFF · n8n (tier, KPI)" },
+    { entity: L("Client (Golden Record)", "Klien (Golden Record)"), store: "Golden Record board", writers: "Existing pipeline (Shopify, Odoo); App via BFF (register, Love Tags, assigned SA, last reach out)", readers: "App via BFF · n8n" },
+    { entity: L("Transactions"), store: "Transactions board", writers: "Existing Golden Record pipeline (Shopify, Odoo) — read-only for the app", readers: "App via BFF · n8n (tier, KPI)" },
     { entity: L("Reach Out log"), store: "Reach Out board", writers: "App via BFF", readers: "n8n (KPI) · App" },
     { entity: L("Wishlist"), store: "Wishlist board", writers: "App via BFF", readers: "n8n (attribution) · App" },
     { entity: L("Agenda tasks & appointments", "Task & appointment Agenda"), store: "Agenda board", writers: "n8n (pushes), App via BFF", readers: "App via BFF" },

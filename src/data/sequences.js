@@ -87,7 +87,7 @@ const sequences = [
     messages: [
       M("user", "app", "sync", L("Type phone / name", "Ketik HP / nama")),
       M("app", "bff", "sync", L("Search clients", "Cari klien"), "GET /v1/clients?q=0812345&limit=20", { headers: UTOKEN }),
-      M("bff", "cp", "sync", L("Contacts query with user token", "Query kontak dengan token user"), "GET /api/contacts?q=0812345&limit=20", { headers: UTOKEN }, { cp: "CP-02", note: "Same Contact API, but evaluated as the signed-in user (RBAC)." }),
+      M("bff", "cp", "sync", L("Golden Record query with user token", "Query Golden Record dengan token user"), "GET /api/crm/boards/{goldenRecordBoardId}/items?q=0812345&limit=20", { headers: UTOKEN }, { cp: "CP-02", note: "Same Golden Record aPI, but evaluated as the signed-in user (RBAC)." }),
       M("cp", "crm", "sync", L("Read within Role Hierarchy visibility", "Baca sesuai visibilitas Role Hierarchy"), "own · subordinates · unassigned", null, { cp: "CP-02" }),
       M("crm", "cp", "reply", L("Visible contacts", "Kontak yang terlihat"), "200"),
       M("cp", "bff", "reply", L("Scoped contacts", "Kontak sesuai scope"), "200", {
@@ -99,7 +99,7 @@ const sequences = [
       }),
       M("user", "app", "sync", L("Open client", "Buka klien")),
       M("app", "bff", "sync", L("Get profile", "Ambil profil"), "GET /v1/clients/100245", { headers: UTOKEN }),
-      M("bff", "cp", "sync", L("Get contact (RBAC)", "Ambil kontak (RBAC)"), "GET /api/contacts/100245", { headers: UTOKEN }, { cp: "CP-02" }),
+      M("bff", "cp", "sync", L("Get Golden Record item (RBAC)", "Ambil item Golden Record (RBAC)"), "GET /api/crm/boards/{goldenRecordBoardId}/items/100245", { headers: UTOKEN }, { cp: "CP-02" }),
       M("cp", "bff", "reply", L("Not in scope", "Di luar scope"), "403", { error: "forbidden" }, { cp: "CP-02" }),
       M("bff", "cp", "sync", L("Get transactions (RBAC)", "Ambil transaksi (RBAC)"), "GET /api/crm/boards/{transactionsBoardId}/items", { headers: UTOKEN, filter: { customer_id: 100245 }, sort: "-transaction_datetime", limit: 10 }, { cp: "CP-02" }),
       M("bff", "cp", "sync", L("Get Love Tags (RBAC)", "Ambil Love Tags (RBAC)"), "GET /api/crm/boards/{loveTagsBoardId}/items", { headers: UTOKEN, filter: { customer_id: 100245 } }, { cp: "CP-02" }),
@@ -119,40 +119,22 @@ const sequences = [
   /* ================================================================ SD-03 */
   {
     id: "SD-03",
-    title: L("POS order → Golden Record → push", "Order POS → Golden Record → push"),
+    title: L("Tier change in Cekat → push", "Perubahan tier di Cekat → push"),
     desc: L(
-      "Odoo pushes the paid POS order; n8n updates the contact and transactions in Cekat CRM and, on a tier change, creates the push, the Agenda task and the device notification.",
-      "Odoo mengirim order POS yang sudah dibayar; n8n meng-update kontak dan transaksi di Cekat CRM, dan bila tier berubah, membuat push, task Agenda, serta notifikasi perangkat."
+      "The existing Golden Record pipeline has already written the Shopify/Odoo order and the new tier into Cekat. A Segment History item triggers the clienteling flow: push, Agenda task and device notification. No Shopify or Odoo webhook is handled here.",
+      "Pipeline Golden Record yang berjalan sudah menulis order Shopify/Odoo dan tier baru ke Cekat. Item Segment History memicu alur clienteling: push, task Agenda, dan notifikasi perangkat. Tidak ada webhook Shopify atau Odoo yang ditangani di sini."
     ),
     refs: ["UC-03", "UC-10", "AD-02"],
-    participants: ["odoo", "n8n", "crm", "fcm", "app"],
+    participants: ["crm", "cp", "n8n", "fcm", "app"],
     messages: [
-      M("odoo", "n8n", "async", L("Webhook: POS order paid", "Webhook: order POS dibayar"), "POST /webhook/odoo/pos-order", {
-        event: "pos.order.paid", odoo_order_id: 55231, receipt_number: "PI-0055231", transaction_type: "sale",
-        partner: { odoo_partner_id: 10432, name: "Sari Dewi", phone: "+6281234567890", email: "sari.dewi@mail.com" },
-        boutique_id: 3, salesperson_id: 87, transaction_datetime: "2026-10-28T16:30:00+07:00", currency: "IDR", amount_net: 4750000,
-        line_items: [{ sku: "L1899089P59", product_name: "Le Pliage Original M", category: "Handbag", qty: 1, unit_price: 2450000 }],
-      }),
-      M("n8n", "n8n", "self", L("Verify secret · idempotency_key = sha256(source+id+event)", "Verifikasi secret · idempotency_key = sha256(source+id+event)")),
-      M("n8n", "odoo", "reply", L("Duplicate — ignored", "Duplikat — diabaikan"), "200", { status: "duplicate_ignored" }),
-      M("n8n", "crm", "sync", L("Find contact by phone", "Cari kontak berdasarkan HP"), "GET /api/contacts?phone=%2B6281234567890", { headers: KEY }, { verify: true }),
-      M("crm", "n8n", "reply", L("Contact (or none)", "Kontak (atau kosong)"), "200", { data: [{ id: 100245 }] }),
-      M("n8n", "crm", "sync", L("Upsert contact", "Upsert kontak"), "PATCH /api/contacts/100245", {
-        last_purchase_date: "2026-10-28", purchase_count: 7, total_spent_idr: 64500000, product_categories: "Handbag,Le Pliage",
-      }, { verify: true }),
-      M("n8n", "crm", "sync", L("Create Transactions item", "Buat item Transactions"), "POST /api/crm/boards/{transactionsBoardId}/items", {
-        source_system: "odoo", source_order_id: "55231", receipt_number: "PI-0055231", customer_id: 100245, transaction_type: "sale",
-        boutique_id: 3, salesperson_user_id: 87, channel: "offline", transaction_datetime: "2026-10-28T16:30:00+07:00",
-        currency: "IDR", amount_net_idr: 4750000, idempotency_key: "9f2c…e81a",
-      }, { verify: true }),
-      M("n8n", "crm", "sync", L("Create Transaction Lines", "Buat Transaction Lines"), "POST /api/crm/boards/{transactionLinesBoardId}/items", {
-        transaction_id: 7781, sku: "L1899089P59", product_name: "Le Pliage Original M", category: "Handbag", qty: 1, unit_price_idr: 2450000, line_total_idr: 2450000,
-      }, { verify: true }),
-      M("n8n", "n8n", "self", L("Recompute tier from total_spent_idr", "Hitung ulang tier dari total_spent_idr")),
-      M("n8n", "crm", "sync", L("Update tier on contact", "Update tier di kontak"), "PATCH /api/contacts/100245", { current_tier_id: 4, current_tier_name: "FAN" }, { verify: true }),
-      M("n8n", "crm", "sync", L("Create Segment History", "Buat Segment History"), "POST /api/crm/boards/{segmentHistoryBoardId}/items", {
-        customer_id: 100245, from_tier_id: 3, to_tier_id: 4, direction: "upgrade", trigger_transaction_id: 7781, total_spent_idr_at_change: 64500000,
-      }, { verify: true }),
+      M("crm", "crm", "self", L("Existing pipeline: transaction + tier + Segment History written", "Pipeline berjalan: transaksi + tier + Segment History tertulis")),
+      M("cp", "n8n", "async", L("Webhook: Segment History item created", "Webhook: item Segment History dibuat"), "POST /hooks/cekat/board-item", {
+        event: "board_item.created", board: "segment_history", item_id: 9001,
+        values: { customer_id: 100245, from_tier_name: "COLLECTOR", to_tier_name: "FAN", direction: "upgrade", created_at: "2026-10-28T16:31:00+07:00" },
+      }, { cp: "CP-05" }),
+      M("n8n", "n8n", "self", L("Idempotency + match Push Rules", "Idempotency + cocokkan Push Rules")),
+      M("n8n", "crm", "sync", L("Read Golden Record item", "Baca item Golden Record"), "GET /api/crm/boards/{goldenRecordBoardId}/items/100245", { headers: KEY }, { verify: true }),
+      M("crm", "n8n", "reply", L("Assigned SA + tier", "SA + tier"), "200", { id: 100245, name: "Sari Dewi", assigned_user_id: 87, registration_boutique_id: 3, current_tier_name: "FAN", consent_wa: true }),
       M("n8n", "crm", "sync", L("Create Clienteling Push", "Buat Clienteling Push"), "POST /api/crm/boards/{pushesBoardId}/items", {
         push_type: "high_value_upgrade", rule_id: 2, customer_id: 100245, assigned_user_id: 87, boutique_id: 3, trigger_history_id: 9001, due_date: "2026-11-04", status: "sent",
       }, { verify: true }),
@@ -163,12 +145,9 @@ const sequences = [
         message: { token: "fcm:APA91b…", notification: { title: "High Value Upgrade", body: "Sari Dewi is now FAN — call before 4 Nov" }, data: { push_id: "6120", customer_id: "100245" } },
       }),
       M("fcm", "app", "async", L("Notification on SA device", "Notifikasi di perangkat SA")),
-      M("n8n", "crm", "sync", L("Update totals only", "Update total saja"), "PATCH /api/contacts/100245", { total_spent_idr: 64500000, purchase_count: 7 }, { verify: true }),
-      M("n8n", "odoo", "reply", L("Processed", "Diproses"), "200", { status: "processed", transaction_id: 7781 }),
     ],
     fragments: [
-      { type: "opt", from: 2, to: 2, label: L("duplicate event", "event duplikat") },
-      { type: "alt", from: 9, to: 15, label: L("tier changed", "tier berubah"), branches: [{ at: 15, label: L("no change", "tidak berubah") }] },
+      { type: "opt", from: 5, to: 8, label: L("rule matched (until CP-05: daily cron reads Segment History)", "rule cocok (sebelum CP-05: cron harian membaca Segment History)") },
     ],
   },
 
@@ -185,7 +164,7 @@ const sequences = [
     messages: [
       M("user", "app", "sync", L("Tap Reach Out", "Tekan Reach Out")),
       M("app", "bff", "sync", L("Check eligibility", "Cek kelayakan"), "GET /v1/clients/100245/reach-out", { headers: UTOKEN }),
-      M("bff", "crm", "sync", L("Get contact (user token)", "Ambil kontak (token user)"), "GET /api/contacts/100245", { headers: UTOKEN }, { verify: true, note: "RBAC enforced by Cekat Product (CP-02)." }),
+      M("bff", "crm", "sync", L("Get Golden Record item (user token)", "Ambil item Golden Record (token user)"), "GET /api/crm/boards/{goldenRecordBoardId}/items/100245", { headers: UTOKEN }, { verify: true, note: "RBAC enforced by Cekat Product (CP-02)." }),
       M("crm", "bff", "reply", L("Contact", "Kontak"), "200", { last_reach_out_at: "2026-10-02T14:20:00+07:00", consent_wa: true, last_contact_from_agent: "2026-10-02T14:19:00+07:00" }),
       M("bff", "app", "reply", L("Not eligible", "Tidak layak"), "200", { eligible: false, days_since_last_contact: 12, reason: "contacted_within_30_days" }),
       M("bff", "app", "reply", L("Eligible + templates", "Layak + template"), "200", {
@@ -203,7 +182,7 @@ const sequences = [
       M("chat", "bff", "reply", L("Message id", "Id pesan"), "200", { message_id: "msg_77ab…", status: "sent" }),
       M("bff", "app", "reply", L("Sent", "Terkirim"), "200", { cekat_message_id: "msg_77ab…", status: "sent" }),
       M("wh", "n8n", "async", L("Webhook: Message Sent", "Webhook: Message Sent"), "POST /webhook/cekat/message", { event: "message_sent", message_id: "msg_77ab…", contact_id: 100245, sent_at: "2026-11-16T10:30:05+07:00" }, { verify: true, note: "Event exists; payload fields to verify." }),
-      M("n8n", "crm", "sync", L("Update last_reach_out_at", "Update last_reach_out_at"), "PATCH /api/contacts/100245", { last_reach_out_at: "2026-11-16T10:30:05+07:00", last_reach_out_channel: "whatsapp" }, { verify: true }),
+      M("n8n", "crm", "sync", L("Update last_reach_out_at", "Update last_reach_out_at"), "PATCH /api/crm/boards/{goldenRecordBoardId}/items/100245", { last_reach_out_at: "2026-11-16T10:30:05+07:00", last_reach_out_channel: "whatsapp" }, { verify: true }),
       M("app", "user", "reply", L("Reach-out form", "Form reach-out")),
       M("user", "app", "sync", L("Select reason & channel, validate", "Pilih alasan & channel, validasi")),
       M("app", "bff", "sync", L("Log reach-out", "Catat reach-out"), "POST /v1/reach-outs", {
@@ -280,21 +259,21 @@ const sequences = [
     id: "SD-06",
     title: L("Supervisor reassigns a client", "Supervisor memindahkan klien"),
     desc: L(
-      "The permission check is done by Cekat Product on the user token (an SM may only reassign inside their boutique). The documented Contact updated webhook lets n8n notify the new SA — also when the change is made in the Cekat UI.",
-      "Pengecekan izin dilakukan Cekat Product lewat token user (SM hanya boleh memindahkan di dalam boutique-nya). Webhook Contact updated yang terdokumentasi membuat n8n bisa memberi tahu SA baru — juga saat perubahan dilakukan di UI Cekat."
+      "The permission check is done by Cekat Product on the user token (an SM may only reassign inside their boutique). The board item webhook (CP-05) lets n8n notify the new SA — also when the change is made in the Cekat UI.",
+      "Pengecekan izin dilakukan Cekat Product lewat token user (SM hanya boleh memindahkan di dalam boutique-nya). Webhook board item (CP-05) membuat n8n bisa memberi tahu SA baru — juga saat perubahan dilakukan di UI Cekat."
     ),
     refs: ["UC-22", "AD-05"],
     participants: ["user", "app", "bff", "cp", "crm", "wh", "n8n", "fcm"],
     messages: [
       M("user", "app", "sync", L("Reassign to another SA", "Pindahkan ke SA lain")),
       M("app", "bff", "sync", L("Change assignee", "Ubah assignee"), "PATCH /v1/clients/100245/assignee", { headers: UTOKEN, new_owner_id: "agt_5590", reason: "sa_resigned" }),
-      M("bff", "cp", "sync", L("Update Contact Owner (RBAC)", "Update Contact Owner (RBAC)"), "PATCH /api/contacts/100245", { headers: UTOKEN, contact_owner: "agt_5590" }, { cp: "CP-02" }),
+      M("bff", "cp", "sync", L("Update assigned_user (RBAC)", "Update assigned_user (RBAC)"), "PATCH /api/crm/boards/{goldenRecordBoardId}/items/100245", { headers: UTOKEN, assigned_user_id: 91 }, { cp: "CP-02" }),
       M("cp", "bff", "reply", L("Forbidden — outside scope", "Ditolak — di luar scope"), "403", { error: "forbidden", reason: "target_owner_not_in_scope" }, { cp: "CP-02" }),
       M("bff", "app", "reply", L("Show error", "Tampilkan error"), "403", { error: "outside_scope" }),
       M("cp", "crm", "sync", L("Apply update", "Terapkan update"), "contact_owner = agt_5590", null, { cp: "CP-02" }),
       M("cp", "bff", "reply", L("Updated", "Ter-update"), "200", { id: 100245, contact_owner: "agt_5590" }, { cp: "CP-02" }),
       M("bff", "app", "reply", L("Done", "Selesai"), "200", { customer_id: 100245, assigned_user_name: "Maya Lestari" }),
-      M("wh", "n8n", "async", L("Webhook: Contact updated", "Webhook: Contact updated"), "POST /webhook/cekat/contact", { event: "contact_updated", contact_id: 100245, changed: ["contact_owner"] }, { verify: true, note: "Confirm the payload says which field changed." }),
+      M("cp", "n8n", "async", L("Webhook: Golden Record item updated", "Webhook: item Golden Record berubah"), "POST /hooks/cekat/board-item", { event: "board_item.updated", board: "golden_record", item_id: 100245, changed: ["assigned_user_id"] }, { cp: "CP-05" }),
       M("n8n", "crm", "sync", L("Move open Agenda items to new SA", "Pindahkan item Agenda terbuka ke SA baru"), "PATCH /api/crm/boards/{agendaBoardId}/items/*", { headers: KEY, filter: { customer_id: 100245, status: "open" }, set: { owner_user_id: "agt_5590" } }, { verify: true }),
       M("n8n", "fcm", "sync", L("Push to new SA", "Push ke SA baru"), "POST /v1/projects/{project}/messages:send", { message: { token: "fcm:…maya", notification: { title: "New client", body: "Sari Dewi is now in your Client Book" } } }),
       M("fcm", "app", "async", L("Notification", "Notifikasi")),
