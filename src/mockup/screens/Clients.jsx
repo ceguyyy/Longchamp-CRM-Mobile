@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button, Chip, Input, Label, SearchField, Switch, Tabs, TextField } from "@heroui/react";
 import { useApp, AppBar, Body, SectionTitle, Tile, TierBadge, Initials, Pill, Row, ContactBar, Icon, LcButton } from "../core";
-import { CLIENTS, LISTS, LOVE_TAGS, PUSHES, PUSH_LABEL, TEAM, TEMPLATES, REACH_REASONS, BOUTIQUES, idr, tag, usableTemplates, loveLabel } from "../data";
+import { CLIENTS, LISTS, LOVE_TAGS, PUSHES, PUSH_LABEL, TEAM, TEMPLATES, REACH_REASONS, BOUTIQUES, idr, tag, usableTemplates, loveLabel, trackLabel } from "../data";
 
 /* RBAC as returned by Cekat Product (CP-02) — the app only renders what comes back */
 export function visibleClients(role) {
@@ -234,6 +234,9 @@ export function ClientProfile({ customer_id, push_id }) {
           <div className="flex items-center justify-between">
             <p className="text-[16px] font-bold uppercase tracking-[0.06em]">{c.full_name}</p>
             <TierBadge tier={c.current_tier_name} small />
+            {(c.tracking_tags || []).map((t) => (
+              <span key={t} className="caps bg-[var(--lc-lime)] px-1.5 py-0.5 text-[9px] text-black">{trackLabel(t)}</span>
+            ))}
           </div>
           <p className="text-[11.5px] text-white/60">
             {c.city}

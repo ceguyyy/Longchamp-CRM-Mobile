@@ -116,6 +116,7 @@ const entities = [
       F("product_categories", "TEXT", "Text", "", false, "Comma-separated categories bought (dynamic list filter).", "Handbag,Le Pliage", "n8n"),
       F("consent_wa", "BOOLEAN", "Checkbox", "IDX", true, "UU PDP gate for WhatsApp. From latest consent_log.", true, "n8n", "false"),
       F("consent_email", "BOOLEAN", "Checkbox", "", true, "UU PDP gate for Klaviyo.", false, "n8n", "false"),
+      F("tracking_tags", "TEXT", "Dropdown (multi)", "IDX", false, "[new] Tag codes from tracking rules (e.g. silverspoon). Written only by n8n J-08.", "silverspoon", "n8n"),
       F("love_tags", "TEXT", "Text", "", false, "[new] Comma-separated Love Tag codes (detail in client_love_tag).", "le_pliage,leather,gifting", "app"),
       F("client_note", "TEXT", "Long Text", "", false, "[new] Comment section: preferences, gifting habits. No sensitive data.", "Prefers navy; buys gifts for mother in Dec.", "app"),
       F("last_reach_out_at", "TIMESTAMPTZ", "Date", "IDX", false, "[new] Last validated Reach Out (any channel). 30-day rule.", "2026-10-02T14:20:00+07:00", "n8n"),
@@ -126,6 +127,37 @@ const entities = [
       F("source_primary", "ENUM", "Select", "", false, "odoo | shopify | excel | app.", "odoo", "n8n"),
       F("created_at", "TIMESTAMPTZ", "Created At (native)", "", true, "Created.", "2021-03-14T10:00:00+07:00", "cekat"),
       F("updated_at", "TIMESTAMPTZ", "Updated At (native)", "", true, "Last update.", "2026-10-28T16:40:00+07:00", "cekat"),
+    ],
+  },
+  {
+    id: "tracking_rule", domain: "customer", status: "new", cekat: "Board: Tracking Rules",
+    desc: "Transaction-based rules that tag Golden Record customers (e.g. Silverspoon). Managed by Super Admin (X-05), evaluated by n8n J-08 (Cekat IT Delivery).",
+    fields: [
+      F("rule_id", "BIGINT", "Item id (native)", "PK", true, "Rule id.", 1, "cekat"),
+      F("code", "VARCHAR(40)", "Text", "UQ", true, "Tag code written to tracking_tags.", "silverspoon", "app"),
+      F("label", "VARCHAR(60)", "Item name (native)", "", true, "Shown in the app.", "Silverspoon", "app"),
+      F("combine", "ENUM", "Select", "", true, "all | any.", "all", "app", "'all'"),
+      F("scope", "ENUM", "Select", "", true, "same_transaction | window.", "same_transaction", "app", "'same_transaction'"),
+      F("conditions_json", "JSON", "Long Text", "", true, "[{field, op, value}] — sku_unit_price_idr, transaction_total_idr, cumulative_spent_idr, sku_in, category_in, purchase_count, boutique_id.", '[{"field":"sku_unit_price_idr","op":">=","value":40000000},{"field":"transaction_total_idr","op":">=","value":50000000}]', "app"),
+      F("window_days", "INT", "Number", "", true, "Look-back window.", 365, "app", "365"),
+      F("notify_sa", "BOOLEAN", "Checkbox", "", true, "Push to assigned SA on first match.", true, "app", "false"),
+      F("remove_when_unmatched", "BOOLEAN", "Checkbox", "", true, "Remove tag when no longer matched (refund).", false, "app", "false"),
+      F("is_active", "BOOLEAN", "Checkbox", "", true, "Active.", true, "app", "true"),
+      F("created_by_user_id", "BIGINT", "Agents", "FK", true, "Super Admin.", 1, "app"),
+    ],
+  },
+  {
+    id: "customer_tag_history", domain: "customer", status: "new", cekat: "Board: Customer Tag History",
+    desc: "Audit of every tag added or removed by the rule engine, with the transaction that triggered it.",
+    fields: [
+      F("history_id", "BIGINT", "Item id (native)", "PK", true, "Row id.", 30012, "cekat"),
+      F("customer_id", "BIGINT", "References", "FK", true, "Golden Record item.", 100245, "n8n"),
+      F("rule_id", "BIGINT", "References", "FK", true, "Tracking rule.", 1, "n8n"),
+      F("action", "ENUM", "Select", "", true, "added | removed.", "added", "n8n"),
+      F("trigger_transaction_id", "BIGINT", "References", "FK", false, "Transaction that matched.", 7802, "n8n"),
+      F("transaction_total_idr", "NUMERIC(18,2)", "Number", "", false, "Value at match.", 52400000, "n8n"),
+      F("max_sku_unit_price_idr", "NUMERIC(18,2)", "Number", "", false, "Highest SKU price in the qualifying transaction(s).", 41500000, "n8n"),
+      F("created_at", "TIMESTAMPTZ", "Created At (native)", "", true, "When.", "2026-10-28T16:32:00+07:00", "cekat"),
     ],
   },
   {
@@ -438,6 +470,10 @@ const entities = [
 
 /* FK relations for the ERD:  [from entity, from field, to entity, cardinality] */
 const relations = [
+  ["tracking_rule", "created_by_user_id", "app_user", "N:1"],
+  ["customer_tag_history", "customer_id", "customer", "N:1"],
+  ["customer_tag_history", "rule_id", "tracking_rule", "N:1"],
+  ["customer_tag_history", "trigger_transaction_id", "transaction", "N:1"],
   ["app_user", "boutique_id", "boutique", "N:1"],
   ["app_user", "reports_to_user_id", "app_user", "N:1"],
   ["boutique", "supervisor_user_id", "app_user", "N:1"],
@@ -493,7 +529,7 @@ const unchanged = [
 /* ERD grid placement: column → ordered entity ids */
 const layout = [
   ["boutique", "app_user", "app_device", "segment_tier"],
-  ["customer", "consent_log", "client_love_tag"],
+  ["customer", "consent_log", "client_love_tag", "tracking_rule", "customer_tag_history"],
   ["segment_history", "transaction", "transaction_line", "service_ticket"],
   ["clienteling_push", "push_rule", "message_template", "reach_out"],
   ["agenda_item", "wishlist_item", "kpi_snapshot"],

@@ -40,6 +40,7 @@ export const TIER_STYLE = {
 
 export const CLIENTS = [
   {
+    tracking_tags: ["silverspoon"],
     customer_id: 100245, odoo_partner_id: 10432, purchase_frequency: "every 2 months", tickets: [{ ticket_id: "TCK-10398", type: "repair", status: "ready for pick-up", sku: "Le Pliage Original M" }], full_name: "Sari Dewi", phone_e164: "+6281234567890", email: "sari.dewi@mail.com", birthdate: "1990-12-02",
     current_tier_name: "FAN", total_spent_idr: 64500000, purchase_count: 7, last_purchase_date: "2026-10-28",
     assigned_user_id: 87, assigned_user_name: "Andi Pratama", boutique_id: 3, consent_wa: true, consent_email: false,
@@ -240,3 +241,31 @@ export const REACH_REASONS = ["push", "wishlist", "birthday", "clienteling_kit",
 export const idr = (n) => "Rp " + Math.round(n).toLocaleString("id-ID");
 export const idrShort = (n) => (n >= 1e9 ? `Rp ${(n / 1e9).toFixed(1)} M` : n >= 1e6 ? `Rp ${(n / 1e6).toFixed(1)} jt` : idr(n));
 export const tag = (t) => t.replace(/_/g, " ");
+
+/* Transaction tracking rules on the Golden Record (built by Cekat IT Delivery, evaluated by n8n on each new Transactions item) */
+export const TRACK_FIELDS = {
+  sku_unit_price_idr: { en: "Any SKU unit price (IDR)", id: "Harga satuan SKU mana pun (IDR)" },
+  transaction_total_idr: { en: "Transaction total (IDR)", id: "Total transaksi (IDR)" },
+  cumulative_spent_idr: { en: "Cumulative spend in window (IDR)", id: "Total belanja dalam periode (IDR)" },
+  sku_in: { en: "SKU / collection", id: "SKU / koleksi" },
+  purchase_count: { en: "Number of purchases in window", id: "Jumlah pembelian dalam periode" },
+};
+export const TRACKING_RULES = [
+  {
+    rule_id: 1, code: "silverspoon", label: "Silverspoon", color: "#a3e363", is_active: true, combine: "all", window_days: 365, matched: 23,
+    conditions: [
+      { field: "sku_unit_price_idr", op: ">=", value: 40000000 },
+      { field: "transaction_total_idr", op: ">=", value: 50000000 },
+    ],
+    notify_sa: true,
+  },
+  {
+    rule_id: 2, code: "pliage_collector", label: "Le Pliage collector", color: "#000000", is_active: true, combine: "all", window_days: 730, matched: 61,
+    conditions: [
+      { field: "sku_in", op: "in", value: "Le Pliage" },
+      { field: "purchase_count", op: ">=", value: 5 },
+    ],
+    notify_sa: false,
+  },
+];
+export const trackLabel = (code) => (TRACKING_RULES.find((r) => r.code === code) || { label: code }).label;

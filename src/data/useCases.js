@@ -409,6 +409,21 @@ const model = {
       ],
     },
     {
+      id: "UC-29", module: "access", actors: ["hq"],
+      name: { en: "Manage transaction tracking rules", id: "Kelola aturan tracking transaksi" },
+      desc: {
+        en: "Super Admin defines rules on the Golden Record from transaction data (e.g. Silverspoon: bought a SKU priced ≥ Rp40 jt and a transaction total ≥ Rp50 jt). n8n tags matching customers on every new transaction; tags show on the profile, in filters and lists, and can push the assigned SA.",
+        id: "Super Admin membuat aturan di Golden Record dari data transaksi (mis. Silverspoon: pernah membeli SKU berharga ≥ Rp40 jt dan total transaksi ≥ Rp50 jt). n8n memberi tag pada pelanggan yang cocok di setiap transaksi baru; tag tampil di profil, filter, dan list, dan bisa memicu push ke SA.",
+      },
+      rbac: { sa: "use", sm: "use", hq: "manage" },
+      sources: [
+        { sys: "cekatApi", type: "API", dir: "write", ref: "Board Tracking Rules item (rule definition)", status: "available", verify: true },
+        { sys: "cekatApi", type: "API", dir: "read", ref: "Board Transactions + Transaction Lines (filled by the existing Golden Record pipeline)", status: "available" },
+        { sys: "n8n", type: "Workflow", dir: "write", ref: "J-08: Golden Record tracking_tags + Customer Tag History", status: "internal" },
+        { sys: "cekatNew", type: "Webhook", dir: "in", ref: "Transactions board item created → evaluate rules", status: "product", cp: "CP-05" },
+      ],
+    },
+    {
       id: "UC-25", module: "search", actors: [],
       name: { en: "Connect / disconnect client", id: "Hubungkan / putuskan klien" },
       desc: {
@@ -486,6 +501,7 @@ const model = {
     { from: "UC-13", to: "UC-11", type: "extend" },
     { from: "UC-16", to: "UC-15", type: "extend" },
     { from: "UC-28", to: "UC-15", type: "extend" },
+    { from: "UC-29", to: "UC-20", type: "extend" },
     { from: "UC-17", to: "UC-28", type: "include" },
     { from: "UC-28", to: "UC-02", type: "extend" },
     { from: "UC-24", to: "UC-15", type: "extend" },

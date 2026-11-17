@@ -331,6 +331,41 @@ const activities = {
         ["a10", "e2"],
       ],
     },
+    {
+      id: "AD-07",
+      title: L("Transaction → tracking tag (e.g. Silverspoon)", "Transaksi → tag tracking (mis. Silverspoon)"),
+      desc: L(
+        "Built by Cekat IT Delivery on the Golden Record. Every new Transactions item written by the existing pipeline is checked against the active tracking rules; a match adds the tag, logs it, and can push the assigned SA.",
+        "Dibangun Cekat IT Delivery di Golden Record. Setiap item Transactions baru dari pipeline dicek terhadap tracking rule aktif; bila cocok, tag ditambahkan, dicatat, dan bisa memicu push ke SA."
+      ),
+      ucs: ["UC-29", "UC-02", "UC-10"],
+      lanes: ["user", "app", "bff", "cekat", "product"],
+      nodes: [
+        { id: "s0", lane: "user", row: 0, type: "start" },
+        { id: "r1", lane: "user", row: 1, type: "action", label: L("Super Admin defines rule: SKU ≥ Rp40 jt AND total ≥ Rp50 jt", "Super Admin membuat rule: SKU ≥ Rp40 jt DAN total ≥ Rp50 jt") },
+        { id: "r2", lane: "app", row: 2, type: "action", label: L("Preview matching customers", "Pratinjau pelanggan yang cocok"), ref: "X-06" },
+        { id: "r3", lane: "cekat", row: 3, type: "action", label: L("Save Tracking Rules item", "Simpan item Tracking Rules"), ref: "Board API (X-05)" },
+        { id: "e0", lane: "cekat", row: 4, type: "end" },
+        { id: "s1", lane: "bff", row: 3, type: "start" },
+        { id: "a1", lane: "bff", row: 4, type: "action", label: L("Existing pipeline writes a Transactions item", "Pipeline menulis item Transactions") },
+        { id: "a2", lane: "product", row: 5, type: "action", label: L("Board item webhook to n8n", "Webhook board item ke n8n"), cp: "CP-05" },
+        { id: "a3", lane: "bff", row: 6, type: "action", label: L("Load customer transactions in window + lines", "Ambil transaksi pelanggan dalam window + lines") },
+        { id: "d1", lane: "bff", row: 7, type: "decision", label: L("Rule matched, tag not set?", "Rule cocok, tag belum ada?") },
+        { id: "e1", lane: "app", row: 7, type: "end" },
+        { id: "a4", lane: "cekat", row: 8, type: "action", label: L("Add code to tracking_tags on Golden Record", "Tambah code ke tracking_tags di Golden Record"), ref: "Board API" },
+        { id: "a5", lane: "cekat", row: 9, type: "action", label: L("Create Customer Tag History item", "Buat item Customer Tag History"), ref: "Board API" },
+        { id: "a6", lane: "bff", row: 10, type: "action", label: L("Push + FCM to assigned SA (notify_sa)", "Push + FCM ke SA (notify_sa)") },
+        { id: "a7", lane: "app", row: 11, type: "action", label: L("Tag on profile, filters and lists", "Tag di profil, filter, dan list") },
+        { id: "e2", lane: "app", row: 12, type: "end" },
+      ],
+      edges: [
+        ["s0", "r1"], ["r1", "r2"], ["r2", "r3"], ["r3", "e0"],
+        ["s1", "a1"], ["a1", "a2"], ["a2", "a3"], ["a3", "d1"],
+        ["d1", "e1", L("no", "tidak")],
+        ["d1", "a4", L("yes", "ya")],
+        ["a4", "a5"], ["a5", "a6"], ["a6", "a7"], ["a7", "e2"],
+      ],
+    },
   ],
 };
 

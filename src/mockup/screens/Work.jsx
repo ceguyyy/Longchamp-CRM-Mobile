@@ -4,7 +4,7 @@ import { useApp, AppBar, Body, SectionTitle, Tile, TierBadge, Initials, Pill, St
 import { PushRow } from "./Home";
 import { visibleClients } from "./Clients";
 import {
-  AGENDA, PUSHES, PRODUCTS, BOUTIQUES, CLIENTS, TEAM, KPI, BY_CHANNEL, BY_BOUTIQUE, TEMPLATES, PUSH_RULES, PUSH_LABEL, USERS, WISHLIST_KPI, PUSH_KPI, idr, idrShort,
+  AGENDA, PUSHES, PRODUCTS, BOUTIQUES, CLIENTS, TEAM, KPI, BY_CHANNEL, BY_BOUTIQUE, TEMPLATES, PUSH_RULES, PUSH_LABEL, USERS, WISHLIST_KPI, PUSH_KPI, TRACKING_RULES, TRACK_FIELDS, idr, idrShort,
 } from "../data";
 
 /* ================================================================ ACTIONS */
@@ -806,6 +806,7 @@ export function Admin() {
           ["users", tx("Users & roles", "User & role"), tx("Super Admin · Supervisor · Sales Agent — from Cekat", "Super Admin · Supervisor · Sales Agent — dari Cekat")],
           ["templates", tx("WhatsApp templates", "Template WhatsApp"), `${TEMPLATES.length} ${tx("templates", "template")}`],
           ["push_rules", tx("Clienteling push rules", "Aturan clienteling push"), `${PUSH_RULES.filter((r) => r.is_active).length} ${tx("active", "aktif")}`],
+          ["tracking_rules", tx("Transaction tracking rules", "Aturan tracking transaksi"), tx("Golden Record tags, e.g. Silverspoon", "Tag Golden Record, mis. Silverspoon")],
         ].map(([id, t, s]) => (
           <Tile key={id} onClick={() => nav(id)} className="mb-2 flex items-center justify-between p-4">
             <div>
@@ -887,6 +888,105 @@ export function LegacyTemplates() {
         <Button fullWidth className="mt-4 h-12 rounded-xl bg-[var(--lc-forest)] text-white">
           + {tx("New template", "Template baru")}
         </Button>
+      </Body>
+    </>
+  );
+}
+
+const fmtVal = (f, v) => (f.endsWith("_idr") ? idrShort(v) : String(v));
+export function TrackingRules() {
+  const { tx, back, lang, notify } = useApp();
+  const [rules, setRules] = useState(TRACKING_RULES);
+  const [draft, setDraft] = useState(null);
+  const newDraft = () => setDraft({ label: "", combine: "all", window_days: 365, notify_sa: true, conditions: [{ field: "sku_unit_price_idr", op: ">=", value: 40000000 }, { field: "transaction_total_idr", op: ">=", value: 50000000 }] });
+  const setCond = (i, k, v) => setDraft({ ...draft, conditions: draft.conditions.map((c, j) => (j === i ? { ...c, [k]: v } : c)) });
+  return (
+    <>
+      <AppBar title={tx("Tracking rules", "Aturan tracking")} sub={tx("Evaluated by n8n on every new transaction in Cekat", "Dievaluasi n8n di setiap transaksi baru di Cekat")} onBack={back} />
+      <Body>
+        <p className="mb-3 text-[12px] text-[var(--lc-muted)]">
+          {tx("When a customer's transactions match a rule, the tag is written to the Golden Record and shown on the profile and in filters.", "Bila transaksi pelanggan memenuhi rule, tag ditulis ke Golden Record dan tampil di profil serta filter.")}
+        </p>
+        {rules.map((r) => (
+          <div key={r.rule_id} className="mb-2 border border-[var(--lc-line)] p-3">
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <span className="caps px-1.5 py-0.5 text-[10px]" style={{ background: r.color, color: r.color === "#000000" ? "#fff" : "#000" }}>{r.label}</span>
+                <span className="text-[11px] text-[var(--lc-muted)]">{r.matched} {tx("customers", "pelanggan")}</span>
+              </span>
+              <Switch defaultSelected={r.is_active} aria-label="active">
+                <Switch.Control>
+                  <Switch.Thumb />
+                </Switch.Control>
+              </Switch>
+            </div>
+            <ul className="mt-2 space-y-0.5 text-[12px]">
+              {r.conditions.map((c, i) => (
+                <li key={i}>
+                  {i > 0 && <span className="caps mr-1 text-[9.5px] text-[var(--lc-muted)]">{r.combine === "all" ? tx("and", "dan") : tx("or", "atau")}</span>}
+                  {TRACK_FIELDS[c.field][lang]} <b>{c.op}</b> {fmtVal(c.field, c.value)}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-1.5 text-[11px] text-[var(--lc-muted)]">
+              {tx("Window", "Periode")} {r.window_days} {tx("days", "hari")}
+              {r.notify_sa ? ` · ${tx("push to assigned SA", "push ke SA")}` : ""}
+            </p>
+          </div>
+        ))}
+        {!draft && (
+          <LcButton variant="outline" className="mt-2" onClick={newDraft}>
+            + {tx("New rule", "Rule baru")}
+          </LcButton>
+        )}
+        {draft && (
+          <div className="mt-3 border-[1.25px] border-black p-3">
+            <p className="caps text-[10.5px]">{tx("New rule", "Rule baru")}</p>
+            <input value={draft.label} onChange={(e) => setDraft({ ...draft, label: e.target.value })} placeholder={tx("Tag name, e.g. Silverspoon", "Nama tag, mis. Silverspoon")} className="mt-2 w-full border-b border-black py-1.5 text-[14px] outline-none" />
+            <div className="mt-3 flex gap-1.5">
+              {[["all", tx("All conditions", "Semua kondisi")], ["any", tx("Any condition", "Salah satu")]].map(([k, l]) => (
+                <Pill key={k} active={draft.combine === k} onClick={() => setDraft({ ...draft, combine: k })}>{l}</Pill>
+              ))}
+            </div>
+            {draft.conditions.map((c, i) => (
+              <div key={i} className="mt-2 grid grid-cols-[minmax(0,1fr)_48px_76px_14px] items-center gap-1">
+                <select value={c.field} onChange={(e) => setCond(i, "field", e.target.value)} className="w-full min-w-0 border border-[var(--lc-line)] px-1 py-1.5 text-[11.5px]">
+                  {Object.entries(TRACK_FIELDS).map(([k, v]) => (
+                    <option key={k} value={k}>{v[lang]}</option>
+                  ))}
+                </select>
+                <select value={c.op} onChange={(e) => setCond(i, "op", e.target.value)} className="w-full min-w-0 border border-[var(--lc-line)] px-1 py-1.5 text-[11.5px]">
+                  {[">=", ">", "=", "in"].map((o) => <option key={o}>{o}</option>)}
+                </select>
+                <input value={c.value} onChange={(e) => setCond(i, "value", e.target.value)} className="w-full min-w-0 border border-[var(--lc-line)] px-1.5 py-1.5 text-[11.5px]" />
+                <button aria-label="remove" onClick={() => setDraft({ ...draft, conditions: draft.conditions.filter((_, j) => j !== i) })} className="text-[14px]">×</button>
+              </div>
+            ))}
+            <button className="mt-2 text-[11.5px] underline" onClick={() => setDraft({ ...draft, conditions: [...draft.conditions, { field: "purchase_count", op: ">=", value: 1 }] })}>
+              + {tx("Condition", "Kondisi")}
+            </button>
+            <div className="mt-3 flex items-center justify-between text-[12px]">
+              <span>{tx("Window", "Periode")}</span>
+              <input value={draft.window_days} onChange={(e) => setDraft({ ...draft, window_days: e.target.value })} className="w-20 border border-[var(--lc-line)] px-1.5 py-1 text-right" />
+            </div>
+            <label className="mt-2 flex items-center gap-2 text-[12px]">
+              <input type="checkbox" checked={draft.notify_sa} onChange={(e) => setDraft({ ...draft, notify_sa: e.target.checked })} className="h-4 w-4 accent-black" />
+              {tx("Push to the assigned SA when a customer gets the tag", "Push ke SA saat pelanggan mendapat tag")}
+            </label>
+            <p className="mt-3 bg-[var(--lc-lime-soft)] p-2 text-[11.5px]">{tx("Preview: 23 customers match today", "Pratinjau: 23 pelanggan cocok hari ini")}</p>
+            <LcButton
+              className="mt-3"
+              onClick={() => {
+                if (!draft.label) return notify(tx("Give the tag a name", "Isi nama tag"));
+                setRules([...rules, { ...draft, rule_id: rules.length + 1, code: draft.label.toLowerCase().replace(/\s+/g, "_"), color: "#a3e363", is_active: true, matched: 23 }]);
+                setDraft(null);
+                notify(tx("Rule saved in Cekat CRM; backfill runs tonight", "Rule tersimpan di Cekat CRM; backfill jalan malam ini"));
+              }}
+            >
+              {tx("Save rule", "Simpan rule")}
+            </LcButton>
+          </div>
+        )}
       </Body>
     </>
   );

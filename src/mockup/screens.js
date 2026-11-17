@@ -5,7 +5,7 @@
 import { Login, Register, Forgot } from "./screens/Auth";
 import Home, { Profile } from "./screens/Home";
 import { ClientSearch, ClientProfile, ClientNew, ReachOut, Lists, ListBuilder, ListDetail, TicketNew } from "./screens/Clients";
-import { Actions, AgendaNew, Catalog, Product, Scan, ClientWishlist, WishlistSend, Performance, Team, Unassigned, Admin, Users, PushRules } from "./screens/Work";
+import { Actions, AgendaNew, Catalog, Product, Scan, ClientWishlist, TrackingRules, WishlistSend, Performance, Team, Unassigned, Admin, Users, PushRules } from "./screens/Work";
 import { Templates, TemplateNew } from "./screens/Templates";
 
 const ALL = ["sales_agent", "supervisor", "super_admin"];
@@ -231,6 +231,14 @@ export const SCREENS = {
     owner: "itdev",
     note: L("Localised rules for the 2026 push revamp.", "Aturan lokal untuk revamp push 2026."),
   },
+  tracking_rules: {
+    C: TrackingRules, roles: ["super_admin"], group: "admin",
+    title: L("Tracking rules", "Aturan tracking"),
+    refs: ["UC-29", "AD-07", "SD-08"],
+    api: ["GET / POST / PATCH /v1/tracking-rules (X-05) → Cekat CRM: Board Tracking Rules", "POST /v1/tracking-rules/preview (X-06) → count over Golden Record + Transactions", "n8n (J-08) on each new Transactions item → Golden Record tracking_tags + Customer Tag History"],
+    owner: "itdev",
+    note: L("Built by Cekat IT Delivery on the Golden Record. Example: Silverspoon = bought a SKU priced ≥ Rp40 jt AND a transaction total ≥ Rp50 jt.", "Dibangun Cekat IT Delivery di Golden Record. Contoh: Silverspoon = pernah membeli SKU berharga ≥ Rp40 jt DAN total transaksi ≥ Rp50 jt."),
+  },
   profile: {
     C: Profile, roles: ALL, group: "main",
     title: L("My account", "Akun saya"),
@@ -255,5 +263,5 @@ export const GROUPS = {
 export const ROOT_OF = {
   client: "clients", client_new: "clients", reach_out: "clients", lists: "home", list_builder: "home", list_detail: "home", ticket_new: "clients",
   agenda_new: "actions", product: "catalog", scan: "catalog", catalog_pick: "clients", client_wishlist: "clients", wishlist_send: "catalog",
-  clients_unassigned: "team", users: "admin", templates: "admin", template_new: "templates", push_rules: "admin", profile: "home",
+  clients_unassigned: "team", users: "admin", templates: "admin", template_new: "templates", push_rules: "admin", tracking_rules: "admin", profile: "home",
 };

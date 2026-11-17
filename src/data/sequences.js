@@ -333,6 +333,35 @@ const sequences = [
       { type: "loop", from: 11, to: 15, label: L("every 15 min until approved or rejected", "tiap 15 menit sampai approved atau rejected") },
     ],
   },
+  /* ================================================================ SD-08 */
+  {
+    id: "SD-08",
+    title: L("Transaction → tracking tag (Silverspoon)", "Transaksi → tag tracking (Silverspoon)"),
+    desc: L(
+      "Cekat IT Delivery rule engine on the Golden Record. The existing pipeline writes the Transactions item; n8n evaluates the active tracking rules, adds the tag to the Golden Record, logs it and notifies the assigned SA.",
+      "Rule engine Cekat IT Delivery di Golden Record. Pipeline menulis item Transactions; n8n mengevaluasi tracking rule aktif, menambah tag ke Golden Record, mencatatnya, dan memberi tahu SA."
+    ),
+    refs: ["UC-29", "AD-07"],
+    participants: ["crm", "cp", "n8n", "fcm", "app"],
+    messages: [
+      M("crm", "crm", "self", L("Existing pipeline: Transactions item 7802 (Rp52,4 jt)", "Pipeline: item Transactions 7802 (Rp52,4 jt)")),
+      M("cp", "n8n", "async", L("Webhook: Transactions item created", "Webhook: item Transactions dibuat"), "POST /hooks/cekat/board-item", { event: "board_item.created", board: "transactions", item_id: 7802, values: { customer_id: 100245, transaction_type: "sale", amount_net_idr: 52400000 } }, { cp: "CP-05" }),
+      M("n8n", "crm", "sync", L("Active tracking rules", "Tracking rule aktif"), "GET /api/crm/boards/{trackingRulesBoardId}/items?is_active=true", { headers: KEY }, { verify: true }),
+      M("crm", "n8n", "reply", L("Rules", "Rules"), "200", { data: [{ code: "silverspoon", combine: "all", scope: "same_transaction", conditions: [{ field: "sku_unit_price_idr", op: ">=", value: 40000000 }, { field: "transaction_total_idr", op: ">=", value: 50000000 }], window_days: 365, notify_sa: true }] }),
+      M("n8n", "crm", "sync", L("Transaction lines of 7802", "Lines transaksi 7802"), "GET /api/crm/boards/{transactionLinesBoardId}/items?transaction_id=7802", { headers: KEY }, { verify: true, cp: "CP-04" }),
+      M("crm", "n8n", "reply", L("Lines", "Lines"), "200", { data: [{ sku: "L10200HZZ", product_name: "Roseau Exotic", unit_price_idr: 41500000, qty: 1 }, { sku: "L1899089P59", unit_price_idr: 2450000, qty: 1 }] }),
+      M("n8n", "n8n", "self", L("Silverspoon: max SKU 41,5 jt ≥ 40 jt AND total 52,4 jt ≥ 50 jt → match", "Silverspoon: SKU maks 41,5 jt ≥ 40 jt DAN total 52,4 jt ≥ 50 jt → cocok")),
+      M("n8n", "crm", "sync", L("Add tag to Golden Record", "Tambah tag ke Golden Record"), "PATCH /api/crm/boards/{goldenRecordBoardId}/items/100245", { values: { tracking_tags: ["silverspoon"] } }, { verify: true }),
+      M("n8n", "crm", "sync", L("Customer Tag History", "Customer Tag History"), "POST /api/crm/boards/{tagHistoryBoardId}/items", { customer_id: 100245, rule_id: 1, action: "added", trigger_transaction_id: 7802, transaction_total_idr: 52400000, max_sku_unit_price_idr: 41500000 }, { verify: true }),
+      M("n8n", "crm", "sync", L("Clienteling push for SA", "Clienteling push untuk SA"), "POST /api/crm/boards/{pushesBoardId}/items", { push_type: "tracking_tag", tag: "silverspoon", customer_id: 100245, assigned_user_id: 87, status: "sent" }, { verify: true }),
+      M("n8n", "fcm", "sync", L("Send push", "Kirim push"), "POST /v1/projects/{project}/messages:send", { message: { notification: { title: "Silverspoon", body: "Sari Dewi is now Silverspoon" } } }),
+      M("fcm", "app", "async", L("Notification on SA device", "Notifikasi di perangkat SA")),
+    ],
+    fragments: [
+      { type: "opt", from: 7, to: 8, label: L("rule matched and tag not set yet", "rule cocok dan tag belum ada") },
+      { type: "opt", from: 9, to: 11, label: L("notify_sa = true", "notify_sa = true") },
+    ],
+  },
 ];
 
 export default sequences;

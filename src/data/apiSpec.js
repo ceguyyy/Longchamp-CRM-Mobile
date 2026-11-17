@@ -167,6 +167,7 @@ export const ENDPOINTS = [
       V("last_purchase_from / last_purchase_to", "date", false, "Rentang pembelian terakhir.", "2026-01-01"),
       V("sales_12m_gte", "number", false, "Sales 12 bulan minimal (IDR).", 10000000),
       V("consent_wa", "bool", false, "Hanya yang consent WhatsApp.", true),
+      V("tracking_tag", "string[]", false, "Tag dari tracking rule (X-05), mis. silverspoon.", "silverspoon"),
       V("city", "string", false, "Kota.", "Jakarta Selatan"),
       V("sort", "string", false, "full_name | -last_contact_at | -last_purchase_at | -sales_12m_idr.", "-last_contact_at"),
       V("limit / cursor", "paging", false, "Lihat konvensi.", 20),
@@ -188,7 +189,7 @@ export const ENDPOINTS = [
       tier: "FAN", tier_since: "2026-06-11", sales_12m_idr: 48500000, purchase_frequency: 3.5, last_purchase_at: "2026-10-28", odoo_partner_id: 55120,
       assigned_user_id: 87, assigned_user_name: "Andi Pratama", boutique_id: 3, consent_wa: true, consent_email: false,
       last_reach_out_at: "2026-10-03T14:20:00+07:00", days_since_last_contact: 44, reach_out_allowed: true,
-      love_tags: ["leather", "travel"], wishlist: { saved: 1, sent: 1, purchased: 0 }, open_tickets: 1, welcome_status: "welcomed",
+      love_tags: ["leather", "travel"], tracking_tags: [{ code: "silverspoon", label: "Silverspoon", since: "2026-10-28" }], wishlist: { saved: 1, sent: 1, purchased: 0 }, open_tickets: 1, welcome_status: "welcomed",
     },
     errors: ["404 not_found"],
   },
@@ -670,6 +671,37 @@ export const ENDPOINTS = [
     errors: [],
   },
   {
+    id: "X-05", group: "admin", method: "GET · POST · PATCH", path: "/tracking-rules[/{rule_id}]", title: "Aturan tracking transaksi (Golden Record)", roles: ["super_admin"], uc: ["UC-29"], cp: ["CP-05"],
+    upstream: ["Cekat CRM: Board Tracking Rules (dibaca n8n J-08)"],
+    logic: [
+      "GET: semua role boleh membaca daftar tag (untuk filter); hanya Super Admin yang membuat dan mengubah rule.",
+      "Validasi kondisi: field dari daftar yang didukung, operator sesuai tipe, nilai IDR > 0, window_days 1–1095.",
+      "code dibuat dari label (huruf kecil, underscore) dan unik; code dipakai di kolom tracking_tags Golden Record.",
+      "Simpan sebagai item Board Tracking Rules. Rule baru atau berubah memicu backfill malam (J-08 mode backfill) atas transaksi dalam window.",
+      "Menonaktifkan rule tidak menghapus tag yang sudah ada; tag dicabut hanya bila remove_when_unmatched = true.",
+    ],
+    body: [
+      V("label", "string(60)", true, "Nama tag yang tampil di app.", "Silverspoon"),
+      V("combine", "enum", true, "all (semua kondisi) | any (salah satu).", "all"),
+      V("conditions", "object[]", true, "{field, op, value}. field: sku_unit_price_idr | transaction_total_idr | cumulative_spent_idr | sku_in | category_in | purchase_count | boutique_id. op: >= | > | = | in.", [{ field: "sku_unit_price_idr", op: ">=", value: 40000000 }, { field: "transaction_total_idr", op: ">=", value: 50000000 }]),
+      V("window_days", "int", true, "Transaksi yang dihitung: N hari terakhir.", 365),
+      V("scope", "enum", false, "same_transaction (kondisi harus terpenuhi di satu transaksi) | window (boleh di transaksi berbeda dalam window). Default same_transaction.", "same_transaction"),
+      V("notify_sa", "bool", false, "Buat push + FCM ke SA saat pelanggan pertama kali mendapat tag.", true),
+      V("remove_when_unmatched", "bool", false, "Cabut tag bila kondisi tidak terpenuhi lagi (mis. setelah refund). Default false.", false),
+      V("is_active", "bool", false, "Default true.", true),
+    ],
+    response: { rule_id: 1, code: "silverspoon", label: "Silverspoon", is_active: true, cekat_item_id: "trk_1201", backfill: "scheduled_tonight" },
+    errors: ["400 invalid_condition", "409 code_taken"],
+  },
+  {
+    id: "X-06", group: "admin", method: "POST", path: "/tracking-rules/preview", title: "Pratinjau jumlah pelanggan yang cocok", roles: ["super_admin"], uc: ["UC-29"], cp: ["CP-04"],
+    upstream: ["Cekat CRM: Board Transactions + Transaction Lines (filter tanggal, harga)", "Board Golden Record (count)"],
+    logic: ["Jalankan kondisi rule atas transaksi dalam window tanpa menulis apa pun.", "Kembalikan jumlah pelanggan + 5 contoh untuk dicek admin.", "Cache 5 menit per kombinasi kondisi."],
+    body: [V("rule", "object", true, "Isi sama dengan body X-05.", { combine: "all", conditions: [{ field: "sku_unit_price_idr", op: ">=", value: 40000000 }, { field: "transaction_total_idr", op: ">=", value: 50000000 }], window_days: 365 })],
+    response: { matched_customers: 23, sample: [{ customer_id: 100245, full_name: "Sari Dewi", qualifying_transaction_id: 7802, transaction_total_idr: 52400000, max_sku_unit_price_idr: 41500000 }] },
+    errors: ["400 invalid_condition"],
+  },
+  {
     id: "X-04", group: "admin", method: "GET", path: "/customers/unassigned", title: "Pelanggan tanpa assignee", roles: LEAD, uc: ["UC-22"], cp: ["CP-02", "CP-04"],
     upstream: ["GET /api/crm/boards/{goldenRecordBoardId}/items?assigned_user=none&registration_boutique_id="],
     logic: ["Sama dengan C-01 dengan assigned_user_id=none; dipakai layar reassign."],
@@ -684,7 +716,7 @@ export const WEBHOOKS = [
   { id: "WH-02", source: "Shopify", event: "products/update (katalog, bukan transaksi)", path: "POST /hooks/shopify/products", logic: "Invalidasi cache katalog Redis untuk SKU terkait. Opsional: tanpa ini cache katalog kedaluwarsa sendiri dalam 15 menit." },
   { id: "WH-04", source: "Cekat", event: "Message Sent · Message Received", path: "POST /hooks/cekat/message", logic: "Update last_reach_out_at (sent) dan penanda sesi 24 jam (received)." },
   { id: "WH-05", source: "Cekat Product", event: "Golden Record item updated: assigned_user berubah (CP-05)", path: "POST /hooks/cekat/board-item", logic: "Pindahkan push open ke SA baru, kirim FCM ke SA baru." },
-  { id: "WH-06", source: "Cekat Product", event: "Board item created (CP-05): Segment History, Agenda", path: "POST /hooks/cekat/board-item", logic: "Segment History baru (tier berubah oleh pipeline Golden Record) → cocokkan Push Rules → Pushes + Agenda + FCM. Agenda yang dibuat di UI Cekat → FCM ke assignee." },
+  { id: "WH-06", source: "Cekat Product", event: "Board item created (CP-05): Segment History, Transactions, Agenda", path: "POST /hooks/cekat/board-item", logic: "Transactions baru (dari pipeline) → evaluasi tracking rules (J-08). Segment History baru (tier berubah oleh pipeline Golden Record) → cocokkan Push Rules → Pushes + Agenda + FCM. Agenda yang dibuat di UI Cekat → FCM ke assignee." },
   { id: "WH-07", source: "Cekat Product", event: "Message status per penerima (CP-06)", path: "POST /hooks/cekat/message-status", logic: "Update delivery_status Wishlist, Event Guests, Reach Out." },
 ];
 
@@ -696,6 +728,7 @@ export const JOBS = [
   { id: "J-04", name: "Evaluasi list dinamis", schedule: "Harian 02:30 WIB", logic: "Jalankan filter_json tiap list dinamis → member_count, refreshed_at." },
   { id: "J-05", name: "Status template Meta", schedule: "Tiap 15 menit", logic: "Template pending → cek status → approved/rejected + rejection_reason → FCM ke pembuat." },
   { id: "J-06", name: "Reminder agenda", schedule: "Tiap 5 menit", logic: "Appointment/task mulai dalam 30 menit → FCM." },
+  { id: "J-08", name: "Evaluasi tracking rules (Golden Record)", schedule: "Setiap Transactions item baru (WH-06) + backfill harian 03:00", logic: "Ambil transaksi + lines pelanggan dalam window rule → cek kondisi (combine all/any, scope satu transaksi atau window) → tambah code ke kolom tracking_tags Golden Record + item Customer Tag History (rule, transaksi pemicu, nilai). Bila notify_sa: push + FCM ke assigned SA. Refund/cancel dievaluasi ulang; tag dicabut hanya bila remove_when_unmatched. Idempotent per (customer, rule)." },
   { id: "J-07", name: "Data quality report (data dari app)", schedule: "Mingguan Senin 07:00", logic: "Pelanggan baru dari app yang kemungkinan duplikat dengan Golden Record, nomor invalid, pelanggan tanpa assigned_user, dead-letter > 0 → email ke IT Delivery & CRM Longchamp." },
 ];
 
@@ -748,6 +781,7 @@ export const WRITES = [
   ], true),
   W("W-03", "Hapus wishlist", [S("Cekat CRM · Board Wishlist", "DELETE /api/crm/boards/{wishlistBoardId}/items/{id}", { status_check: "saved" })]),
   W("W-04", "Kirim wishlist", [S("Cekat Chat · Message API", "POST Message API (send)", { inbox_id: "ibx_pi_wa", phone: "+6281234567890", template: "lc_wishlist_id", variables: ["Sari", "Roseau Shoulder Bag, Le Pliage Original M"] }), S("Cekat CRM · Board Wishlist", "PATCH /api/crm/boards/{wishlistBoardId}/items/{id}", { status: "sent", wishlist_ref: "WL-20261117-0087-01", sent_at: "2026-11-17T11:02:00+07:00", cekat_message_id: "msg_91c0…", price_idr_at_send: 9900000 }), S("Cekat CRM · Board Reach Out", "POST /api/crm/boards/{reachOutBoardId}/items", { customer_id: 100245, channel: "whatsapp", reason: "wishlist" })]),
+  W("X-05", "Aturan tracking", [S("Cekat CRM · Board Tracking Rules", "POST / PATCH /api/crm/boards/{trackingRulesBoardId}/items", { code: "silverspoon", label: "Silverspoon", combine: "all", scope: "same_transaction", conditions_json: "[{\"field\":\"sku_unit_price_idr\",\"op\":\">=\",\"value\":40000000},{\"field\":\"transaction_total_idr\",\"op\":\">=\",\"value\":50000000}]", window_days: 365, notify_sa: true, remove_when_unmatched: false, is_active: true, created_by_user_id: 1 })]),
   W("X-03", "Aturan push", [S("Cekat CRM · Board Push Rules", "POST / PATCH /api/crm/boards/{pushRulesBoardId}/items", { push_type: "vip_birthday", min_tier: "FAN", days_before: 14, due_in_days: 14, active: true })]),
   W("A-06", "Token push device", [S("Cekat Product · Users (CP-03)", "PATCH user push_tokens", { device_id: "a1b2-c3d4", platform: "ios", fcm_token: "fcm_…" }, false)]),
 ];

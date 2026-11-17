@@ -415,6 +415,7 @@ export const MENU = {
     { id: "performance", en: "Country KPI", idl: "KPI negara" },
     { id: "templates", en: "WhatsApp templates", idl: "Template WhatsApp" },
     { id: "push_rules", en: "Push rules", idl: "Aturan push" },
+    { id: "tracking_rules", en: "Tracking rules", idl: "Aturan tracking" },
     { id: "users", en: "Users & roles", idl: "User & role" },
   ],
 };
