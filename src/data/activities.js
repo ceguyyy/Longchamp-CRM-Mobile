@@ -366,6 +366,40 @@ const activities = {
         ["a4", "a5"], ["a5", "a6"], ["a6", "a7"], ["a7", "e2"],
       ],
     },
+    {
+      id: "AD-08",
+      title: L("CMS & configuration", "CMS & pengaturan"),
+      desc: L(
+        "Super Admin edits Home content and settings; the API saves them in Cekat CRM and logs the change. Apps and n8n pick them up without a deploy.",
+        "Super Admin mengubah konten Beranda dan pengaturan; API menyimpannya di Cekat CRM dan mencatat perubahan. App dan n8n memakainya tanpa deploy ulang."
+      ),
+      ucs: ["UC-30"],
+      lanes: ["user", "app", "bff", "cekat", "product"],
+      nodes: [
+        { id: "s0", lane: "user", row: 0, type: "start" },
+        { id: "a1", lane: "user", row: 1, type: "action", label: L("Open CMS & configuration", "Buka CMS & pengaturan") },
+        { id: "a2", lane: "app", row: 2, type: "action", label: L("Load settings, content, master data", "Muat pengaturan, konten, master data"), ref: "X-07, X-09, X-10" },
+        { id: "d1", lane: "user", row: 3, type: "decision", label: L("Content or setting?", "Konten atau pengaturan?") },
+        { id: "c1", lane: "user", row: 4, type: "action", label: L("Write text ID/EN, role, boutique, dates; preview", "Isi teks ID/EN, role, boutique, tanggal; pratinjau") },
+        { id: "c2", lane: "cekat", row: 5, type: "action", label: L("Save App Content item (draft / published)", "Simpan item App Content (draf / terbit)"), ref: "X-09" },
+        { id: "g1", lane: "user", row: 4, type: "action", label: L("Change value or switch", "Ubah nilai atau saklar") },
+        { id: "g2", lane: "bff", row: 5, type: "decision", label: L("Valid range?", "Rentang valid?") },
+        { id: "g3", lane: "app", row: 6, type: "action", label: L("Show validation error", "Tampilkan error validasi") },
+        { id: "g4", lane: "cekat", row: 6, type: "action", label: L("Update App Settings + Settings History", "Update App Settings + Settings History"), ref: "X-08" },
+        { id: "p1", lane: "product", row: 7, type: "action", label: L("RBAC: super_admin only", "RBAC: hanya super_admin"), cp: "CP-02" },
+        { id: "a3", lane: "bff", row: 8, type: "action", label: L("Clear Redis app_config cache", "Hapus cache Redis app_config") },
+        { id: "a4", lane: "app", row: 9, type: "action", label: L("Apps read GET /v1/app/config; API + n8n use new values", "App membaca GET /v1/app/config; API + n8n pakai nilai baru"), ref: "H-02" },
+        { id: "e1", lane: "app", row: 10, type: "end" },
+      ],
+      edges: [
+        ["s0", "a1"], ["a1", "a2"], ["a2", "d1"],
+        ["d1", "c1", L("content", "konten")], ["c1", "c2"], ["c2", "p1"],
+        ["d1", "g1", L("setting", "pengaturan")], ["g1", "g2"],
+        ["g2", "g3", L("no", "tidak")], ["g3", "g1"],
+        ["g2", "g4", L("yes", "ya")], ["g4", "p1"],
+        ["p1", "a3"], ["a3", "a4"], ["a4", "e1"],
+      ],
+    },
   ],
 };
 

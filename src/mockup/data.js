@@ -273,3 +273,45 @@ export const TRACKING_RULES = [
   },
 ];
 export const trackLabel = (code) => (TRACKING_RULES.find((r) => r.code === code) || { label: code }).label;
+
+/* CMS & configuration (Super Admin). Stored in Cekat CRM: Board App Settings (key/value) + Board App Content. */
+export const APP_CONTENT = [
+  { content_id: 1, kind: "announcement", audience: "all", boutique: "all", title_id: "Preview Le Pliage Re-Play mulai 5 Desember", title_en: "Le Pliage Re-Play preview from 5 December", start_at: "2026-11-20", end_at: "2026-12-10", status: "scheduled" },
+  { content_id: 2, kind: "hero", audience: "sales_agent", boutique: "all", title_id: "Musim hadiah", title_en: "Gifting season", subtitle_id: "Siapkan wishlist pelanggan Anda", subtitle_en: "Get your clients' wishlists ready", cta: "catalog", start_at: "2026-11-15", end_at: "2026-12-31", status: "live" },
+  { content_id: 3, kind: "banner", audience: "supervisor", boutique: "Plaza Indonesia", title_id: "Target Desember: 120 reach out", title_en: "December target: 120 reach outs", start_at: "2026-12-01", end_at: "2026-12-31", status: "draft" },
+];
+export const CONTENT_KIND = { announcement: { en: "Announcement bar", id: "Announcement bar" }, hero: { en: "Home hero", id: "Hero beranda" }, banner: { en: "Home banner", id: "Banner beranda" } };
+
+export const APP_SETTINGS = {
+  rules: [
+    { key: "reach_out_min_days", label: { en: "Minimum days between reach outs", id: "Jeda minimum antar reach out" }, type: "int", value: 30, unit: "hari", used_by: "C-12, R-01" },
+    { key: "attribution_window_days", label: { en: "Conversion attribution window", id: "Jendela atribusi konversi" }, type: "int", value: 30, unit: "hari", used_by: "J-02" },
+    { key: "max_open_pushes_per_client", label: { en: "Open pushes per client", id: "Push terbuka per pelanggan" }, type: "int", value: 1, unit: "", used_by: "J-01" },
+    { key: "require_wa_consent", label: { en: "Require WhatsApp consent to send", id: "Wajib consent WhatsApp untuk kirim" }, type: "bool", value: true, used_by: "C-12, R-01, W-04, E-03" },
+    { key: "quiet_hours", label: { en: "Quiet hours (no sending)", id: "Jam tenang (tidak kirim)" }, type: "text", value: "21:00–08:00", used_by: "R-01, W-04, J-01" },
+    { key: "wishlist_expire_days", label: { en: "Saved wishlist expires after", id: "Wishlist tersimpan kedaluwarsa setelah" }, type: "int", value: 90, unit: "hari", used_by: "W-01" },
+    { key: "peer_sharing", label: { en: "Sales Agents see each other's clients", id: "Sales Agent melihat pelanggan rekan" }, type: "bool", value: false, used_by: "CP-02" },
+  ],
+  app: [
+    { key: "min_app_version", label: { en: "Minimum app version", id: "Versi app minimum" }, type: "text", value: "1.0.0", used_by: "Semua (426)" },
+    { key: "default_language", label: { en: "Default language", id: "Bahasa default" }, type: "text", value: "id", used_by: "A-07" },
+    { key: "session_idle_minutes", label: { en: "Sign out after idle", id: "Logout setelah tidak aktif" }, type: "int", value: 480, unit: "menit", used_by: "CP-01" },
+    { key: "feature_scan", label: { en: "Barcode scan", id: "Scan barcode" }, type: "bool", value: true, used_by: "K-03" },
+    { key: "feature_events", label: { en: "Events & RSVP", id: "Event & RSVP" }, type: "bool", value: true, used_by: "E-01..E-03" },
+    { key: "feature_tracking_tags", label: { en: "Show tracking tags on profile", id: "Tampilkan tag tracking di profil" }, type: "bool", value: true, used_by: "C-02" },
+  ],
+};
+export const MASTER_DATA = [
+  { type: "love_tags", label: { en: "Love tags", id: "Love tags" }, count: 12, sample: "fashion, travel, gift, art" },
+  { type: "reach_reasons", label: { en: "Reach-out reasons", id: "Alasan reach out" }, count: 9, sample: "push, wishlist, birthday, after_sales" },
+  { type: "template_moments", label: { en: "Template moments", id: "Momen template" }, count: 8, sample: "birthday, event, wishlist, welcome" },
+  { type: "cancel_reasons", label: { en: "Push cancel reasons", id: "Alasan batal push" }, count: 5, sample: "client_unreachable, not_interested" },
+  { type: "boutiques", label: { en: "Boutiques & WhatsApp inbox", id: "Boutique & inbox WhatsApp" }, count: 5, sample: "Plaza Indonesia → ibx_pi_wa" },
+];
+export const INTEGRATIONS = [
+  { name: "Cekat CRM · Golden Record", status: "ok", note: { en: "Last item update 2 min ago", id: "Update item terakhir 2 menit lalu" } },
+  { name: "Cekat Chat · WhatsApp inbox (5)", status: "ok", note: { en: "All inboxes connected", id: "Semua inbox terhubung" } },
+  { name: "Shopify katalog", status: "ok", note: { en: "Cache 15 min", id: "Cache 15 menit" } },
+  { name: "Odoo stok", status: "warn", note: { en: "1 boutique slow (>3 s)", id: "1 boutique lambat (>3 dtk)" } },
+  { name: "Firebase Cloud Messaging", status: "ok", note: { en: "Delivery 99.2% (7 days)", id: "Terkirim 99,2% (7 hari)" } },
+];

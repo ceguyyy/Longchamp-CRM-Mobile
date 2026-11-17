@@ -424,6 +424,20 @@ const model = {
       ],
     },
     {
+      id: "UC-30", module: "access", actors: ["hq"],
+      name: { en: "Manage CMS & configuration", id: "Kelola CMS & pengaturan" },
+      desc: {
+        en: "Super Admin manages Home content (announcement bar, hero, banners per role and boutique, scheduled, in Indonesian and English), clienteling rules (minimum days between reach outs, attribution window, WhatsApp consent, quiet hours, open pushes per client, wishlist expiry, peer sharing), app settings and feature switches (minimum app version, default language, idle sign-out, scan, events, tracking tags), master data (love tags, reasons, template moments, cancel reasons, boutique inboxes) and sees integration health. Values are stored in Cekat CRM, every change is logged, and the API, n8n and the app read them at run time.",
+        id: "Super Admin mengatur konten Beranda (announcement bar, hero, banner per role dan boutique, terjadwal, dalam Bahasa Indonesia dan Inggris), aturan clienteling (jeda minimum reach out, jendela atribusi, consent WhatsApp, jam tenang, push terbuka per pelanggan, kedaluwarsa wishlist, peer sharing), pengaturan app dan saklar fitur (versi app minimum, bahasa default, logout saat tidak aktif, scan, event, tag tracking), master data (love tags, alasan, momen template, alasan batal, inbox boutique) dan melihat status integrasi. Nilai disimpan di Cekat CRM, setiap perubahan dicatat, dan API, n8n, serta app membacanya saat berjalan.",
+      },
+      rbac: { sa: "use", sm: "use", hq: "manage" },
+      sources: [
+        { sys: "cekatApi", type: "API", dir: "write", ref: "Board App Settings + Settings History + App Content + master data boards", status: "available", verify: true },
+        { sys: "cekatNew", type: "API", dir: "write", ref: "RBAC: only super_admin may write config boards", status: "product", cp: "CP-02" },
+        { sys: "cekatApi", type: "API", dir: "read", ref: "GET /v1/app/config for every role (cached 5 min)", status: "available" },
+      ],
+    },
+    {
       id: "UC-25", module: "search", actors: [],
       name: { en: "Connect / disconnect client", id: "Hubungkan / putuskan klien" },
       desc: {
@@ -502,6 +516,7 @@ const model = {
     { from: "UC-16", to: "UC-15", type: "extend" },
     { from: "UC-28", to: "UC-15", type: "extend" },
     { from: "UC-29", to: "UC-20", type: "extend" },
+    { from: "UC-30", to: "UC-20", type: "extend" },
     { from: "UC-17", to: "UC-28", type: "include" },
     { from: "UC-28", to: "UC-02", type: "extend" },
     { from: "UC-24", to: "UC-15", type: "extend" },

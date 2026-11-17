@@ -146,6 +146,31 @@ export const ENDPOINTS = [
     errors: [],
   },
 
+  {
+    id: "H-02", group: "home", method: "GET", path: "/app/config", title: "Konfigurasi & konten app (CMS)", roles: ALL, uc: ["UC-30"], cp: ["CP-02", "CP-04"],
+    upstream: ["Board App Settings", "Board App Content (status=published, tanggal aktif)", "Board Master Data (is_active=true)", "Board Love Tags"],
+    logic: [
+      "Dipanggil app saat buka dan setiap kembali ke foreground; app menyimpan version terakhir.",
+      "Ambil dari Redis app_config:{role}:{boutique_id} (TTL 5 menit); bila kosong, baca 4 board di atas dan simpan ke Redis.",
+      "Konten difilter: audience = all atau role user; boutique kosong atau boutique user; start_at ≤ hari ini ≤ end_at (Asia/Jakarta).",
+      "Hanya setting dengan group app dan setting rules yang perlu ditampilkan (mis. reach_out_min_days) dikirim; sisanya tetap di server.",
+      "Bila X-App-Version < min_app_version → 426 upgrade_required.",
+      "If-None-Match dengan version yang sama → 304 tanpa body.",
+    ],
+    query: [V("lang", "enum", false, "id | en. Default dari profil user.", "id")],
+    response: {
+      version: 42,
+      settings: { reach_out_min_days: 30, quiet_hours: "21:00-08:00", wishlist_expire_days: 90, default_language: "id", session_idle_minutes: 480, min_app_version: "1.0.0" },
+      features: { scan: true, events: true, tracking_tags: true },
+      content: [
+        { content_id: 1, kind: "announcement", text: "Preview Le Pliage Re-Play mulai 5 Desember", cta_target: null },
+        { content_id: 2, kind: "hero", title: "Musim hadiah", subtitle: "Siapkan wishlist pelanggan Anda", image_url: "https://cdn…/hero-gifting.jpg", cta_target: "catalog" },
+      ],
+      master: { reach_reasons: [{ code: "after_sales", label: "Purna jual" }], template_moments: [{ code: "birthday", label: "Ulang tahun" }], cancel_reasons: [{ code: "client_unreachable", label: "Pelanggan tidak bisa dihubungi" }], love_tags: [{ code: "fashion", label: "Fashion" }] },
+    },
+    errors: ["426 upgrade_required"],
+  },
+
   /* ================================================================ CUSTOMERS */
   {
     id: "C-01", group: "customers", method: "GET", path: "/customers", title: "Cari & filter pelanggan", roles: ALL, uc: ["UC-01", "UC-06"], cp: ["CP-02", "CP-04"],
@@ -181,7 +206,7 @@ export const ENDPOINTS = [
     logic: [
       "Ambil item Golden Record; 404 bila tidak terlihat oleh user (CP-02 menyembunyikan, tidak 403, agar keberadaan data tidak bocor).",
       "Petakan properti item Golden Record (current_tier_name, total_spent_idr, purchase_count, first/last_purchase_date, registration_boutique, consent, dll.) ke response; purchase_frequency dihitung API.",
-      "Hitung days_since_last_contact dan reach_out_allowed (≥ 30 hari atau null).",
+      "Hitung days_since_last_contact dan reach_out_allowed (≥ reach_out_min_days dari App Settings, default 30 hari, atau null).",
       "Sertakan ringkasan: jumlah wishlist per status, tiket after-sales terbuka, love tags.",
     ],
     response: {
@@ -289,7 +314,7 @@ export const ENDPOINTS = [
     id: "C-12", group: "customers", method: "GET", path: "/customers/{customer_id}/reach-out-eligibility", title: "Cek aturan 30 hari", roles: FIELD, uc: ["UC-11"], cp: ["CP-02"],
     upstream: ["GET Golden Record item (last_reach_out_at, consent_wa, consent_email, is_reachable)"],
     logic: [
-      "allowed = last_reach_out_at null atau ≥ 30 hari (Asia/Jakarta).",
+      "allowed = last_reach_out_at null atau ≥ reach_out_min_days hari (App Settings, default 30; Asia/Jakarta). Jam tenang (quiet_hours) dan require_wa_consent juga dibaca dari App Settings.",
       "Usulan pengecualian: push_id aktif untuk pelanggan ini selalu boleh (perlu konfirmasi Longchamp).",
       "Channel tersedia: whatsapp bila consent_wa, email bila consent_email, call dan sms selalu.",
       "within_24h_session = ada pesan masuk < 24 jam (boleh teks bebas); bila false, WhatsApp wajib template.",
@@ -705,6 +730,94 @@ export const ENDPOINTS = [
     errors: ["400 invalid_condition"],
   },
   {
+    id: "X-07", group: "admin", method: "GET", path: "/admin/settings", title: "Baca semua pengaturan (CMS)", roles: ["super_admin"], uc: ["UC-30"], cp: ["CP-02"],
+    upstream: ["Board App Settings", "Board Settings History (10 terakhir per key)"],
+    logic: [
+      "Hanya super_admin (403 untuk role lain; dicek juga oleh RBAC Cekat CP-02).",
+      "Kembalikan semua key per group (rules, app) dengan tipe, nilai, rentang yang boleh, dan dipakai oleh siapa.",
+      "Sertakan perubahan terakhir per key untuk audit.",
+    ],
+    query: [V("group", "enum", false, "rules | app. Kosong = semua.", "rules")],
+    response: {
+      version: 42,
+      data: [
+        { key: "reach_out_min_days", group: "rules", value_type: "int", value: 30, min_value: 7, max_value: 90, used_by: "C-12, R-01", updated_by: "Hendra Wijaya", updated_at: "2026-11-12T14:05:00+07:00" },
+        { key: "require_wa_consent", group: "rules", value_type: "bool", value: true, used_by: "C-12, R-01, W-04, E-03", updated_by: "Hendra Wijaya", updated_at: "2026-10-01T09:00:00+07:00" },
+        { key: "feature_scan", group: "app", value_type: "bool", value: true, used_by: "K-03", updated_by: "Hendra Wijaya", updated_at: "2026-10-01T09:00:00+07:00" },
+      ],
+    },
+    errors: ["403 forbidden"],
+  },
+  {
+    id: "X-08", group: "admin", method: "PATCH", path: "/admin/settings", title: "Ubah pengaturan (CMS)", roles: ["super_admin"], uc: ["UC-30"], cp: ["CP-02"],
+    upstream: ["Board App Settings (PATCH per key)", "Board Settings History (POST per key)"],
+    logic: [
+      "Hanya super_admin.",
+      "Validasi tiap perubahan: key dikenal, tipe sesuai, dalam min/max (mis. reach_out_min_days 7–90, attribution_window_days 7–90, quiet_hours HH:MM–HH:MM, min_app_version semver).",
+      "Semua valid atau tidak ada yang disimpan (400 validation_error dengan daftar key).",
+      "PATCH item App Settings per key dengan token user, lalu POST Settings History (old_value, new_value, reason).",
+      "Naikkan version, hapus Redis app_config:* dan cache setting di API; n8n membaca nilai baru di run berikutnya.",
+    ],
+    body: [
+      V("changes", "array<object>", true, "Daftar perubahan.", [{ key: "reach_out_min_days", value: 21 }]),
+      V("changes[].key", "string", true, "Key setting.", "reach_out_min_days"),
+      V("changes[].value", "int | bool | string", true, "Nilai baru sesuai value_type.", 21),
+      V("reason", "string", false, "Catatan untuk audit, maks 200 karakter.", "Promo Desember"),
+    ],
+    response: { version: 43, updated: [{ key: "reach_out_min_days", old_value: 30, new_value: 21 }] },
+    errors: ["400 validation_error", "400 unknown_key", "403 forbidden"],
+  },
+  {
+    id: "X-09", group: "admin", method: "GET · POST · PATCH · DELETE", path: "/admin/content[/{content_id}]", title: "Konten Beranda (CMS)", roles: ["super_admin"], uc: ["UC-30"], cp: ["CP-02", "CP-04"],
+    upstream: ["Board App Content", "Board Settings History", "Upload gambar ke Cekat Files (verify)"],
+    logic: [
+      "GET: daftar konten dengan filter kind, status, audience, boutique; status tampil scheduled / live / ended dihitung dari tanggal.",
+      "POST/PATCH: validasi title_id dan title_en wajib, panjang announcement ≤ 80 karakter, hero wajib image_url, end_at ≥ start_at, cta_target salah satu layar yang dikenal.",
+      "Maksimal 1 announcement dan 1 hero aktif per (audience, boutique) pada tanggal yang sama; bentrok → 409 content_overlap.",
+      "DELETE = status archived (tidak dihapus permanen).",
+      "Setiap tulis dicatat di Settings History dan menghapus Redis app_config:*.",
+    ],
+    query: [V("kind", "enum", false, "announcement | hero | banner.", "hero"), V("status", "enum", false, "draft | published | archived.", "published"), V("audience", "enum", false, "all | sales_agent | supervisor.", "all"), V("boutique_id", "int", false, "Filter boutique.", 3)],
+    body: [
+      V("kind", "enum", true, "announcement | hero | banner.", "hero"),
+      V("audience", "enum", true, "all | sales_agent | supervisor.", "sales_agent"),
+      V("boutique_id", "int | null", false, "Kosong = semua boutique.", null),
+      V("title_id", "string", true, "Teks utama Bahasa Indonesia.", "Musim hadiah"),
+      V("title_en", "string", true, "Teks utama Bahasa Inggris.", "Gifting season"),
+      V("subtitle_id", "string", false, "Subjudul hero (ID).", "Siapkan wishlist pelanggan Anda"),
+      V("subtitle_en", "string", false, "Subjudul hero (EN).", "Get your clients' wishlists ready"),
+      V("image_url", "string(url)", false, "Wajib untuk hero.", "https://cdn…/hero-gifting.jpg"),
+      V("cta_target", "enum", false, "catalog | actions | lists | templates | none.", "catalog"),
+      V("start_at", "date", true, "Mulai tampil.", "2026-11-15"),
+      V("end_at", "date", true, "Selesai tampil.", "2026-12-31"),
+      V("status", "enum", true, "draft | published.", "published"),
+      V("sort_order", "int", false, "Urutan di Beranda.", 1),
+    ],
+    response: { content_id: 2, kind: "hero", status: "published", display_status: "live", start_at: "2026-11-15", end_at: "2026-12-31" },
+    errors: ["400 validation_error", "409 content_overlap", "403 forbidden"],
+  },
+  {
+    id: "X-10", group: "admin", method: "GET · POST · PATCH", path: "/admin/master/{list_type}[/{item_id}]", title: "Master data dropdown (CMS)", roles: ["super_admin"], uc: ["UC-30"], cp: ["CP-02"],
+    upstream: ["Board Master Data", "Board Love Tags (list_type=love_tags)", "Board Settings History"],
+    logic: [
+      "list_type: love_tags | reach_reasons | template_moments | cancel_reasons | boutique_inbox.",
+      "code tidak bisa diubah setelah dibuat (dipakai laporan KPI); yang bisa diubah label_id, label_en, is_active, sort_order.",
+      "Item tidak dihapus; is_active=false menyembunyikannya di app tetapi data lama tetap terbaca.",
+      "boutique_inbox: map boutique → inbox WhatsApp Cekat (dipakai R-01, W-04, E-03).",
+      "Setiap tulis dicatat di Settings History dan menghapus Redis app_config:*.",
+    ],
+    body: [
+      V("code", "string", true, "POST saja; huruf kecil dan _.", "after_sales"),
+      V("label_id", "string", true, "Label Bahasa Indonesia.", "Purna jual"),
+      V("label_en", "string", true, "Label Bahasa Inggris.", "After sales"),
+      V("is_active", "bool", false, "Default true.", true),
+      V("sort_order", "int", false, "Urutan.", 6),
+      V("inbox_id", "string", false, "Hanya boutique_inbox: id inbox Cekat.", "ibx_pi_wa"),
+    ],
+    response: { item_id: 40, list_type: "reach_reasons", code: "after_sales", label_id: "Purna jual", label_en: "After sales", is_active: true, sort_order: 6 },
+    errors: ["400 validation_error", "409 code_exists", "403 forbidden"],
+  },
+  {
     id: "X-04", group: "admin", method: "GET", path: "/customers/unassigned", title: "Pelanggan tanpa assignee", roles: LEAD, uc: ["UC-22"], cp: ["CP-02", "CP-04"],
     upstream: ["GET /api/crm/boards/{goldenRecordBoardId}/items?assigned_user=none&registration_boutique_id="],
     logic: ["Sama dengan C-01 dengan assigned_user_id=none; dipakai layar reassign."],
@@ -785,6 +898,9 @@ export const WRITES = [
   W("W-03", "Hapus wishlist", [S("Cekat CRM · Board Wishlist", "DELETE /api/crm/boards/{wishlistBoardId}/items/{id}", { status_check: "saved" })]),
   W("W-04", "Kirim wishlist", [S("Cekat Chat · Message API", "POST Message API (send)", { inbox_id: "ibx_pi_wa", phone: "+6281234567890", template: "lc_wishlist_id", variables: ["Sari", "Roseau Shoulder Bag, Le Pliage Original M"] }), S("Cekat CRM · Board Wishlist", "PATCH /api/crm/boards/{wishlistBoardId}/items/{id}", { status: "sent", wishlist_ref: "WL-20261117-0087-01", sent_at: "2026-11-17T11:02:00+07:00", cekat_message_id: "msg_91c0…", price_idr_at_send: 9900000 }), S("Cekat CRM · Board Reach Out", "POST /api/crm/boards/{reachOutBoardId}/items", { customer_id: 100245, channel: "whatsapp", reason: "wishlist" })]),
   W("X-05", "Aturan tracking", [S("Cekat CRM · Board Tracking Rules", "POST / PATCH /api/crm/boards/{trackingRulesBoardId}/items", { code: "silverspoon", label: "Silverspoon", scope: "same_transaction", rule_json: "{\"groups\":[{\"conditions\":[{\"field\":\"sku_any_of\",\"op\":\"in\",\"value\":[\"LONGCHAMP001\"]}]},{\"conditions\":[{\"field\":\"sku_any_of\",\"op\":\"in\",\"value\":[\"LONGCHAMP-A\",\"LONGCHAMP-B\",\"LONGCHAMP-C\"]},{\"field\":\"sku_unit_price_idr\",\"op\":\">=\",\"value\":40000000},{\"field\":\"transaction_total_idr\",\"op\":\">=\",\"value\":50000000}]}]}", window_days: 365, notify_sa: true, remove_when_unmatched: false, is_active: true, created_by_user_id: 1 })]),
+  W("X-08", "Ubah pengaturan (CMS)", [S("Cekat CRM · Board App Settings", "PATCH /api/crm/boards/{appSettingsBoardId}/items/{id}", { values: { value: "21", updated_by_user_id: 1, updated_at: "2026-11-17T10:40:00+07:00" } }), S("Cekat CRM · Board Settings History", "POST /api/crm/boards/{settingsHistoryBoardId}/items", { object: "setting", key: "reach_out_min_days", old_value: "30", new_value: "21", reason: "Promo Desember", changed_by_user_id: 1 })], true),
+  W("X-09", "Konten Beranda (CMS)", [S("Cekat CRM · Board App Content", "POST / PATCH /api/crm/boards/{appContentBoardId}/items", { kind: "hero", audience: "sales_agent", boutique_id: null, title_id: "Musim hadiah", title_en: "Gifting season", image_url: "https://cdn…/hero-gifting.jpg", cta_target: "catalog", start_at: "2026-11-15", end_at: "2026-12-31", status: "published", created_by_user_id: 1 }), S("Cekat CRM · Board Settings History", "POST /api/crm/boards/{settingsHistoryBoardId}/items", { object: "content", key: "2", new_value: "published", changed_by_user_id: 1 })]),
+  W("X-10", "Master data (CMS)", [S("Cekat CRM · Board Master Data / Love Tags", "POST / PATCH /api/crm/boards/{masterDataBoardId}/items", { list_type: "reach_reasons", code: "after_sales", label_id: "Purna jual", label_en: "After sales", is_active: true, sort_order: 6 }), S("Cekat CRM · Board Settings History", "POST /api/crm/boards/{settingsHistoryBoardId}/items", { object: "master", key: "reach_reasons.after_sales", new_value: "active", changed_by_user_id: 1 })]),
   W("X-03", "Aturan push", [S("Cekat CRM · Board Push Rules", "POST / PATCH /api/crm/boards/{pushRulesBoardId}/items", { push_type: "vip_birthday", min_tier: "FAN", days_before: 14, due_in_days: 14, active: true })]),
   W("A-06", "Token push device", [S("Cekat Product · Users (CP-03)", "PATCH user push_tokens", { device_id: "a1b2-c3d4", platform: "ios", fcm_token: "fcm_…" }, false)]),
 ];

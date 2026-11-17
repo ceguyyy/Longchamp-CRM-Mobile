@@ -417,6 +417,7 @@ export const MENU = {
     { id: "push_rules", en: "Push rules", idl: "Aturan push" },
     { id: "tracking_rules", en: "Tracking rules", idl: "Aturan tracking" },
     { id: "users", en: "Users & roles", idl: "User & role" },
+    { id: "settings", en: "CMS & configuration", idl: "CMS & pengaturan" },
   ],
 };
 /* Bottom app bar: four fixed tabs per role + "More" (the rest of MENU, account, sign out) */

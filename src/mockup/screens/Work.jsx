@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { Button, Input, Label, ProgressBar, Switch, Tabs, TextField } from "@heroui/react";
-import { useApp, AppBar, Body, SectionTitle, Tile, TierBadge, Initials, Pill, Stat, BagArt, Icon, LcButton } from "../core";
+import { useApp, AppBar, Body, SectionTitle, Tile, TierBadge, Initials, Pill, Stat, BagArt, Icon, LcButton, Hero } from "../core";
 import { PushRow } from "./Home";
 import { visibleClients } from "./Clients";
 import {
-  AGENDA, PUSHES, PRODUCTS, BOUTIQUES, CLIENTS, TEAM, KPI, BY_CHANNEL, BY_BOUTIQUE, TEMPLATES, PUSH_RULES, PUSH_LABEL, USERS, WISHLIST_KPI, PUSH_KPI, TRACKING_RULES, TRACK_FIELDS, idr, idrShort,
+  AGENDA, PUSHES, PRODUCTS, BOUTIQUES, CLIENTS, TEAM, KPI, BY_CHANNEL, BY_BOUTIQUE, TEMPLATES, PUSH_RULES, PUSH_LABEL, USERS, WISHLIST_KPI, PUSH_KPI, TRACKING_RULES, TRACK_FIELDS, idr, idrShort, APP_CONTENT, CONTENT_KIND, APP_SETTINGS, MASTER_DATA, INTEGRATIONS, BOUTIQUES as BQ,
 } from "../data";
 
 /* ================================================================ ACTIONS */
@@ -807,6 +807,7 @@ export function Admin() {
           ["templates", tx("WhatsApp templates", "Template WhatsApp"), `${TEMPLATES.length} ${tx("templates", "template")}`],
           ["push_rules", tx("Clienteling push rules", "Aturan clienteling push"), `${PUSH_RULES.filter((r) => r.is_active).length} ${tx("active", "aktif")}`],
           ["tracking_rules", tx("Transaction tracking rules", "Aturan tracking transaksi"), tx("Golden Record tags, e.g. Silverspoon", "Tag Golden Record, mis. Silverspoon")],
+          ["settings", tx("CMS & configuration", "CMS & pengaturan"), tx("Home content, clienteling rules, app, master data, integrations", "Konten beranda, aturan clienteling, app, master data, integrasi")],
         ].map(([id, t, s]) => (
           <Tile key={id} onClick={() => nav(id)} className="mb-2 flex items-center justify-between p-4">
             <div>
@@ -1053,6 +1054,228 @@ export function PushRules() {
             </Tile>
           ))}
         </div>
+      </Body>
+    </>
+  );
+}
+
+/* ================================================================ CMS & CONFIGURATION (Super Admin) */
+const FIELD_CLS = "w-full border border-[var(--lc-line)] bg-white px-2.5 py-2 text-[13px]";
+const STATUS_STYLE = { live: "bg-[var(--lc-lime)] text-black", scheduled: "bg-black text-white", draft: "border border-black text-black" };
+
+function Field({ label, children }) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="text-[11.5px] font-medium">{label}</span>
+      {children}
+    </label>
+  );
+}
+
+function SettingRow({ s, value, onChange, tx, lang }) {
+  return (
+    <div className="flex items-center justify-between gap-3 border-b border-[var(--lc-line)] py-2.5">
+      <div className="min-w-0">
+        <p className="text-[13px]">{s.label[lang]}</p>
+        <p className="text-[10.5px] text-[var(--lc-muted)]">
+          <code>{s.key}</code> · {tx("used by", "dipakai")} {s.used_by}
+        </p>
+      </div>
+      {s.type === "bool" ? (
+        <Switch isSelected={value} onChange={onChange} aria-label={s.key}>
+          <Switch.Control>
+            <Switch.Thumb />
+          </Switch.Control>
+        </Switch>
+      ) : (
+        <div className="flex shrink-0 items-center gap-1">
+          <input value={value} onChange={(e) => onChange(s.type === "int" ? Number(e.target.value.replace(/\D/g, "")) : e.target.value)} className={`${s.type === "text" ? "w-[112px]" : "w-[86px]"} border border-[var(--lc-line)] px-2 py-1.5 text-right text-[13px]`} aria-label={s.key} />
+          {s.unit && <span className="w-9 text-[11px] text-[var(--lc-muted)]">{s.unit}</span>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ContentEditor({ item, onSave, onCancel, tx }) {
+  const [d, setD] = useState(item);
+  const set = (k) => (e) => setD({ ...d, [k]: e.target.value });
+  return (
+    <div className="flex flex-col gap-2.5">
+      <div className="overflow-hidden border border-[var(--lc-line)]">
+        <p className="caps bg-[var(--lc-muted)]/10 px-2 py-1 text-[9px] text-[var(--lc-muted)]">{tx("Preview", "Pratinjau")}</p>
+        {d.kind === "hero" ? (
+          <Hero title={d.title_id || "—"} subtitle={d.subtitle_id} cta={d.cta ? tx("Open", "Buka") : null} height={120} />
+        ) : (
+          <div className={`px-3 py-2 text-center text-[11.5px] ${d.kind === "announcement" ? "bg-[var(--lc-lime)]" : "bg-black text-white"}`}>{d.title_id || "—"}</div>
+        )}
+      </div>
+      <Field label={tx("Type", "Jenis")}>
+        <select value={d.kind} onChange={set("kind")} className={FIELD_CLS}>
+          {Object.entries(CONTENT_KIND).map(([k, v]) => <option key={k} value={k}>{v.id}</option>)}
+        </select>
+      </Field>
+      <Field label={tx("Text (Indonesian)", "Teks (Indonesia)")}>
+        <input value={d.title_id} onChange={set("title_id")} className={FIELD_CLS} />
+      </Field>
+      <Field label={tx("Text (English)", "Teks (Inggris)")}>
+        <input value={d.title_en} onChange={set("title_en")} className={FIELD_CLS} />
+      </Field>
+      {d.kind === "hero" && (
+        <>
+          <Field label={tx("Subtitle (ID)", "Subjudul (ID)")}>
+            <input value={d.subtitle_id || ""} onChange={set("subtitle_id")} className={FIELD_CLS} />
+          </Field>
+          <Field label={tx("Button opens", "Tombol membuka")}>
+            <select value={d.cta || ""} onChange={set("cta")} className={FIELD_CLS}>
+              <option value="">{tx("No button", "Tanpa tombol")}</option>
+              <option value="catalog">{tx("Catalog", "Katalog")}</option>
+              <option value="actions">{tx("Actions", "Aksi")}</option>
+              <option value="lists">{tx("Customer lists", "Daftar pelanggan")}</option>
+            </select>
+          </Field>
+        </>
+      )}
+      <div className="grid grid-cols-2 gap-2">
+        <Field label={tx("Shown to", "Tampil untuk")}>
+          <select value={d.audience} onChange={set("audience")} className={FIELD_CLS}>
+            <option value="all">{tx("All roles", "Semua role")}</option>
+            <option value="sales_agent">Sales Agent</option>
+            <option value="supervisor">Supervisor</option>
+          </select>
+        </Field>
+        <Field label="Boutique">
+          <select value={d.boutique} onChange={set("boutique")} className={FIELD_CLS}>
+            <option value="all">{tx("All", "Semua")}</option>
+            {BQ.map((b) => <option key={b.boutique_id} value={b.boutique_name}>{b.boutique_name}</option>)}
+          </select>
+        </Field>
+        <Field label={tx("Start", "Mulai")}>
+          <input type="date" value={d.start_at} onChange={set("start_at")} className={FIELD_CLS} />
+        </Field>
+        <Field label={tx("End", "Selesai")}>
+          <input type="date" value={d.end_at} onChange={set("end_at")} className={FIELD_CLS} />
+        </Field>
+      </div>
+      <div className="mt-1 grid grid-cols-2 gap-2">
+        <LcButton variant="secondary" onClick={() => onSave({ ...d, status: "draft" })}>{tx("Save draft", "Simpan draf")}</LcButton>
+        <LcButton onClick={() => onSave({ ...d, status: d.start_at > "2026-11-17" ? "scheduled" : "live" })}>{tx("Publish", "Terbitkan")}</LcButton>
+      </div>
+      <button onClick={onCancel} className="caps py-2 text-[10.5px] text-[var(--lc-muted)]">{tx("Cancel", "Batal")}</button>
+    </div>
+  );
+}
+
+export function Settings() {
+  const { tx, back, lang, notify } = useApp();
+  const [tab, setTab] = useState("content");
+  const [content, setContent] = useState(APP_CONTENT);
+  const [editing, setEditing] = useState(null);
+  const [vals, setVals] = useState(() => Object.fromEntries([...APP_SETTINGS.rules, ...APP_SETTINGS.app].map((s) => [s.key, s.value])));
+  const [dirty, setDirty] = useState(false);
+  const change = (k) => (v) => {
+    setVals({ ...vals, [k]: v });
+    setDirty(true);
+  };
+  const saveSettings = () => {
+    setDirty(false);
+    notify(tx("Saved to Cekat CRM · App Settings", "Tersimpan di Cekat CRM · App Settings"));
+  };
+  const saveContent = (d) => {
+    setContent(d.content_id ? content.map((c) => (c.content_id === d.content_id ? d : c)) : [...content, { ...d, content_id: Date.now() }]);
+    setEditing(null);
+    notify(d.status === "draft" ? tx("Draft saved to Cekat CRM · App Content", "Draf tersimpan di Cekat CRM · App Content") : tx("Published · the app picks it up within 5 minutes", "Diterbitkan · app mengambilnya dalam 5 menit"));
+  };
+  const TABS_ = [
+    ["content", tx("Content", "Konten")],
+    ["rules", tx("Clienteling rules", "Aturan clienteling")],
+    ["app", tx("App", "App")],
+    ["master", tx("Master data", "Master data")],
+    ["integrations", tx("Integrations", "Integrasi")],
+  ];
+  return (
+    <>
+      <AppBar title={tx("CMS & configuration", "CMS & pengaturan")} sub={tx("Stored in Cekat CRM · applies to all boutiques", "Tersimpan di Cekat CRM · berlaku untuk semua boutique")} onBack={editing ? () => setEditing(null) : back} />
+      <Body>
+        {!editing && (
+          <div className="-mx-4 mb-3 flex gap-1.5 overflow-x-auto px-4 pb-1">
+            {TABS_.map(([k, l]) => (
+              <Pill key={k} active={tab === k} onClick={() => setTab(k)}>{l}</Pill>
+            ))}
+          </div>
+        )}
+
+        {editing && <ContentEditor item={editing} tx={tx} onCancel={() => setEditing(null)} onSave={saveContent} />}
+
+        {!editing && tab === "content" && (
+          <>
+            <p className="mb-2 text-[12px] text-[var(--lc-muted)]">{tx("What staff see on Home. Scheduled by date, per role and boutique, in Indonesian and English.", "Yang dilihat staf di Beranda. Terjadwal per tanggal, per role dan boutique, dalam Bahasa Indonesia dan Inggris.")}</p>
+            <div className="flex flex-col gap-2">
+              {content.map((c) => (
+                <Tile key={c.content_id} onClick={() => setEditing(c)} className="p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="caps text-[9.5px] text-[var(--lc-muted)]">{CONTENT_KIND[c.kind][lang]}</p>
+                    <span className={`caps px-1.5 py-0.5 text-[8.5px] ${STATUS_STYLE[c.status]}`}>{c.status}</span>
+                  </div>
+                  <p className="mt-1 text-[13.5px] font-semibold">{lang === "id" ? c.title_id : c.title_en}</p>
+                  <p className="mt-0.5 text-[11px] text-[var(--lc-muted)]">
+                    {c.audience === "all" ? tx("All roles", "Semua role") : c.audience === "sales_agent" ? "Sales Agent" : "Supervisor"} · {c.boutique === "all" ? tx("all boutiques", "semua boutique") : c.boutique} · {c.start_at} → {c.end_at}
+                  </p>
+                </Tile>
+              ))}
+            </div>
+            <LcButton className="mt-3" onClick={() => setEditing({ kind: "announcement", audience: "all", boutique: "all", title_id: "", title_en: "", start_at: "2026-11-17", end_at: "2026-11-30", status: "draft" })}>
+              {tx("New content", "Konten baru")}
+            </LcButton>
+          </>
+        )}
+
+        {!editing && (tab === "rules" || tab === "app") && (
+          <>
+            <p className="mb-1 text-[12px] text-[var(--lc-muted)]">
+              {tab === "rules"
+                ? tx("Read by the Clienteling API and n8n on every request; no deploy needed.", "Dibaca Clienteling API dan n8n di setiap request; tanpa deploy ulang.")
+                : tx("App behaviour and feature switches, delivered to the app with GET /v1/app/config.", "Perilaku app dan saklar fitur, dikirim ke app lewat GET /v1/app/config.")}
+            </p>
+            {APP_SETTINGS[tab].map((s) => (
+              <SettingRow key={s.key} s={s} value={vals[s.key]} onChange={change(s.key)} tx={tx} lang={lang} />
+            ))}
+            <p className="mt-3 text-[10.5px] text-[var(--lc-muted)]">{tx("Last changed by Hendra Wijaya · 12 Nov 2026 14:05 · every change is logged in App Settings history", "Terakhir diubah Hendra Wijaya · 12 Nov 2026 14:05 · setiap perubahan tercatat di riwayat App Settings")}</p>
+            <LcButton className="mt-3" onClick={saveSettings}>{dirty ? tx("Save changes", "Simpan perubahan") : tx("Saved", "Tersimpan")}</LcButton>
+          </>
+        )}
+
+        {!editing && tab === "master" && (
+          <>
+            <p className="mb-2 text-[12px] text-[var(--lc-muted)]">{tx("Lists the app offers in dropdowns. Items can be renamed (ID/EN) or deactivated; codes stay fixed for reporting.", "Daftar pilihan di dropdown app. Item bisa diganti nama (ID/EN) atau dinonaktifkan; kode tetap untuk laporan.")}</p>
+            <div className="flex flex-col gap-2">
+              {MASTER_DATA.map((m) => (
+                <Tile key={m.type} onClick={() => notify(tx("Opens the list editor", "Membuka editor daftar"))} className="flex items-center justify-between p-3">
+                  <div className="min-w-0">
+                    <p className="text-[13.5px] font-semibold">{m.label[lang]}</p>
+                    <p className="truncate text-[11px] text-[var(--lc-muted)]">{m.count} item · {m.sample}</p>
+                  </div>
+                  <span className="text-[var(--lc-muted)]">›</span>
+                </Tile>
+              ))}
+            </div>
+          </>
+        )}
+
+        {!editing && tab === "integrations" && (
+          <>
+            <p className="mb-2 text-[12px] text-[var(--lc-muted)]">{tx("Read-only health of the systems the app depends on. Credentials stay in Secret Manager with Cekat IT Delivery.", "Status (hanya baca) sistem yang dipakai app. Kredensial tetap di Secret Manager oleh Cekat IT Delivery.")}</p>
+            {INTEGRATIONS.map((g) => (
+              <div key={g.name} className="flex items-center gap-3 border-b border-[var(--lc-line)] py-2.5">
+                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${g.status === "ok" ? "bg-[#4caf50]" : "bg-[#f5a623]"}`} aria-hidden />
+                <div>
+                  <p className="text-[13px]">{g.name}</p>
+                  <p className="text-[11px] text-[var(--lc-muted)]">{g.note[lang]}</p>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
       </Body>
     </>
   );

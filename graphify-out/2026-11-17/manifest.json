@@ -12,9 +12,9 @@
     "semantic_hash": ""
   },
   "src/App.jsx": {
-    "mtime": 1794848651.3649058,
-    "seen": 1794849607.3123567,
-    "ast_hash": "1e0c525f7d605e0a48776622efaa515c",
+    "mtime": 1794886077.124297,
+    "seen": 1794886099.3627925,
+    "ast_hash": "12db90f6a632a0d875b025c53a7ff8c2",
     "semantic_hash": ""
   },
   "src/components/CpBacklog.jsx": {
@@ -150,9 +150,9 @@
     "semantic_hash": ""
   },
   "src/i18n.js": {
-    "mtime": 1794884224.0870354,
-    "seen": 1794884276.2352748,
-    "ast_hash": "45bca68e2eced4e9d38e90040d8e334e",
+    "mtime": 1794886077.1245341,
+    "seen": 1794886099.3628173,
+    "ast_hash": "bb2cae0f3ad2dbb3d4c0aa83161c99bf",
     "semantic_hash": ""
   },
   "src/main.jsx": {
@@ -297,6 +297,18 @@
     "mtime": 1794841799.1689134,
     "seen": 1794849607.312432,
     "ast_hash": "ab60ac0b065768fd812defdf9cf5406d",
+    "semantic_hash": ""
+  },
+  "src/data/workplan.js": {
+    "mtime": 1794886028.0790687,
+    "seen": 1794886099.3628163,
+    "ast_hash": "4c77b3768478d9e331c8b8fb3c6cca2e",
+    "semantic_hash": ""
+  },
+  "src/pages/WorkplanPage.jsx": {
+    "mtime": 1794886077.1240246,
+    "seen": 1794886099.3628345,
+    "ast_hash": "1376e97d9bf1be151d6250b29f14a700",
     "semantic_hash": ""
   },
   "package-lock.json": {

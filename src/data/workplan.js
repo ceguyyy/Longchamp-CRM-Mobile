@@ -97,7 +97,7 @@ const VMAP = {
   lists: "V-06", list_builder: "V-06", list_detail: "V-06", actions: "V-07", agenda_new: "V-07",
   catalog: "V-08", scan: "V-08", product: "V-08", catalog_pick: "V-09", client_wishlist: "V-09", wishlist_send: "V-09",
   performance: "V-10", team: "V-10", clients_unassigned: "V-10",
-  admin: "V-11", users: "V-11", templates: "V-11", template_new: "V-11", push_rules: "V-11", tracking_rules: "V-11",
+  admin: "V-11", users: "V-11", templates: "V-11", template_new: "V-11", push_rules: "V-11", tracking_rules: "V-11", settings: "V-11",
 };
 export const V_NAME = {
   "V-01": "Shell app", "V-02": "Login & aktivasi", "V-03": "Home", "V-04": "Pelanggan", "V-05": "Reach Out", "V-06": "Daftar & event",

@@ -362,6 +362,33 @@ const sequences = [
       { type: "opt", from: 9, to: 11, label: L("notify_sa = true", "notify_sa = true") },
     ],
   },
+  {
+    id: "SD-09",
+    title: L("CMS & configuration: Super Admin saves, every app reads", "CMS & pengaturan: Super Admin simpan, semua app membaca"),
+    desc: L(
+      "Settings and Home content live in Cekat CRM boards (App Settings, App Content). The Clienteling API writes them with the Super Admin token (RBAC CP-02), clears the Redis cache, and every app gets the new values from GET /v1/app/config within 5 minutes. The API and n8n read the same settings at run time.",
+      "Pengaturan dan konten Beranda ada di board Cekat CRM (App Settings, App Content). Clienteling API menulisnya dengan token Super Admin (RBAC CP-02), menghapus cache Redis, dan setiap app mendapat nilai baru dari GET /v1/app/config dalam 5 menit. API dan n8n membaca pengaturan yang sama saat berjalan."
+    ),
+    refs: ["UC-30", "AD-08"],
+    participants: ["user", "app", "bff", "cp", "crm"],
+    messages: [
+      M("user", "app", "sync", L("Super Admin changes reach-out gap to 21 days and publishes a hero", "Super Admin ubah jeda reach out ke 21 hari dan terbitkan hero")),
+      M("app", "bff", "sync", L("Save settings", "Simpan pengaturan"), "PATCH /v1/admin/settings", { changes: [{ key: "reach_out_min_days", value: 21 }], reason: "Promo Desember" }),
+      M("bff", "cp", "sync", L("Role check: super_admin", "Cek role: super_admin"), "GET users/me", {}, { cp: "CP-03" }),
+      M("bff", "crm", "sync", L("Update App Settings item", "Update item App Settings"), "PATCH /api/crm/boards/{appSettingsBoardId}/items/{id}", { values: { value: "21", updated_by_user_id: 1, updated_at: "2026-11-17T10:40:00+07:00" } }, { verify: true, cp: "CP-02" }),
+      M("bff", "crm", "sync", L("Settings History item", "Item Settings History"), "POST /api/crm/boards/{settingsHistoryBoardId}/items", { key: "reach_out_min_days", old_value: "30", new_value: "21", changed_by_user_id: 1, reason: "Promo Desember" }, { verify: true }),
+      M("bff", "bff", "self", L("Delete Redis key app_config:*", "Hapus key Redis app_config:*")),
+      M("bff", "app", "reply", L("Saved", "Tersimpan"), "200", { updated: ["reach_out_min_days"], version: 42 }),
+      M("app", "bff", "sync", L("Publish hero", "Terbitkan hero"), "POST /v1/admin/content", { kind: "hero", audience: "sales_agent", boutique_id: null, title_id: "Musim hadiah", title_en: "Gifting season", cta: "catalog", start_at: "2026-11-15", end_at: "2026-12-31", status: "published" }),
+      M("bff", "crm", "sync", L("Create App Content item", "Buat item App Content"), "POST /api/crm/boards/{appContentBoardId}/items", { kind: "hero", audience: "sales_agent", title_id: "Musim hadiah", start_at: "2026-11-15", end_at: "2026-12-31", status: "published", created_by_user_id: 1 }, { verify: true }),
+      M("app", "bff", "async", L("Any app (SA) opens Home", "App mana pun (SA) buka Beranda"), "GET /v1/app/config"),
+      M("bff", "crm", "sync", L("Settings + live content (cache miss)", "Pengaturan + konten aktif (cache kosong)"), "GET /api/crm/boards/{appSettingsBoardId|appContentBoardId}/items", { headers: KEY }, { verify: true, cp: "CP-04" }),
+      M("bff", "app", "reply", L("Config for this role and boutique", "Config untuk role dan boutique ini"), "200", { version: 42, settings: { reach_out_min_days: 21, quiet_hours: "21:00-08:00" }, features: { scan: true, events: true }, content: [{ kind: "hero", title: "Musim hadiah", cta: "catalog" }] }),
+    ],
+    fragments: [
+      { type: "opt", from: 10, to: 10, label: L("cache older than 5 minutes or cleared", "cache lebih dari 5 menit atau sudah dihapus") },
+    ],
+  },
 ];
 
 export default sequences;

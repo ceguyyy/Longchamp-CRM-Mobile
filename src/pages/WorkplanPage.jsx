@@ -30,7 +30,7 @@ const TABS = [
   {
     key: "api", owner: "Cekat IT Dev / Delivery", rows: apiRows,
     title: { en: "API", id: "API" },
-    desc: { en: "57 Clienteling API endpoints (Go), built by Cekat IT Dev. Cekat Product items they need are listed per endpoint.", id: "57 endpoint Clienteling API (Go), dibangun Cekat IT Dev. Item Cekat Product yang dibutuhkan dicantumkan per endpoint." },
+    desc: { en: `${apiRows.length} Clienteling API endpoints (Go), built by Cekat IT Dev. Cekat Product items they need are listed per endpoint.`, id: `${apiRows.length} endpoint Clienteling API (Go), dibangun Cekat IT Dev. Item Cekat Product yang dibutuhkan dicantumkan per endpoint.` },
     cols: [
       ["id", "ID", 60], ["method", "Method", 80, (v) => <Chip size="sm" variant="soft" color={METHOD_COLOR[v.split(" ")[0]] || "default"}>{v}</Chip>],
       ["path", "Path", 230, code], ["title", { en: "Title", id: "Judul" }, 200], ["group", { en: "Group", id: "Grup" }, 150],

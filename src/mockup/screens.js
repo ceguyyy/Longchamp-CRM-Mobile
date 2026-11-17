@@ -5,7 +5,7 @@
 import { Login, Register, Forgot } from "./screens/Auth";
 import Home, { Profile } from "./screens/Home";
 import { ClientSearch, ClientProfile, ClientNew, ReachOut, Lists, ListBuilder, ListDetail, TicketNew } from "./screens/Clients";
-import { Actions, AgendaNew, Catalog, Product, Scan, ClientWishlist, TrackingRules, WishlistSend, Performance, Team, Unassigned, Admin, Users, PushRules } from "./screens/Work";
+import { Actions, AgendaNew, Catalog, Product, Scan, ClientWishlist, TrackingRules, WishlistSend, Performance, Team, Unassigned, Admin, Users, PushRules, Settings } from "./screens/Work";
 import { Templates, TemplateNew } from "./screens/Templates";
 
 const ALL = ["sales_agent", "supervisor", "super_admin"];
@@ -239,6 +239,14 @@ export const SCREENS = {
     owner: "itdev",
     note: L("Built by Cekat IT Delivery on the Golden Record. A rule is a set of groups: any group matches (OR), all conditions in a group (AND). Silverspoon example (parameters TBC by Longchamp) = bought SKU LONGCHAMP001, OR bought A/B/C AND a SKU priced ≥ Rp40 jt AND transaction total ≥ Rp50 jt.", "Dibangun Cekat IT Delivery di Golden Record. Rule berupa grup: salah satu grup cocok (ATAU), semua kondisi di dalam grup (DAN). Contoh Silverspoon (parameter TBC dari Longchamp) = beli SKU LONGCHAMP001, ATAU beli A/B/C DAN SKU berharga ≥ Rp40 jt DAN total transaksi ≥ Rp50 jt."),
   },
+  settings: {
+    C: Settings, roles: ["super_admin"], group: "admin",
+    title: L("CMS & configuration", "CMS & pengaturan"),
+    refs: ["UC-30", "AD-08", "SD-09"],
+    api: ["GET /v1/admin/settings (X-07) → Cekat CRM: Board App Settings", "PATCH /v1/admin/settings (X-08) → Board App Settings + Settings History", "GET / POST / PATCH /v1/admin/content (X-09) → Board App Content", "GET / POST / PATCH /v1/admin/master/{type} (X-10) → master data boards", "Every role reads the result with GET /v1/app/config (H-02)"],
+    owner: "itdev",
+    note: L("Super Admin manages Home content (announcement bar, hero, banners per role and boutique, scheduled, ID/EN), clienteling rules (reach-out gap, attribution window, consent, quiet hours), app settings and feature switches, master data, and sees integration health. Stored in Cekat CRM; the API and n8n read it at run time, so no deploy is needed.", "Super Admin mengatur konten Beranda (announcement bar, hero, banner per role dan boutique, terjadwal, ID/EN), aturan clienteling (jeda reach out, jendela atribusi, consent, jam tenang), pengaturan app dan saklar fitur, master data, serta melihat status integrasi. Disimpan di Cekat CRM; API dan n8n membacanya saat berjalan, jadi tanpa deploy ulang."),
+  },
   profile: {
     C: Profile, roles: ALL, group: "main",
     title: L("My account", "Akun saya"),
@@ -263,5 +271,5 @@ export const GROUPS = {
 export const ROOT_OF = {
   client: "clients", client_new: "clients", reach_out: "clients", lists: "home", list_builder: "home", list_detail: "home", ticket_new: "clients",
   agenda_new: "actions", product: "catalog", scan: "catalog", catalog_pick: "clients", client_wishlist: "clients", wishlist_send: "catalog",
-  clients_unassigned: "team", users: "admin", templates: "admin", template_new: "templates", push_rules: "admin", tracking_rules: "admin", profile: "home",
+  clients_unassigned: "team", users: "admin", templates: "admin", template_new: "templates", push_rules: "admin", tracking_rules: "admin", settings: "admin", profile: "home",
 };
