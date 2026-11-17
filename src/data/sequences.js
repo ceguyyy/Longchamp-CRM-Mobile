@@ -35,8 +35,8 @@ const sequences = [
     id: "SD-01",
     title: L("Sign in & role resolution", "Login & penentuan role"),
     desc: L(
-      "Cekat Product authenticates the CRM user and returns role and data scope. The backend holds no credentials and builds no scope — it only forwards the Cekat user token.",
-      "Cekat Product mengautentikasi user CRM dan mengembalikan role serta scope data. Backend tidak menyimpan kredensial dan tidak membangun scope — hanya meneruskan token user Cekat."
+      "Email + password only (no register or forgot password in the app). Cekat Product authenticates the CRM user and returns role, boutique and data scope. The backend holds no credentials and builds no scope — it only forwards the Cekat user token. A role outside the three app roles gets 403 role_not_allowed.",
+      "Hanya email + password (tanpa register dan lupa password di app). Cekat Product mengautentikasi user CRM dan mengembalikan role, boutique, dan scope data. Backend tidak menyimpan kredensial dan tidak membangun scope — hanya meneruskan token user Cekat. Role di luar tiga role app mendapat 403 role_not_allowed."
     ),
     refs: ["UC-21", "AD-01"],
     participants: ["user", "app", "bff", "cp", "crm"],
@@ -48,8 +48,8 @@ const sequences = [
       M("bff", "cp", "sync", L("Authenticate CRM user", "Autentikasi user CRM"), "POST /auth/token (new)", {
         email: "andi@longchamp.co.id", password: "••••••••", client_id: "longchamp-clienteling",
       }, { cp: "CP-01" }),
-      M("cp", "bff", "reply", L("Invalid credentials", "Kredensial salah"), "401", { error: "invalid_credentials" }, { cp: "CP-01" }),
-      M("bff", "app", "reply", L("Sign-in error", "Error login"), "401", { error: "invalid_credentials" }),
+      M("cp", "bff", "reply", L("Invalid credentials / locked", "Kredensial salah / dikunci"), "401 · 423", { error: "invalid_credentials", attempts_left: 3 }, { cp: "CP-01" }),
+      M("bff", "app", "reply", L("Sign-in error shown to user", "Error login ditampilkan"), "401 · 423", { error: { code: "invalid_credentials", message: "Email atau password salah.", details: { attempts_left: 3 } } }),
       M("cp", "bff", "reply", L("User token", "Token user"), "200", {
         access_token: "ck_usr_…", refresh_token: "ck_ref_…", expires_in: 3600, cekat_user_id: "agt_5521", email: "andi@longchamp.co.id",
       }, { cp: "CP-01" }),
@@ -63,9 +63,12 @@ const sequences = [
         device_id: "dev_7f3a9c", cekat_user_id: "agt_5521", platform: "ios", push_token: "fcm:APA91b…", app_version: "1.0.3", last_seen_at: "2026-11-16T09:12:00+07:00",
       }, { verify: true, note: "System write with workspace api_key — device tokens are for push (IT Dev)." }),
       M("bff", "app", "reply", L("Session", "Sesi"), "200", {
-        access_token: "ck_usr_…", refresh_token: "ck_ref_…", expires_in: 3600,
-        user: { cekat_user_id: "agt_5521", full_name: "Andi Pratama", app_role: "sales_agent", boutique_id: 3 },
-        modules: ["search", "lists", "actions", "catalog", "performance"],
+        access_token: "ck_usr_…", refresh_token: "ck_ref_…", token_type: "Bearer", expires_in: 3600,
+        user: { user_id: 87, cekat_user_id: "agt_5521", full_name: "Andi Pratama", role: "sales_agent", role_label: "Sales Agent", boutique_id: 3, boutique_name: "Plaza Indonesia", reports_to_name: "Rina Wijaya" },
+        scope: { level: "own", boutique_ids: [3], include_unassigned: true },
+        modules: ["home", "clients", "lists", "actions", "catalog", "performance"],
+        permissions: { reassign_client: false, manage_templates: false, manage_cms: false },
+        config_version: 42,
       }),
       M("app", "user", "reply", L("Home with modules for the role", "Home dengan modul sesuai role")),
     ],

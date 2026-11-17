@@ -342,8 +342,8 @@ const model = {
       id: "UC-19", module: "perf", actors: ["sa", "sm", "hq"],
       name: { en: "View performance KPI", id: "Lihat KPI performa" },
       desc: {
-        en: "Actions, actions/POS/day, conversion rate, sales, avg conversion days — by channel (incl. sales per channel) and reason, plus a Wishlist block (sent, conversion, sales) and Push completion (executed, cancelled, treated). SA sees own, SM boutique, Admin country.",
-        id: "Actions, actions/POS/hari, conversion rate, sales, rata-rata hari konversi — per channel (termasuk sales per channel) dan alasan, plus blok Wishlist (terkirim, konversi, sales) dan Penyelesaian push (dieksekusi, dibatalkan, ditangani). SA lihat miliknya, SM boutique, Admin negara.",
+        en: "Actions, actions/POS/day, conversion rate, sales, avg conversion days — by reason, a WhatsApp block (sent via Cekat, conversion, sales; phone, SMS and email are not tracked by Cekat so there is no per-channel split), plus a Wishlist block (sent, conversion, sales) and Push completion (executed, cancelled, treated). SA sees own, SM boutique, Admin country.",
+        id: "Actions, actions/POS/hari, conversion rate, sales, rata-rata hari konversi — per alasan, blok WhatsApp (terkirim via Cekat, konversi, sales; telepon, SMS, dan email tidak tercatat di Cekat sehingga tidak ada pembagian per channel), plus blok Wishlist (terkirim, konversi, sales) dan Penyelesaian push (dieksekusi, dibatalkan, ditangani). SA lihat miliknya, SM boutique, Admin negara.",
       },
       rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
@@ -480,8 +480,8 @@ const model = {
       id: "UC-21", module: "access", actors: ["sa", "hq"],
       name: { en: "Sign in & resolve role", id: "Login & tentukan role" },
       desc: {
-        en: "Sign in with the Cekat CRM account; Cekat returns the user token, role (SA / SM / Admin), boutique and data scope. Built by Cekat Product.",
-        id: "Login dengan akun Cekat CRM; Cekat mengembalikan token user, role (SA / SM / Admin), boutique, dan scope data. Dibangun Cekat Product.",
+        en: "Sign in with email and password of the Cekat CRM account; Cekat returns the user token, role (SA / SM / Admin), boutique, data scope, modules and permissions. No register or forgot-password in the app: the Super Admin creates accounts and resets passwords in Cekat CRM. Built by Cekat Product.",
+        id: "Login dengan email dan password akun Cekat CRM; Cekat mengembalikan token user, role (SA / SM / Admin), boutique, scope data, modul, dan izin. Tidak ada register atau lupa password di app: Super Admin membuat akun dan me-reset password di Cekat CRM. Dibangun Cekat Product.",
       },
       rbac: { sa: "use", sm: "use", hq: "use" },
       sources: [

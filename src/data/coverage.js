@@ -58,7 +58,7 @@ export const COVERAGE = [
 
   /* ---------------- Performance */
   { area: "perf", cap: L("KPI: actions, actions/POS/day, conversion rate, sales, days to convert", "KPI: actions, actions/POS/hari, conversion rate, sales, hari konversi"), screen: "performance", role: "sales_agent", uc: ["UC-19"], ad: [], sd: [], status: "covered" },
-  { area: "perf", cap: L("KPI by channel incl. sales per channel", "KPI per channel termasuk sales per channel"), screen: "performance", role: "supervisor", uc: ["UC-19"], ad: [], sd: [], status: "covered" },
+  { area: "perf", cap: L("KPI by channel incl. sales per channel", "KPI per channel termasuk sales per channel"), screen: "performance", role: "supervisor", uc: ["UC-19"], ad: [], sd: [], status: "adapted", note: L("WhatsApp only: phone, SMS and email are not tracked by Cekat, so there is no per-channel split.", "Hanya WhatsApp: telepon, SMS, dan email tidak tercatat di Cekat, jadi tidak ada pembagian per channel.") },
   { area: "perf", cap: L("Wishlist KPI", "KPI wishlist"), screen: "performance", role: "supervisor", uc: ["UC-19"], ad: [], sd: [], status: "covered" },
   { area: "perf", cap: L("Push completion", "Penyelesaian push"), screen: "performance", role: "supervisor", uc: ["UC-19"], ad: [], sd: [], status: "covered" },
   { area: "perf", cap: L("Country / boutique / seller levels", "Level negara / boutique / seller"), screen: "performance", role: "super_admin", uc: ["UC-19", "UC-21"], ad: ["AD-01"], sd: ["SD-01"], status: "covered" },

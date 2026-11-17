@@ -2,9 +2,10 @@ import { useState } from "react";
 import { Button, Input, Label, ProgressBar, Switch, Tabs, TextField } from "@heroui/react";
 import { useApp, AppBar, Body, SectionTitle, Tile, TierBadge, Initials, Pill, Stat, BagArt, Icon, LcButton, Hero } from "../core";
 import { PushRow } from "./Home";
+import { useConfig, configStore, displayStatus } from "../config";
 import { visibleClients } from "./Clients";
 import {
-  AGENDA, PUSHES, PRODUCTS, BOUTIQUES, CLIENTS, TEAM, KPI, BY_CHANNEL, BY_BOUTIQUE, TEMPLATES, PUSH_RULES, PUSH_LABEL, USERS, WISHLIST_KPI, PUSH_KPI, TRACKING_RULES, TRACK_FIELDS, idr, idrShort, APP_CONTENT, CONTENT_KIND, APP_SETTINGS, MASTER_DATA, INTEGRATIONS, BOUTIQUES as BQ,
+  AGENDA, PUSHES, PRODUCTS, BOUTIQUES, CLIENTS, TEAM, KPI, WA_KPI, BY_BOUTIQUE, TEMPLATES, PUSH_RULES, PUSH_LABEL, USERS, WISHLIST_KPI, PUSH_KPI, TRACKING_RULES, TRACK_FIELDS, idr, idrShort, APP_CONTENT, CONTENT_KIND, APP_SETTINGS, MASTER_DATA, INTEGRATIONS, BOUTIQUES as BQ,
 } from "../data";
 
 /* ================================================================ ACTIONS */
@@ -294,6 +295,7 @@ export function Scan() {
 
 export function Catalog({ customer_id }) {
   const { tx, nav, back, stack } = useApp();
+  const scanOn = useConfig().settings.feature_scan;
   const [col, setCol] = useState("All");
   const cols = ["All", ...new Set(PRODUCTS.map((p) => p.collection))];
   const list = PRODUCTS.filter((p) => col === "All" || p.collection === col);
@@ -308,9 +310,11 @@ export function Catalog({ customer_id }) {
             <Icon name="search" size={16} />
             {tx("Search", "Cari")}
           </div>
-          <button aria-label="Scan" onClick={() => nav("scan")}>
-            <Icon name="barcode" size={22} stroke={1.3} />
-          </button>
+          {scanOn && (
+            <button aria-label="Scan" onClick={() => nav("scan")}>
+              <Icon name="barcode" size={22} stroke={1.3} />
+            </button>
+          )}
         </div>
         <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
           {cols.map((x) => (
@@ -589,7 +593,7 @@ export function WishlistSend() {
               [cid]: [...kept, ...skus.map((sku) => ({ sku, status: "sent", added_at: "2026-11-16", sent_at: "2026-11-16", delivery: "sent", added_by: session.user.full_name, source: "catalog" }))],
             });
             setWishlist([]);
-            notify(tx("Wishlist sent · tracked for 30 days", "Wishlist terkirim · dilacak 30 hari"));
+            notify(tx(`Wishlist sent · tracked for ${configStore.get().settings.attribution_window_days} days`, `Wishlist terkirim · dilacak ${configStore.get().settings.attribution_window_days} hari`));
             reset("home");
           }}
         >
@@ -630,24 +634,13 @@ export function Performance() {
           <Stat label="Actions" value={period === "month" ? k.actions : k.actions * 11} sub={`${k.actions_per_pos_day} / POS / ${tx("day", "hari")}`} />
           <Stat label={tx("Avg conv. days", "Rata-rata hari konv.")} value={k.avg_conversion_days} />
         </div>
-        <SectionTitle>{tx("By channel", "Per channel")}</SectionTitle>
-        <Tile className="p-3">
-          {BY_CHANNEL.map((c) => (
-            <div key={c.channel} className="mb-2.5 last:mb-0">
-              <div className="flex justify-between text-[12.5px]">
-                <span className="font-medium">{c.channel}</span>
-                <span className="text-[var(--lc-muted)]">
-                  {tx("share", "porsi")} {c.share} · conv. {c.conversion_rate} · {idrShort(c.sales_idr)}
-                </span>
-              </div>
-              <ProgressBar aria-label={c.channel} value={c.share} className="mt-1">
-                <ProgressBar.Track className="h-1.5 rounded-full bg-[#eceee5]">
-                  <ProgressBar.Fill className="rounded-full bg-[var(--lc-forest)]" />
-                </ProgressBar.Track>
-              </ProgressBar>
-            </div>
-          ))}
-        </Tile>
+        <SectionTitle>WhatsApp</SectionTitle>
+        <div className="grid grid-cols-3 gap-2">
+          <Stat label={tx("Sent via Cekat", "Terkirim via Cekat")} value={WA_KPI.sent} />
+          <Stat label="Conv. rate" value={WA_KPI.conversion_rate} />
+          <Stat label="Sales" value={idrShort(WA_KPI.sales_idr)} />
+        </div>
+        <p className="mt-1.5 text-[10.5px] text-[var(--lc-muted)]">{tx("Phone, SMS and email are counted in Actions but not reported per channel: Cekat does not track them.", "Telepon, SMS, dan email ikut dihitung di Actions tetapi tidak dilaporkan per channel: Cekat tidak mencatatnya.")}</p>
         <SectionTitle>{tx("Wishlist", "Wishlist")}</SectionTitle>
         <div className="grid grid-cols-2 gap-2">
           <Stat label={tx("Wishlists sent", "Wishlist terkirim")} value={WISHLIST_KPI.sent} />
@@ -836,8 +829,8 @@ export function Users() {
       <Body>
         <div className="rounded-2xl border border-dashed border-[var(--impl-product)] bg-[#fff8eb] p-3 text-[12px] leading-snug">
           {tx(
-            "Users, roles and hierarchy live in Cekat CRM (Settings → CRM User Settings) and are served to the app by Cekat Product (CP-03). Invite new staff there; they activate in the app.",
-            "User, role, dan hierarki ada di Cekat CRM (Settings → CRM User Settings) dan disajikan ke app oleh Cekat Product (CP-03). Undang staf baru di sana; mereka aktivasi di app."
+            "Users, roles and hierarchy live in Cekat CRM (Settings → CRM User Settings) and are served to the app by Cekat Product (CP-03). Create staff accounts and reset passwords there; staff sign in to the app with that email and password.",
+            "User, role, dan hierarki ada di Cekat CRM (Settings → CRM User Settings) dan disajikan ke app oleh Cekat Product (CP-03). Buat akun staf dan reset password di sana; staf login ke app dengan email dan password tersebut."
           )}
         </div>
         <SectionTitle>{tx("Role hierarchy", "Hierarki role")}</SectionTitle>
@@ -1061,7 +1054,7 @@ export function PushRules() {
 
 /* ================================================================ CMS & CONFIGURATION (Super Admin) */
 const FIELD_CLS = "w-full border border-[var(--lc-line)] bg-white px-2.5 py-2 text-[13px]";
-const STATUS_STYLE = { live: "bg-[var(--lc-lime)] text-black", scheduled: "bg-black text-white", draft: "border border-black text-black" };
+const STATUS_STYLE = { live: "bg-[var(--lc-lime)] text-black", scheduled: "bg-black text-white", draft: "border border-black text-black", ended: "border border-[var(--lc-line)] text-[var(--lc-muted)]" };
 
 function Field({ label, children }) {
   return (
@@ -1082,11 +1075,15 @@ function SettingRow({ s, value, onChange, tx, lang }) {
         </p>
       </div>
       {s.type === "bool" ? (
-        <Switch isSelected={value} onChange={onChange} aria-label={s.key}>
-          <Switch.Control>
-            <Switch.Thumb />
-          </Switch.Control>
-        </Switch>
+        <button
+          role="switch"
+          aria-checked={!!value}
+          aria-label={s.key}
+          onClick={() => onChange(!value)}
+          className={`relative h-6 w-11 shrink-0 border-[1.25px] border-black transition ${value ? "bg-black" : "bg-white"}`}
+        >
+          <span className={`absolute top-[2px] h-[16px] w-[16px] transition-all ${value ? "left-[22px] bg-[var(--lc-lime)]" : "left-[2px] bg-black"}`} />
+        </button>
       ) : (
         <div className="flex shrink-0 items-center gap-1">
           <input value={value} onChange={(e) => onChange(s.type === "int" ? Number(e.target.value.replace(/\D/g, "")) : e.target.value)} className={`${s.type === "text" ? "w-[112px]" : "w-[86px]"} border border-[var(--lc-line)] px-2 py-1.5 text-right text-[13px]`} aria-label={s.key} />
@@ -1159,7 +1156,7 @@ function ContentEditor({ item, onSave, onCancel, tx }) {
       </div>
       <div className="mt-1 grid grid-cols-2 gap-2">
         <LcButton variant="secondary" onClick={() => onSave({ ...d, status: "draft" })}>{tx("Save draft", "Simpan draf")}</LcButton>
-        <LcButton onClick={() => onSave({ ...d, status: d.start_at > "2026-11-17" ? "scheduled" : "live" })}>{tx("Publish", "Terbitkan")}</LcButton>
+        <LcButton onClick={() => onSave({ ...d, status: "published" })}>{tx("Publish", "Terbitkan")}</LcButton>
       </div>
       <button onClick={onCancel} className="caps py-2 text-[10.5px] text-[var(--lc-muted)]">{tx("Cancel", "Batal")}</button>
     </div>
@@ -1169,22 +1166,24 @@ function ContentEditor({ item, onSave, onCancel, tx }) {
 export function Settings() {
   const { tx, back, lang, notify } = useApp();
   const [tab, setTab] = useState("content");
-  const [content, setContent] = useState(APP_CONTENT);
+  const cfg = useConfig();
+  const content = cfg.content;
   const [editing, setEditing] = useState(null);
-  const [vals, setVals] = useState(() => Object.fromEntries([...APP_SETTINGS.rules, ...APP_SETTINGS.app].map((s) => [s.key, s.value])));
+  const [vals, setVals] = useState(() => ({ ...cfg.settings }));
   const [dirty, setDirty] = useState(false);
   const change = (k) => (v) => {
     setVals({ ...vals, [k]: v });
     setDirty(true);
   };
   const saveSettings = () => {
+    configStore.setSettings(vals);
     setDirty(false);
     notify(tx("Saved to Cekat CRM · App Settings", "Tersimpan di Cekat CRM · App Settings"));
   };
   const saveContent = (d) => {
-    setContent(d.content_id ? content.map((c) => (c.content_id === d.content_id ? d : c)) : [...content, { ...d, content_id: Date.now() }]);
+    configStore.saveContent(d);
     setEditing(null);
-    notify(d.status === "draft" ? tx("Draft saved to Cekat CRM · App Content", "Draf tersimpan di Cekat CRM · App Content") : tx("Published · the app picks it up within 5 minutes", "Diterbitkan · app mengambilnya dalam 5 menit"));
+    notify(d.status === "draft" ? tx("Draft saved to Cekat CRM · App Content", "Draf tersimpan di Cekat CRM · App Content") : displayStatus(d) === "live" ? tx("Published · switch role to see it on Home", "Diterbitkan · ganti role untuk melihatnya di Beranda") : tx("Scheduled · shows from the start date", "Terjadwal · tampil mulai tanggal mulai"));
   };
   const TABS_ = [
     ["content", tx("Content", "Konten")],
@@ -1215,7 +1214,7 @@ export function Settings() {
                 <Tile key={c.content_id} onClick={() => setEditing(c)} className="p-3">
                   <div className="flex items-center justify-between gap-2">
                     <p className="caps text-[9.5px] text-[var(--lc-muted)]">{CONTENT_KIND[c.kind][lang]}</p>
-                    <span className={`caps px-1.5 py-0.5 text-[8.5px] ${STATUS_STYLE[c.status]}`}>{c.status}</span>
+                    <span className={`caps px-1.5 py-0.5 text-[8.5px] ${STATUS_STYLE[displayStatus(c)]}`}>{displayStatus(c)}</span>
                   </div>
                   <p className="mt-1 text-[13.5px] font-semibold">{lang === "id" ? c.title_id : c.title_en}</p>
                   <p className="mt-0.5 text-[11px] text-[var(--lc-muted)]">

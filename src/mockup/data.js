@@ -221,12 +221,8 @@ export const KPI = {
 export const WISHLIST_KPI = { sent: 84, conversion_rate: 16, vs_lm_pts: -8, sales_idr: 54800000, vs_lm_pct: -26, avg_conversion_days: 6 };
 export const PUSH_KPI = { sent: 30, executed: 26, cancelled: 2, treated: 87, vs_lm_pts: 3, non_treated: 13, cancelled_pct: 7 };
 
-export const BY_CHANNEL = [
-  { channel: "WhatsApp", share: 58, conversion_rate: 9, sales_idr: 28100000 },
-  { channel: "Phone call", share: 22, conversion_rate: 7, sales_idr: 12400000 },
-  { channel: "SMS", share: 8, conversion_rate: 3, sales_idr: 2100000 },
-  { channel: "E-mail", share: 12, conversion_rate: 2, sales_idr: 5900000 },
-];
+/* Only WhatsApp is tracked by Cekat; phone, SMS and email are not counted per channel */
+export const WA_KPI = { sent: 96, conversion_rate: 9, sales_idr: 28100000 };
 
 export const BY_BOUTIQUE = [
   { boutique_name: "Plaza Indonesia", actions: 165, conversion_rate: 9, sales_idr: 151800000 },
@@ -276,8 +272,8 @@ export const trackLabel = (code) => (TRACKING_RULES.find((r) => r.code === code)
 
 /* CMS & configuration (Super Admin). Stored in Cekat CRM: Board App Settings (key/value) + Board App Content. */
 export const APP_CONTENT = [
-  { content_id: 1, kind: "announcement", audience: "all", boutique: "all", title_id: "Preview Le Pliage Re-Play mulai 5 Desember", title_en: "Le Pliage Re-Play preview from 5 December", start_at: "2026-11-20", end_at: "2026-12-10", status: "scheduled" },
-  { content_id: 2, kind: "hero", audience: "sales_agent", boutique: "all", title_id: "Musim hadiah", title_en: "Gifting season", subtitle_id: "Siapkan wishlist pelanggan Anda", subtitle_en: "Get your clients' wishlists ready", cta: "catalog", start_at: "2026-11-15", end_at: "2026-12-31", status: "live" },
+  { content_id: 1, kind: "announcement", audience: "all", boutique: "all", title_id: "Preview Le Pliage Re-Play mulai 5 Desember", title_en: "Le Pliage Re-Play preview from 5 December", start_at: "2026-11-20", end_at: "2026-12-10", status: "published" },
+  { content_id: 2, kind: "hero", audience: "sales_agent", boutique: "all", title_id: "Musim hadiah", title_en: "Gifting season", subtitle_id: "Siapkan wishlist pelanggan Anda", subtitle_en: "Get your clients' wishlists ready", cta: "catalog", start_at: "2026-11-15", end_at: "2026-12-31", status: "published" },
   { content_id: 3, kind: "banner", audience: "supervisor", boutique: "Plaza Indonesia", title_id: "Target Desember: 120 reach out", title_en: "December target: 120 reach outs", start_at: "2026-12-01", end_at: "2026-12-31", status: "draft" },
 ];
 export const CONTENT_KIND = { announcement: { en: "Announcement bar", id: "Announcement bar" }, hero: { en: "Home hero", id: "Hero beranda" }, banner: { en: "Home banner", id: "Banner beranda" } };

@@ -40,6 +40,7 @@ export const apiRows = ENDPOINTS.map((e) => ({
   upstream: numbered(e.upstream),
   logic: numbered(e.logic),
   errors: (e.errors || []).join("\n") || "—",
+  examples: (e.examples || []).map(([l, b]) => `${l}: ${JSON.stringify(b)}`).join("\n\n") || "—",
 }));
 
 /* ---------------------------------------------------------------- variables */
@@ -67,6 +68,7 @@ export const variableRows = [
     const out = [];
     flatten(e.response || {}, "", out);
     for (const [name, type, ex] of out) rows.push({ endpoint: e.id, path, loc: "Response", name, type, req: "—", desc: "—", ex });
+    for (const [label, body] of e.examples || []) rows.push({ endpoint: e.id, path, loc: "Response", name: `(${label})`, type: "object", req: "—", desc: "Response lain", ex: JSON.stringify(body).slice(0, 300) });
     return rows;
   }),
 ];
@@ -92,7 +94,7 @@ export const jobRows = [
 
 /* ---------------------------------------------------------------- app breakdown (Vendor) */
 const VMAP = {
-  login: "V-02", register: "V-02", forgot: "V-02", home: "V-03",
+  login: "V-02", home: "V-03",
   clients: "V-04", client: "V-04", client_new: "V-04", ticket_new: "V-04", reach_out: "V-05",
   lists: "V-06", list_builder: "V-06", list_detail: "V-06", actions: "V-07", agenda_new: "V-07",
   catalog: "V-08", scan: "V-08", product: "V-08", catalog_pick: "V-09", client_wishlist: "V-09", wishlist_send: "V-09",
@@ -100,7 +102,7 @@ const VMAP = {
   admin: "V-11", users: "V-11", templates: "V-11", template_new: "V-11", push_rules: "V-11", tracking_rules: "V-11", settings: "V-11",
 };
 export const V_NAME = {
-  "V-01": "Shell app", "V-02": "Login & aktivasi", "V-03": "Home", "V-04": "Pelanggan", "V-05": "Reach Out", "V-06": "Daftar & event",
+  "V-01": "Shell app", "V-02": "Login", "V-03": "Home", "V-04": "Pelanggan", "V-05": "Reach Out", "V-06": "Daftar & event",
   "V-07": "Aksi & agenda", "V-08": "Katalog & scan", "V-09": "Wishlist", "V-10": "KPI & tim", "V-11": "Admin", "V-12": "Push & rilis",
 };
 const tabsOf = (r) => TABS[r].map((t) => t.idl).join(", ");

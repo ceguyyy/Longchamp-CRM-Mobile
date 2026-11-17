@@ -2,7 +2,7 @@
  * Screen registry: component, which roles see it, a default demo param, and the review annotation
  * (use cases, activity / sequence diagrams, endpoints, implementor).
  */
-import { Login, Register, Forgot } from "./screens/Auth";
+import { Login } from "./screens/Auth";
 import Home, { Profile } from "./screens/Home";
 import { ClientSearch, ClientProfile, ClientNew, ReachOut, Lists, ListBuilder, ListDetail, TicketNew } from "./screens/Clients";
 import { Actions, AgendaNew, Catalog, Product, Scan, ClientWishlist, TrackingRules, WishlistSend, Performance, Team, Unassigned, Admin, Users, PushRules, Settings } from "./screens/Work";
@@ -17,25 +17,9 @@ export const SCREENS = {
     C: Login, roles: ALL, group: "auth", auth: true,
     title: L("Sign in", "Login"),
     refs: ["UC-21", "AD-01", "SD-01"],
-    api: ["POST /v1/auth/login → Cekat Product (CP-01)", "GET /users/me → role & scope (CP-03)"],
+    api: ["POST /v1/auth/login (A-01): email + password → Cekat Product (CP-01)", "Response: token, role, role_label, boutique, scope, modules, permissions (CP-03)", "Errors: 401 invalid_credentials · 423 account_locked · 403 role_not_allowed · 403 account_inactive · 422 boutique_not_assigned"],
     owner: "product",
-    note: L("Login, password policy and session are Cekat Product. The app only renders the form and stores the returned token.", "Login, kebijakan password, dan sesi adalah Cekat Product. App hanya menampilkan form dan menyimpan token yang dikembalikan."),
-  },
-  register: {
-    C: Register, roles: ALL, group: "auth", auth: true,
-    title: L("Register · activate invitation", "Register · aktivasi undangan"),
-    refs: ["UC-21", "UC-22"],
-    api: ["POST /auth/invitations/accept (new, CP-01)", "Invite sent by Super Admin from Cekat CRM User Settings"],
-    owner: "product",
-    note: L("No open self-sign-up: staff accounts are created by the Super Admin in Cekat and activated here with the invitation code.", "Tidak ada sign-up bebas: akun staf dibuat Super Admin di Cekat dan diaktifkan di sini dengan kode undangan."),
-  },
-  forgot: {
-    C: Forgot, roles: ALL, group: "auth", auth: true,
-    title: L("Forgot password", "Lupa password"),
-    refs: ["UC-21"],
-    api: ["POST /auth/password/otp (new, CP-01)", "POST /auth/password/reset (new, CP-01)"],
-    owner: "product",
-    note: L("OTP by email, handled entirely by Cekat Product.", "OTP via email, sepenuhnya ditangani Cekat Product."),
+    note: L("Email + password only. No register and no forgot password in the app: the Super Admin creates accounts and resets passwords in Cekat CRM. A successful sign-in returns the role, which decides the tabs and modules. Use the demo buttons to try each error response.", "Hanya email + password. Tidak ada register dan lupa password di app: Super Admin membuat akun dan me-reset password di Cekat CRM. Login berhasil mengembalikan role, yang menentukan tab dan modul. Pakai tombol demo untuk mencoba tiap response error."),
   },
   home: {
     C: Home, roles: ALL, group: "main",
@@ -203,7 +187,7 @@ export const SCREENS = {
     C: Users, roles: ["super_admin"], group: "admin",
     title: L("Users & roles", "User & role"),
     refs: ["UC-22", "AD-05"],
-    api: ["GET users & hierarchy (CP-03)", "Invite / edit in Cekat CRM User Settings"],
+    api: ["GET users & hierarchy (CP-03)", "Create user, set / reset password in Cekat CRM User Settings"],
     owner: "product",
     note: L("Read-only in the app: users and roles are managed in Cekat by Cekat Product features.", "Hanya baca di app: user dan role dikelola di Cekat lewat fitur Cekat Product."),
   },
@@ -258,7 +242,7 @@ export const SCREENS = {
 };
 
 export const GROUPS = {
-  auth: L("Login & register", "Login & register"),
+  auth: L("Login", "Login"),
   main: L("Home", "Beranda"),
   clients: L("Clients", "Klien"),
   actions: L("Actions", "Aksi"),

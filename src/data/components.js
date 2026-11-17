@@ -23,7 +23,7 @@ export const TECH_STACK = [
 const C = (id, party, name, work, deps) => ({ id, party, name, work, deps });
 export const COMPONENTS = [
   C("V-01", "vendor", "Shell app, bottom tab per role, tema Longchamp", "Router, tab bar 4 + More, HeroUI theme", "—"),
-  C("V-02", "vendor", "Login, aktivasi undangan, lupa password", "Form + simpan token aman (Keychain/Keystore)", "A-01..A-05, CP-01"),
+  C("V-02", "vendor", "Login (email + password)", "Form email + password, pesan error per kode (salah password, akun dikunci, role tidak diizinkan, akun nonaktif, belum ada boutique), simpan token aman (Keychain/Keystore), buka modul sesuai role dari response", "A-01..A-03, A-07, CP-01"),
   C("V-03", "vendor", "Home per role", "Hero, announcement, banner dari CMS, tile, push, agenda, ringkasan KPI; saklar fitur dari config", "H-01, H-02, A-07"),
   C("V-04", "vendor", "Cari pelanggan, profil, registrasi", "Search, filter, Golden Record, love tags, komentar, after-sales, timeline, connect/disconnect", "C-01..C-12"),
   C("V-05", "vendor", "Reach Out", "Eligibility, channel, template per momen ID/EN, kirim, alasan + VALIDATE", "C-12, R-01, R-02, T-01"),
@@ -52,7 +52,7 @@ export const COMPONENTS = [
   C("D-17", "itdelivery", "Tracking rule engine di Golden Record (J-08)", "Rule berbasis transaksi berupa grup kondisi (ATAU antar grup, DAN di dalam grup): daftar SKU (beli salah satu / semua), harga SKU, total transaksi, total belanja, koleksi, jumlah pembelian. Contoh Silverspoon (parameter TBC): LONGCHAMP001, atau A/B/C + SKU ≥ Rp40 jt + total ≥ Rp50 jt → kolom tracking_tags + Customer Tag History + push ke SA; backfill saat rule berubah", "EX-01, CP-05, X-05"),
   C("D-18", "itdelivery", "Backend CMS & konfigurasi", "Board App Settings / Settings History / App Content / Master Data, validasi rentang, audit, cache Redis app_config 5 menit, endpoint H-02 + X-07..X-10; API dan n8n membaca setting saat berjalan (jeda reach out, atribusi, jam tenang, consent)", "D-02, CP-02, CP-04"),
   C("D-16", "itdelivery", "Isi assigned_user awal", "Penugasan SA ke pelanggan Golden Record yang sudah ada (dari data Longchamp)", "D-02"),
-  C("CP-01", "product", "Login pihak ketiga + token user", "Login, refresh, revoke, undangan, reset password", "—"),
+  C("CP-01", "product", "Login pihak ketiga + token user", "Login email + password (mengembalikan token, role, boutique, scope), refresh, revoke, kunci akun setelah 5 gagal. Tanpa register dan lupa password di app: akun dan reset password oleh Super Admin di Cekat CRM", "—"),
   C("CP-02", "product", "RBAC di Board API (Golden Record + board clienteling)", "Filter baca + 403 tulis dari Role Hierarchy + kolom Agents assigned_user", "CP-01, CP-03"),
   C("CP-03", "product", "Users & Role Hierarchy API", "Role, reports-to, boutique, active", "—"),
   C("CP-04", "product", "Filter & search server-side", "Filter kolom, rentang tanggal, sort, cursor, count", "—"),

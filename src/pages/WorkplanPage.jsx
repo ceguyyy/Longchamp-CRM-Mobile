@@ -35,7 +35,7 @@ const TABS = [
       ["id", "ID", 60], ["method", "Method", 80, (v) => <Chip size="sm" variant="soft" color={METHOD_COLOR[v.split(" ")[0]] || "default"}>{v}</Chip>],
       ["path", "Path", 230, code], ["title", { en: "Title", id: "Judul" }, 200], ["group", { en: "Group", id: "Grup" }, 150],
       ["cp", { en: "Needs Cekat Product", id: "Butuh Cekat Product" }, 130], ["roles", "Role", 160], ["uc", "Use case", 90],
-      ["upstream", { en: "Calls to Cekat / upstream", id: "Panggilan ke Cekat / upstream" }, 320, pre], ["logic", "Logic", 440, pre], ["errors", "Error", 200, pre],
+      ["upstream", { en: "Calls to Cekat / upstream", id: "Panggilan ke Cekat / upstream" }, 320, pre], ["logic", "Logic", 440, pre], ["errors", "Error", 200, pre], ["examples", { en: "Other responses", id: "Response lain" }, 420, mono],
     ],
   },
   {

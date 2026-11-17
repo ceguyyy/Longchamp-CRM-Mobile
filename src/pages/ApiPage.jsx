@@ -108,6 +108,12 @@ function EndpointDetail({ e }) {
       <VarTable rows={e.body} label="Request body" />
       <p className="mt-4 mb-1.5 text-[11px] font-semibold uppercase tracking-widest text-[var(--lc-muted)]">Response</p>
       <pre className="max-h-[420px] overflow-auto rounded-xl bg-[#1d2414] p-4 text-[12px] leading-relaxed text-[#e7f3d9]">{JSON.stringify(e.response, null, 2)}</pre>
+      {e.examples?.map(([label, body]) => (
+        <div key={label} className="mt-3">
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-[var(--lc-muted)]">Response {label}</p>
+          <pre className="max-h-[260px] overflow-auto rounded-xl bg-[#2a2f22] p-3 text-[11.5px] leading-relaxed text-[#e7f3d9]">{JSON.stringify(body, null, 2)}</pre>
+        </div>
+      ))}
       {e.errors?.length > 0 && (
         <p className="mt-3 text-sm">
           <span className="text-[var(--lc-muted)]">Error khusus: </span>

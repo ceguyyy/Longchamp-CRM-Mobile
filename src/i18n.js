@@ -193,7 +193,7 @@ export const T = {
     basedOn: "Sumber: Longchamp APAC CX Discussion (Sep 2026) · Dokumentasi API Cekat",
     mk: {
       title: "Mockup Aplikasi",
-      subtitle: "Prototipe HeroUI yang bisa diklik untuk aplikasi clienteling — dari login dan aktivasi akun sampai semua flow, untuk tiga role. Setiap layar terhubung ke use case, diagram, dan sumber datanya.",
+      subtitle: "Prototipe HeroUI yang bisa diklik untuk aplikasi clienteling — dari login sampai semua flow, untuk tiga role. Setiap layar terhubung ke use case, diagram, dan sumber datanya.",
       prototype: "Prototipe",
       gallery: "Semua layar",
       restart: "Ulang dari login",

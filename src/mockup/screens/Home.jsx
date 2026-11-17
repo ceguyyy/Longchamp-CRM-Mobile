@@ -1,4 +1,5 @@
 import { ProgressBar } from "@heroui/react";
+import { useConfig, liveContent } from "../config";
 import { useApp, AppBar, Body, SectionTitle, Tile, TierBadge, Initials, Stat, Icon, BlackTile, Hero, Announcement, LcButton, Row } from "../core";
 import { AGENDA, CLIENTS, PUSHES, PUSH_LABEL, KPI, TEAM, BY_BOUTIQUE, BOUTIQUES, idrShort } from "../data";
 
@@ -6,15 +7,18 @@ const ROLE_NAME = { sales_agent: "Sales Agent", supervisor: "Supervisor", super_
 
 function SearchProduct() {
   const { tx, nav } = useApp();
+  const scan = useConfig().settings.feature_scan;
   return (
     <div className="mx-4 mt-3 flex items-center gap-3">
       <button onClick={() => nav("catalog")} className="flex flex-1 items-center gap-2 border-b-2 border-[var(--lc-lime)] pb-1.5 text-left">
         <Icon name="search" size={17} />
         <span className="text-[12.5px] text-[#8a8a8a]">{tx("Search a product", "Cari produk")}</span>
       </button>
-      <button aria-label={tx("Scan barcode", "Pindai barcode")} onClick={() => nav("scan")} className="text-black">
-        <Icon name="barcode" size={22} stroke={1.3} />
-      </button>
+      {scan && (
+        <button aria-label={tx("Scan barcode", "Pindai barcode")} onClick={() => nav("scan")} className="text-black">
+          <Icon name="barcode" size={22} stroke={1.3} />
+        </button>
+      )}
     </div>
   );
 }
@@ -56,11 +60,18 @@ function Hello() {
 }
 
 export default function Home() {
-  const { session, tx, reset, nav } = useApp();
+  const { session, tx, reset, nav, lang } = useApp();
   const role = session.role;
   const k = KPI[role];
   const myPushes = PUSHES.filter((p) => p.status === "sent" && (role === "sales_agent" ? p.assigned_user_id === 87 : true));
   const open = AGENDA.filter((a) => a.status === "open");
+  const { content } = useConfig();
+  const bq = (BOUTIQUES.find((b) => b.boutique_id === session.user.boutique_id) || {}).boutique_name;
+  const L = (c, k) => (lang === "en" ? c[`${k}_en`] : c[`${k}_id`]) || c[`${k}_id`];
+  const cmsAnn = liveContent(content, "announcement", role, bq);
+  const cmsHero = liveContent(content, "hero", role, bq);
+  const cmsBanner = liveContent(content, "banner", role, bq);
+  const CTA = { catalog: tx("Open catalog", "Buka katalog"), actions: tx("Open actions", "Buka aksi"), lists: tx("Open lists", "Buka daftar") };
 
   if (role === "super_admin") {
     return (
@@ -96,6 +107,7 @@ export default function Home() {
                 </p>
               </div>
             ))}
+            <Row label={tx("CMS & configuration", "CMS & pengaturan")} value={tx(`${content.filter((c) => c.status !== "draft").length} content`, `${content.filter((c) => c.status !== "draft").length} konten`)} onClick={() => nav("settings")} />
             <Row label={tx("Users & roles", "User & role")} value={tx("from Cekat", "dari Cekat")} onClick={() => nav("users")} />
           </div>
         </Body>
@@ -107,15 +119,24 @@ export default function Home() {
     <>
       <AppBar />
       <Body pad={false}>
-        <Announcement onClick={() => reset("actions")}>
-          {tx(`${myPushes.length} clienteling pushes waiting for you`, `${myPushes.length} clienteling push menunggu Anda`)}
-        </Announcement>
-        <Hero
-          title={tx("Be creative", "Jadilah kreatif")}
-          subtitle={tx("Le Pliage, new season", "Le Pliage, musim baru")}
-          cta={tx("Share with clients", "Bagikan ke klien")}
-          onCta={() => reset("catalog")}
-        />
+        {cmsAnn ? (
+          <Announcement>{L(cmsAnn, "title")}</Announcement>
+        ) : (
+          <Announcement onClick={() => reset("actions")}>
+            {tx(`${myPushes.length} clienteling pushes waiting for you`, `${myPushes.length} clienteling push menunggu Anda`)}
+          </Announcement>
+        )}
+        {cmsHero ? (
+          <Hero title={L(cmsHero, "title")} subtitle={L(cmsHero, "subtitle")} cta={cmsHero.cta ? CTA[cmsHero.cta] : null} onCta={() => reset(cmsHero.cta)} />
+        ) : (
+          <Hero
+            title={tx("Be creative", "Jadilah kreatif")}
+            subtitle={tx("Le Pliage, new season", "Le Pliage, musim baru")}
+            cta={tx("Share with clients", "Bagikan ke klien")}
+            onCta={() => reset("catalog")}
+          />
+        )}
+        {cmsBanner && <div className="mx-4 mt-3 bg-black px-4 py-3 text-center text-[12px] uppercase tracking-[0.08em] text-white">{L(cmsBanner, "title")}</div>}
         <SearchProduct />
         <div className="mt-4 grid grid-cols-2 gap-3 px-4">
           <BlackTile label={tx("Customer search", "Cari pelanggan")} onClick={() => reset("clients")} />

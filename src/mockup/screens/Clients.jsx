@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Button, Chip, Input, Label, SearchField, Switch, Tabs, TextField } from "@heroui/react";
 import { useApp, AppBar, Body, SectionTitle, Tile, TierBadge, Initials, Pill, Row, ContactBar, Icon, LcButton } from "../core";
+import { useConfig } from "../config";
 import { CLIENTS, LISTS, LOVE_TAGS, PUSHES, PUSH_LABEL, TEAM, TEMPLATES, REACH_REASONS, BOUTIQUES, idr, tag, usableTemplates, loveLabel, trackLabel } from "../data";
 
 /* RBAC as returned by Cekat Product (CP-02) — the app only renders what comes back */
@@ -41,11 +42,13 @@ export function ClientSearch() {
   const { session, tx, nav } = useApp();
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState("all");
+  const { settings } = useConfig();
+  const gap = settings.reach_out_min_days;
   const base = visibleClients(session.role);
   const list = useMemo(() => {
     let l = base.filter((c) => !q || c.full_name.toLowerCase().includes(q.toLowerCase()) || c.phone_e164.includes(q.replace(/^0/, "")));
     if (filter === "unassigned") l = l.filter((c) => !c.assigned_user_id);
-    if (filter === "due") l = l.filter((c) => c.days_since_last_contact === null || c.days_since_last_contact >= 30);
+    if (filter === "due") l = l.filter((c) => c.days_since_last_contact === null || c.days_since_last_contact >= gap);
     if (filter === "vip") l = l.filter((c) => ["FAN", "FRIEND", "FAMILY"].includes(c.current_tier_name));
     return l;
   }, [q, filter, base]);
@@ -74,7 +77,7 @@ export function ClientSearch() {
         <div className="-mx-4 mt-3 flex gap-2 overflow-x-auto px-4 pb-1">
           {[
             ["all", tx("All", "Semua")],
-            ["due", tx("Not contacted 30d+", "Belum dihubungi 30h+")],
+            ["due", tx(`Not contacted ${gap}d+`, `Belum dihubungi ${gap}h+`)],
             ["vip", "VIP (FAN+)"],
             ["unassigned", tx("Unassigned", "Tanpa assignee")],
           ].map(([k, l]) => (
@@ -222,6 +225,7 @@ export function ClientProfile({ customer_id, push_id }) {
   const avg = Math.round(c.total_spent_idr / Math.max(1, c.purchase_count));
   const reach = (channel) => nav("reach_out", { customer_id: c.customer_id, push_id, channel });
   const { setConnected, connected, wishlist, clientWishlist } = useApp();
+  const showTags = useConfig().settings.feature_tracking_tags;
   useEffect(() => {
     if (canAct) setConnected(c.customer_id);
   }, [c.customer_id, canAct, setConnected]);
@@ -234,7 +238,7 @@ export function ClientProfile({ customer_id, push_id }) {
           <div className="flex items-center justify-between">
             <p className="text-[16px] font-bold uppercase tracking-[0.06em]">{c.full_name}</p>
             <TierBadge tier={c.current_tier_name} small />
-            {(c.tracking_tags || []).map((t) => (
+            {showTags && (c.tracking_tags || []).map((t) => (
               <span key={t} className="caps bg-[var(--lc-lime)] px-1.5 py-0.5 text-[9px] text-black">{trackLabel(t)}</span>
             ))}
           </div>
@@ -477,7 +481,9 @@ export function ReachOut({ customer_id, push_id, channel: startChannel, motive: 
   const { tx, back, notify, session } = useApp();
   const [msgLang, setMsgLang] = useState("id");
   const c = useClient(customer_id);
-  const eligible = c.days_since_last_contact === null || c.days_since_last_contact >= 30;
+  const { settings } = useConfig();
+  const gap = settings.reach_out_min_days;
+  const eligible = c.days_since_last_contact === null || c.days_since_last_contact >= gap;
   const [step, setStep] = useState(eligible ? "contact" : "blocked");
   const [channel, setChannel] = useState(startChannel || (c.consent_wa ? "whatsapp" : "call"));
   const usable = usableTemplates(3);
@@ -511,7 +517,7 @@ export function ReachOut({ customer_id, push_id, channel: startChannel, motive: 
             <div className="py-8 text-center">
               <p className="text-[15px] font-bold uppercase tracking-[0.08em]">{tx("Contacted recently", "Baru saja dihubungi")}</p>
               <p className="mt-2 text-[12.5px] text-[var(--lc-muted)]">
-                {tx(`${first} was contacted ${c.days_since_last_contact} days ago. Reach out again after 30 days.`, `${first} dihubungi ${c.days_since_last_contact} hari lalu. Hubungi lagi setelah 30 hari.`)}
+                {tx(`${first} was contacted ${c.days_since_last_contact} days ago. Reach out again after ${gap} days.`, `${first} dihubungi ${c.days_since_last_contact} hari lalu. Hubungi lagi setelah ${gap} hari.`)}
               </p>
               <button className="mt-6 border border-black px-6 py-2.5 text-[10.5px] font-semibold uppercase tracking-[0.14em]" onClick={back}>
                 {tx("Back to profile", "Kembali ke profil")}
@@ -604,7 +610,7 @@ export function ReachOut({ customer_id, push_id, channel: startChannel, motive: 
                 disabled={!motive}
                 className="mt-6 h-11 w-full bg-[var(--lc-olive)] text-[10.5px] font-semibold uppercase tracking-[0.18em] text-white disabled:opacity-40"
                 onClick={() => {
-                  notify(tx("Validated. Conversion tracked for 30 days.", "Tervalidasi. Konversi dilacak 30 hari."));
+                  notify(tx(`Validated. Conversion tracked for ${settings.attribution_window_days} days.`, `Tervalidasi. Konversi dilacak ${settings.attribution_window_days} hari.`));
                   back();
                 }}
               >
