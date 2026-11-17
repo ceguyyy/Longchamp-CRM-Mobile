@@ -1,5 +1,12 @@
 {
   "0": "UseCasePage.jsx",
-  "5": "App.jsx",
+  "1": "workplan.js",
+  "3": "apiSpec.js",
+  "5": "ErdPage.jsx",
+  "8": "UseCasePage.jsx",
+  "9": "WorkplanPage.jsx",
+  "14": "ApiPage.jsx",
+  "16": "CoveragePage.jsx",
+  "17": "Home.jsx",
   "19": "Product"
 }

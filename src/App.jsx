@@ -9,6 +9,7 @@ import SequencePage from "./pages/SequencePage";
 import MockupPage from "./pages/MockupPage";
 import CoveragePage from "./pages/CoveragePage";
 import ApiPage from "./pages/ApiPage";
+import WorkplanPage from "./pages/WorkplanPage";
 import { T } from "./i18n";
 
 const NAV = [
@@ -19,6 +20,7 @@ const NAV = [
   { key: "sequence", to: "/sequence", ready: true },
   { key: "mockup", to: "/mockup", ready: true },
   { key: "api", to: "/api", ready: true },
+  { key: "workplan", to: "/workplan", ready: true },
   { key: "coverage", to: "/coverage", ready: true },
 ];
 
@@ -112,6 +114,7 @@ export default function App() {
           <Route path="/activity" element={<ActivityPage lang={lang} t={t} />} />
           <Route path="/coverage" element={<CoveragePage lang={lang} t={t} />} />
           <Route path="/api" element={<ApiPage lang={lang} t={t} />} />
+          <Route path="/workplan" element={<WorkplanPage lang={lang} t={t} />} />
           <Route path="*" element={<Navigate to="/use-case" replace />} />
         </Routes>
       </div>
