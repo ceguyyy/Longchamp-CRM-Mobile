@@ -10,6 +10,7 @@ import MockupPage from "./pages/MockupPage";
 import CoveragePage from "./pages/CoveragePage";
 import ApiPage from "./pages/ApiPage";
 import WorkplanPage from "./pages/WorkplanPage";
+import TorPage from "./pages/TorPage";
 import { T } from "./i18n";
 
 const NAV = [
@@ -21,6 +22,7 @@ const NAV = [
   { key: "mockup", to: "/mockup", ready: true },
   { key: "api", to: "/api", ready: true },
   { key: "workplan", to: "/workplan", ready: true },
+  { key: "tor", to: "/tor", ready: true },
   { key: "coverage", to: "/coverage", ready: true },
 ];
 
@@ -115,6 +117,7 @@ export default function App() {
           <Route path="/coverage" element={<CoveragePage lang={lang} t={t} />} />
           <Route path="/api" element={<ApiPage lang={lang} t={t} />} />
           <Route path="/workplan" element={<WorkplanPage lang={lang} t={t} />} />
+          <Route path="/tor" element={<TorPage lang={lang} t={t} />} />
           <Route path="*" element={<Navigate to="/use-case" replace />} />
         </Routes>
       </div>
