@@ -89,7 +89,7 @@ export const SCREENS = {
     C: TicketNew, roles: FIELD, group: "clients", params: { customer_id: 100245 },
     title: L("Service ticket", "Tiket servis"),
     refs: ["UC-18"],
-    api: ["Tickets API — create"],
+    api: ["POST /v1/tickets (C-11) → Cekat CRM: Board Tickets", "POST /v1/tickets/{id}/update (C-13) → status, WhatsApp update ke pelanggan saat siap diambil"],
     owner: "itdev",
     note: L("After-sales request linked to the client.", "Permintaan after-sales yang terhubung ke klien."),
   },

@@ -1,7 +1,7 @@
 # Graph Report - longchamp-crm-mobile  (2026-11-18)
 
 ## Corpus Check
-- 54 files · ~79,742 words
+- 54 files · ~80,245 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 4 file(s) not represented in the graph (top: (none) 3, .css 1)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `622e9089`
+- Built from commit: `a043792a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -48,14 +48,14 @@
 10. `Home()` - 17 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `App()` --calls--> `ApiPage()`  [EXTRACTED]
-  src/App.jsx → src/pages/ApiPage.jsx
-- `App()` --calls--> `WorkplanPage()`  [EXTRACTED]
-  src/App.jsx → src/pages/WorkplanPage.jsx
 - `App()` --calls--> `ErdPage()`  [EXTRACTED]
   src/App.jsx → src/pages/ErdPage.jsx
 - `ErdPage()` --calls--> `downloadSvg()`  [EXTRACTED]
   src/pages/ErdPage.jsx → src/utils/downloadSvg.js
+- `Home()` --calls--> `Hero()`  [EXTRACTED]
+  src/mockup/screens/Home.jsx → src/mockup/core.jsx
+- `ContentEditor()` --calls--> `Hero()`  [EXTRACTED]
+  src/mockup/screens/Work.jsx → src/mockup/core.jsx
 - `Login()` --calls--> `useApp()`  [EXTRACTED]
   src/mockup/screens/Auth.jsx → src/mockup/core.jsx
 

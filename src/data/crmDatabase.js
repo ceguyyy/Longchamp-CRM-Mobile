@@ -57,10 +57,7 @@ export const CRM_BOARDS = ERD.entities.map((ent) => {
       { op: "Token push", call: "POST /users/{id}/push-tokens (CP-03, baru)", note: "Cekat Product" },
     ];
   } else {
-    ops = [
-      { op: "Baca", call: "GET Tickets API (filter contact)", note: "Native Cekat" },
-      { op: "Buat", call: "POST Tickets API", note: "Native Cekat" },
-    ];
+    ops = [];
   }
 
   const writersBy = [...new Set(ent.fields.map((f) => f.writer))].join(", ");

@@ -333,7 +333,7 @@ const model = {
       },
       rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "cekatChat", type: "API", dir: "write", ref: "Tickets API — create ticket", status: "available", verify: true },
+        { sys: "cekatApi", type: "API", dir: "write", ref: "Board Tickets — create / update ticket (C-11, C-13); WhatsApp update to client when ready", status: "available", verify: true },
       ],
     },
 
@@ -471,7 +471,7 @@ const model = {
       },
       rbac: { sa: "own", sm: "boutique", hq: "all" },
       sources: [
-        { sys: "cekatChat", type: "API", dir: "read", ref: "Tickets API — list tickets by contact", status: "available", verify: true },
+        { sys: "cekatApi", type: "API", dir: "read", ref: "Board Tickets — list by customer_id (C-10)", status: "available", verify: true },
       ],
     },
 

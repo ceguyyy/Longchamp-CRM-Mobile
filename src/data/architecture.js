@@ -93,7 +93,7 @@ const arch = {
     {
       id: "chat", x: 820, y: 476, w: 410, h: 84, owner: "itdev",
       title: L("Cekat Chat · WABA"),
-      sub: L("Message · Broadcast · Tickets API"),
+      sub: L("Message · Broadcast"),
       items: [],
       desc: L(
         "Sends WhatsApp session and template messages for Reach Out, wishlist and event invitations; creates service tickets.",
