@@ -251,7 +251,7 @@ const activities = {
         { id: "a3", lane: "product", row: 2, type: "action", label: L("Expose Users & Role Hierarchy API", "Sediakan API Users & Role Hierarchy"), cp: "CP-03" },
         { id: "a4", lane: "product", row: 3, type: "action", label: L("Apply hierarchy to every API call (RBAC)", "Terapkan hierarki di setiap panggilan API (RBAC)"), cp: "CP-02" },
         { id: "a5", lane: "user", row: 4, type: "action", label: L("Supervisor: reassign client to another Sales Agent", "Supervisor: pindahkan klien ke Sales Agent lain") },
-        { id: "a6", lane: "app", row: 4, type: "action", label: L("Pick client & new SA", "Pilih klien & SA baru"), ref: "PATCH /clients/{id}/assignee (BFF)" },
+        { id: "a6", lane: "app", row: 4, type: "action", label: L("Pick client & new SA", "Pilih klien & SA baru"), ref: "POST /v1/customers/{id}/owner (C-05)" },
         { id: "fw", lane: "bff", row: 5, type: "action", label: L("Forward with user token", "Teruskan dengan token user") },
         { id: "d1", lane: "product", row: 6, type: "decision", label: L("Allowed by RBAC?", "Diizinkan RBAC?") },
         { id: "a7", lane: "app", row: 6, type: "action", label: L("Show 403: outside scope", "Tampilkan 403: di luar scope") },

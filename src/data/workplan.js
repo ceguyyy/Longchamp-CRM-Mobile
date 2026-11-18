@@ -6,6 +6,8 @@
 import { COMPONENTS, PARTIES } from "./components";
 import { ENDPOINTS, API_GROUPS, CONVENTIONS, WEBHOOKS, JOBS, WRITES } from "./apiSpec";
 import { SCREENS } from "../mockup/screens";
+import { CRM_BOARDS, CRM_FIELD_ROWS } from "./crmDatabase";
+import { N8N_APIS } from "./n8n";
 import { TABS, MENU } from "../mockup/core";
 
 export const PARTY_LABEL = {
@@ -148,3 +150,21 @@ export const appRows = (() => {
   NATIVE.forEach(([name, detail, api], i) => rows.push({ id: `V-12.${pad(i + 1)}`, parent: "V-12", kind: "Native", name, role: "Semua", detail, api, refs: "—", screen: null, owner: "Vendor" }));
   return rows;
 })();
+
+/* ---------------------------------------------------------------- CRM as database */
+export const crmBoardRows = CRM_BOARDS.map((b) => ({
+  id: b.id,
+  name: b.name,
+  status: b.status === "new" ? "Baru (dibuat IT Delivery)" : "Sudah ada (diperluas)",
+  desc: b.desc,
+  columns: b.fields.map((f) => `${f.name} (${f.cekat})`).join(", "),
+  count: b.fields.length,
+  ops: b.ops.map((o) => `${o.op}: ${o.call}`).join("\n"),
+  readers: b.readers.join(", ") || "—",
+  writers: b.writers.join(", ") || "—",
+  n8n: b.n8n.join(", ") || "—",
+}));
+export const crmFieldRows = CRM_FIELD_ROWS;
+
+/* ---------------------------------------------------------------- n8n */
+export const n8nRows = N8N_APIS.map((n) => ({ id: n.id, method: n.method, path: n.path, kind: n.kind, ref: n.ref, desc: n.desc, example: n.example, note: n.note || "—" }));

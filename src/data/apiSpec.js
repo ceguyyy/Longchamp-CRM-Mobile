@@ -28,6 +28,7 @@ export const API_GROUPS = [
 /* Shared conventions */
 export const CONVENTIONS = {
   base: "https://api.clienteling.longchamp.co.id/v1 (production) · https://api-stg.clienteling.longchamp.co.id/v1 (staging)",
+  methods: "Hanya GET (baca) dan POST (tulis) untuk semua API yang dibangun (Clienteling API, n8n, dan API baru Cekat Product). Buat = POST /resource; ubah = POST /resource/{id}/update; hapus = POST /resource/{id}/delete (soft delete) atau /archive; aksi khusus = POST /resource/{id}/<aksi> (mis. /status, /rsvp, /owner). PATCH / PUT / DELETE tidak dipakai. Pengecualian: panggilan ke Board API Cekat CRM yang sudah ada tetap memakai method dari dokumentasi Cekat.",
   headers: [
     ["Authorization", "string", true, "Bearer <access_token> dari CP-01. Diteruskan apa adanya ke Cekat.", "Bearer eyJhbGciOi…"],
     ["Accept-Language", "string", false, "id | en. Bahasa pesan error dan label.", "id"],
@@ -121,7 +122,7 @@ export const ENDPOINTS = [
   },
   {
     id: "A-06", group: "auth", method: "POST", path: "/devices", title: "Daftarkan token push", roles: ALL, uc: ["UC-10"], cp: ["CP-03"],
-    upstream: ["Cekat Product: PATCH user push_tokens (CP-03)"],
+    upstream: ["Cekat Product: POST users/{id}/push-tokens (CP-03)"],
     logic: ["Upsert token FCM per (user_id, device_id) di data user Cekat (CP-03); tidak disimpan di Redis.", "Token lama untuk device sama diganti."],
     body: [V("device_id", "string", true, "Device.", "a1b2-c3d4"), V("platform", "enum", true, "ios | android.", "ios"), V("fcm_token", "string", true, "Token FCM.", "fcm_…")],
     response: { ok: true },
@@ -253,7 +254,7 @@ export const ENDPOINTS = [
     errors: ["409 duplicate_customer", "409 owned_by_other", "400 invalid_phone"],
   },
   {
-    id: "C-04", group: "customers", method: "PATCH", path: "/customers/{customer_id}", title: "Ubah data pelanggan", roles: FIELD, uc: ["UC-02"], cp: ["CP-02"],
+    id: "C-04", group: "customers", method: "POST", path: "/customers/{customer_id}/update", title: "Ubah data pelanggan", roles: FIELD, uc: ["UC-02"], cp: ["CP-02"],
     upstream: ["PATCH /api/crm/boards/{goldenRecordBoardId}/items/{id}"],
     logic: ["Hanya field yang dikirim yang diubah.", "Perubahan consent menyimpan consent_at dan changed_by.", "Telepon baru diperiksa duplikat seperti C-03."],
     body: [V("email / birthdate / city / gender", "…", false, "Field yang boleh diubah.", "laura@mail.com"), V("consent_wa / consent_email", "bool", false, "Consent.", true)],
@@ -261,7 +262,7 @@ export const ENDPOINTS = [
     errors: ["403 forbidden", "409 duplicate_customer"],
   },
   {
-    id: "C-05", group: "customers", method: "PATCH", path: "/customers/{customer_id}/owner", title: "Reassign pelanggan", roles: LEAD, uc: ["UC-22"], cp: ["CP-02", "CP-03", "CP-05"],
+    id: "C-05", group: "customers", method: "POST", path: "/customers/{customer_id}/owner", title: "Reassign pelanggan", roles: LEAD, uc: ["UC-22"], cp: ["CP-02", "CP-03", "CP-05"],
     upstream: ["PATCH /api/crm/boards/{goldenRecordBoardId}/items/{id} assigned_user (CP-02 menolak di luar boutique)", "Webhook board item updated (CP-05) → n8n notifikasi SA baru"],
     logic: [
       "Supervisor hanya ke Sales Agent di boutique yang sama (dicek Cekat, 403 bila tidak).",
@@ -281,7 +282,7 @@ export const ENDPOINTS = [
     errors: [],
   },
   {
-    id: "C-07", group: "customers", method: "PUT", path: "/customers/{customer_id}/love-tags", title: "Simpan Love Tags (VALIDATE)", roles: FIELD, uc: ["UC-04"], cp: ["CP-02", "CP-04"],
+    id: "C-07", group: "customers", method: "POST", path: "/customers/{customer_id}/love-tags", title: "Simpan Love Tags (VALIDATE)", roles: FIELD, uc: ["UC-04"], cp: ["CP-02", "CP-04"],
     upstream: ["Board Love Tags: hitung selisih → create/delete item"],
     logic: ["Terima daftar lengkap (bukan delta).", "Validasi terhadap 18 kode tag.", "Buat item untuk tag baru, hapus untuk tag yang dicabut; added_by = user."],
     body: [V("tags", "enum[]", true, "animal, art, beauty, book, collab, custom, event, fashion, food, gift, green, leather, limited, music, ready_to_wear, sport, travel, trend.", ["leather", "travel", "gift"])],
@@ -289,9 +290,9 @@ export const ENDPOINTS = [
     errors: ["400 unknown_tag"],
   },
   {
-    id: "C-08", group: "customers", method: "GET · POST · PATCH", path: "/customers/{customer_id}/comments[/{comment_id}]", title: "Komentar", roles: FIELD, uc: ["UC-04"], cp: ["CP-02"],
+    id: "C-08", group: "customers", method: "GET · POST", path: "/customers/{customer_id}/comments[/{comment_id}/update]", title: "Komentar", roles: FIELD, uc: ["UC-04"], cp: ["CP-02"],
     upstream: ["Board Comments"],
-    logic: ["GET: urut terbaru.", "PATCH: hanya penulis atau Supervisor boutique; edited_at diisi."],
+    logic: ["GET: urut terbaru.", "POST …/comments: buat komentar. POST …/comments/{comment_id}/update: ubah, hanya penulis atau Supervisor boutique; edited_at diisi."],
     body: [V("text", "string(1000)", true, "Isi komentar.", "Suka warna netral, cari tas kerja.")],
     response: { comment_id: 4410, text: "Suka warna netral, cari tas kerja.", author_name: "Andi Pratama", created_at: "2026-11-16T10:12:00+07:00", edited_at: null },
     errors: ["403 forbidden"],
@@ -370,20 +371,20 @@ export const ENDPOINTS = [
     errors: [],
   },
   {
-    id: "L-04", group: "lists", method: "GET · PATCH · DELETE", path: "/lists/{list_id}", title: "Detail, ubah, hapus list", roles: FIELD, uc: ["UC-06"], cp: ["CP-02"],
+    id: "L-04", group: "lists", method: "GET · POST", path: "/lists/{list_id}[/update | /delete]", title: "Detail, ubah, hapus list", roles: FIELD, uc: ["UC-06"], cp: ["CP-02"],
     upstream: ["Board Customer Lists"],
-    logic: ["PATCH: name, filters, sort_by, shared_with_boutique; hanya pemilik atau Supervisor.", "DELETE: Client Book tidak bisa dihapus (409)."],
+    logic: ["POST /lists/{list_id}/update: name, filters, sort_by, shared_with_boutique; hanya pemilik atau Supervisor.", "POST /lists/{list_id}/delete: arsip list (soft delete); Client Book tidak bisa dihapus (409)."],
     body: [V("name / filters / sort_by / shared_with_boutique", "…", false, "Field yang diubah.", "VIC Dec")],
     response: { list_id: 512, updated_fields: ["name"] },
     errors: ["409 client_book_locked"],
   },
   {
-    id: "L-05", group: "lists", method: "GET · POST · DELETE", path: "/lists/{list_id}/members[/{customer_id}]", title: "Member list", roles: FIELD, uc: ["UC-06", "UC-07", "UC-08"], cp: ["CP-02", "CP-04"],
+    id: "L-05", group: "lists", method: "GET · POST", path: "/lists/{list_id}/members[/{customer_id}/remove]", title: "Member list", roles: FIELD, uc: ["UC-06", "UC-07", "UC-08"], cp: ["CP-02", "CP-04"],
     upstream: ["Board List Members", "Board Golden Record (data baris)"],
     logic: [
       "GET: member + data baris dari board Golden Record (nama, tier, ulang tahun, last contact, follow_up_status, consent) untuk ikon kontak.",
       "Sort sesuai sort_by list atau query sort.",
-      "POST/DELETE hanya untuk list manual dan client_book.",
+      "POST tambah member dan POST …/{customer_id}/remove hanya untuk list manual dan client_book.",
       "Member di luar scope user tidak dikembalikan (CP-02).",
     ],
     query: [V("sort", "string", false, "Override sort.", "-last_purchase_at"), V("follow_up_status", "enum", false, "welcome_pending | welcomed | followed_up.", "welcome_pending"), V("limit / cursor", "paging", false, "", 50)],
@@ -392,7 +393,7 @@ export const ENDPOINTS = [
     errors: ["409 dynamic_list_readonly"],
   },
   {
-    id: "L-06", group: "lists", method: "PATCH", path: "/lists/{list_id}/members/{customer_id}", title: "Status welcome / follow-up", roles: FIELD, uc: ["UC-08"], cp: ["CP-02"],
+    id: "L-06", group: "lists", method: "POST", path: "/lists/{list_id}/members/{customer_id}/status", title: "Status welcome / follow-up", roles: FIELD, uc: ["UC-08"], cp: ["CP-02"],
     upstream: ["Board List Members update"],
     logic: ["Biasanya diisi otomatis oleh R-02 dengan reason new_client_welcome; endpoint ini untuk koreksi manual."],
     body: [V("follow_up_status", "enum", true, "welcome_pending | welcomed | followed_up.", "welcomed")],
@@ -408,7 +409,7 @@ export const ENDPOINTS = [
     errors: [],
   },
   {
-    id: "E-02", group: "lists", method: "PATCH", path: "/events/{event_id}/guests/{customer_id}", title: "RSVP & kehadiran", roles: FIELD, uc: ["UC-09"], cp: ["CP-02"],
+    id: "E-02", group: "lists", method: "POST", path: "/events/{event_id}/guests/{customer_id}/rsvp", title: "RSVP & kehadiran", roles: FIELD, uc: ["UC-09"], cp: ["CP-02"],
     upstream: ["Board Event Guests update", "Timeline pelanggan"],
     logic: ["attended = true hanya bila rsvp_status = accepted atau walk-in (walk_in = true).", "Kehadiran ditulis ke timeline pelanggan."],
     body: [V("rsvp_status", "enum", false, "invited | accepted | declined | no_reply.", "accepted"), V("attended", "bool", false, "Hadir.", true), V("plus_ones", "int", false, "Pendamping.", 1), V("walk_in", "bool", false, "Datang tanpa undangan; otomatis ditambahkan ke guest list.", false)],
@@ -434,7 +435,7 @@ export const ENDPOINTS = [
     errors: [],
   },
   {
-    id: "P-02", group: "actions", method: "PATCH", path: "/pushes/{push_id}", title: "Selesaikan / batalkan push", roles: FIELD, uc: ["UC-10"], cp: ["CP-02"],
+    id: "P-02", group: "actions", method: "POST", path: "/pushes/{push_id}/status", title: "Selesaikan / batalkan push", roles: FIELD, uc: ["UC-10"], cp: ["CP-02"],
     upstream: ["Board Pushes update", "Board Agenda (task terkait ditutup)"],
     logic: ["executed otomatis saat R-02 dikirim dengan push_id; endpoint ini untuk cancel dengan alasan.", "Push yang sudah executed tidak bisa dibatalkan (409)."],
     body: [V("status", "enum", true, "executed | cancelled.", "cancelled"), V("cancel_reason", "enum", false, "client_unreachable | not_relevant | already_contacted | other.", "client_unreachable")],
@@ -510,7 +511,7 @@ export const ENDPOINTS = [
     errors: ["409 slot_taken"],
   },
   {
-    id: "G-04", group: "actions", method: "PATCH", path: "/agenda/{agenda_item_id}", title: "Ubah / selesaikan agenda", roles: FIELD, uc: ["UC-14"], cp: ["CP-02"],
+    id: "G-04", group: "actions", method: "POST", path: "/agenda/{agenda_item_id}/update", title: "Ubah / selesaikan agenda", roles: FIELD, uc: ["UC-14"], cp: ["CP-02"],
     upstream: ["Board Agenda update"],
     logic: ["status done mengisi done_at.", "Reschedule memeriksa bentrok seperti G-03."],
     body: [V("status", "enum", false, "open | done | cancelled.", "done"), V("start_at / end_at", "datetime", false, "Reschedule.", "2026-11-24T11:00:00+07:00")],
@@ -559,7 +560,7 @@ export const ENDPOINTS = [
     errors: ["403 forbidden", "409 name_taken", "400 invalid_variables", "400 too_many_buttons"],
   },
   {
-    id: "T-03", group: "templates", method: "PATCH", path: "/templates/{template_id}", title: "Ubah & ajukan ulang", roles: LEAD, uc: ["UC-23"], cp: ["CP-02"],
+    id: "T-03", group: "templates", method: "POST", path: "/templates/{template_id}/update", title: "Ubah & ajukan ulang", roles: LEAD, uc: ["UC-23"], cp: ["CP-02"],
     upstream: ["Open API: edit / resubmit", "Board Template Library update"],
     logic: ["Hanya untuk rejected atau pending yang belum diproses; approved diubah dengan membuat versi baru.", "Status kembali pending, rejection_reason dikosongkan."],
     body: [V("body / header / footer / buttons / variable_samples", "…", false, "Field seperti T-02.", "Halo {{1}}, …")],
@@ -567,7 +568,7 @@ export const ENDPOINTS = [
     errors: ["409 invalid_transition"],
   },
   {
-    id: "T-04", group: "templates", method: "DELETE", path: "/templates/{template_id}", title: "Arsipkan template", roles: LEAD, uc: ["UC-23"], cp: ["CP-02"],
+    id: "T-04", group: "templates", method: "POST", path: "/templates/{template_id}/archive", title: "Arsipkan template", roles: LEAD, uc: ["UC-23"], cp: ["CP-02"],
     upstream: ["Board Template Library (archived = true)"],
     logic: ["Tidak dihapus dari Meta; hanya disembunyikan dari library app."],
     response: { template_id: 61, archived: true },
@@ -630,7 +631,7 @@ export const ENDPOINTS = [
     errors: ["409 already_in_wishlist", "404 sku_not_found"],
   },
   {
-    id: "W-03", group: "wishlist", method: "DELETE", path: "/customers/{customer_id}/wishlist/{wishlist_item_id}", title: "Hapus item wishlist", roles: FIELD, uc: ["UC-28"], cp: ["CP-02"],
+    id: "W-03", group: "wishlist", method: "POST", path: "/customers/{customer_id}/wishlist/{wishlist_item_id}/delete", title: "Hapus item wishlist", roles: FIELD, uc: ["UC-28"], cp: ["CP-02"],
     upstream: ["Board Wishlist delete"],
     logic: ["Hanya status saved; item sent/purchased tetap untuk atribusi (409)."],
     response: { ok: true },
@@ -699,7 +700,7 @@ export const ENDPOINTS = [
     errors: [],
   },
   {
-    id: "X-03", group: "admin", method: "GET · POST · PATCH", path: "/push-rules[/{rule_id}]", title: "Aturan clienteling push", roles: ["super_admin"], uc: ["UC-20"], cp: [],
+    id: "X-03", group: "admin", method: "GET · POST", path: "/push-rules[/{rule_id}/update]", title: "Aturan clienteling push", roles: ["super_admin"], uc: ["UC-20"], cp: [],
     upstream: ["Board Push Rules (dibaca scheduler n8n J-01)"],
     logic: ["Perubahan berlaku pada eksekusi scheduler berikutnya (harian 06:00).", "active = false menghentikan rule tanpa menghapus."],
     body: [V("push_type", "enum", true, "vip_birthday | vip_downgrade | high_value_upgrade | beginner_plus_upgrade.", "vip_birthday"), V("min_tier", "enum", true, "Tier minimal.", "FAN"), V("days_before", "int", false, "Untuk birthday: hari sebelum.", 14), V("due_in_days", "int", true, "Batas penyelesaian.", 14), V("active", "bool", true, "Aktif.", true)],
@@ -707,7 +708,7 @@ export const ENDPOINTS = [
     errors: [],
   },
   {
-    id: "X-05", group: "admin", method: "GET · POST · PATCH", path: "/tracking-rules[/{rule_id}]", title: "Aturan tracking transaksi (Golden Record)", roles: ["super_admin"], uc: ["UC-29"], cp: ["CP-05"],
+    id: "X-05", group: "admin", method: "GET · POST", path: "/tracking-rules[/{rule_id}/update]", title: "Aturan tracking transaksi (Golden Record)", roles: ["super_admin"], uc: ["UC-29"], cp: ["CP-05"],
     upstream: ["Cekat CRM: Board Tracking Rules (dibaca n8n J-08)"],
     logic: [
       "GET: semua role boleh membaca daftar tag (untuk filter); hanya Super Admin yang membuat dan mengubah rule.",
@@ -760,7 +761,7 @@ export const ENDPOINTS = [
     errors: ["403 forbidden"],
   },
   {
-    id: "X-08", group: "admin", method: "PATCH", path: "/admin/settings", title: "Ubah pengaturan (CMS)", roles: ["super_admin"], uc: ["UC-30"], cp: ["CP-02"],
+    id: "X-08", group: "admin", method: "POST", path: "/admin/settings/update", title: "Ubah pengaturan (CMS)", roles: ["super_admin"], uc: ["UC-30"], cp: ["CP-02"],
     upstream: ["Board App Settings (PATCH per key)", "Board Settings History (POST per key)"],
     logic: [
       "Hanya super_admin.",
@@ -779,13 +780,13 @@ export const ENDPOINTS = [
     errors: ["400 validation_error", "400 unknown_key", "403 forbidden"],
   },
   {
-    id: "X-09", group: "admin", method: "GET · POST · PATCH · DELETE", path: "/admin/content[/{content_id}]", title: "Konten Beranda (CMS)", roles: ["super_admin"], uc: ["UC-30"], cp: ["CP-02", "CP-04"],
+    id: "X-09", group: "admin", method: "GET · POST", path: "/admin/content[/{content_id}/update | /archive]", title: "Konten Beranda (CMS)", roles: ["super_admin"], uc: ["UC-30"], cp: ["CP-02", "CP-04"],
     upstream: ["Board App Content", "Board Settings History", "Upload gambar ke Cekat Files (verify)"],
     logic: [
       "GET: daftar konten dengan filter kind, status, audience, boutique; status tampil scheduled / live / ended dihitung dari tanggal.",
-      "POST/PATCH: validasi title_id dan title_en wajib, panjang announcement ≤ 80 karakter, hero wajib image_url, end_at ≥ start_at, cta_target salah satu layar yang dikenal.",
+      "POST (buat) dan POST …/update: validasi title_id dan title_en wajib, panjang announcement ≤ 80 karakter, hero wajib image_url, end_at ≥ start_at, cta_target salah satu layar yang dikenal.",
       "Maksimal 1 announcement dan 1 hero aktif per (audience, boutique) pada tanggal yang sama; bentrok → 409 content_overlap.",
-      "DELETE = status archived (tidak dihapus permanen).",
+      "POST …/{content_id}/archive = status archived (tidak dihapus permanen).",
       "Setiap tulis dicatat di Settings History dan menghapus Redis app_config:*.",
     ],
     query: [V("kind", "enum", false, "announcement | hero | banner.", "hero"), V("status", "enum", false, "draft | published | archived.", "published"), V("audience", "enum", false, "all | sales_agent | supervisor.", "all"), V("boutique_id", "int", false, "Filter boutique.", 3)],
@@ -808,7 +809,7 @@ export const ENDPOINTS = [
     errors: ["400 validation_error", "409 content_overlap", "403 forbidden"],
   },
   {
-    id: "X-10", group: "admin", method: "GET · POST · PATCH", path: "/admin/master/{list_type}[/{item_id}]", title: "Master data dropdown (CMS)", roles: ["super_admin"], uc: ["UC-30"], cp: ["CP-02"],
+    id: "X-10", group: "admin", method: "GET · POST", path: "/admin/master/{list_type}[/{item_id}/update]", title: "Master data dropdown (CMS)", roles: ["super_admin"], uc: ["UC-30"], cp: ["CP-02"],
     upstream: ["Board Master Data", "Board Love Tags (list_type=love_tags)", "Board Settings History"],
     logic: [
       "list_type: love_tags | reach_reasons | template_moments | cancel_reasons | boutique_inbox.",
@@ -913,5 +914,5 @@ export const WRITES = [
   W("X-09", "Konten Beranda (CMS)", [S("Cekat CRM · Board App Content", "POST / PATCH /api/crm/boards/{appContentBoardId}/items", { kind: "hero", audience: "sales_agent", boutique_id: null, title_id: "Musim hadiah", title_en: "Gifting season", image_url: "https://cdn…/hero-gifting.jpg", cta_target: "catalog", start_at: "2026-11-15", end_at: "2026-12-31", status: "published", created_by_user_id: 1 }), S("Cekat CRM · Board Settings History", "POST /api/crm/boards/{settingsHistoryBoardId}/items", { object: "content", key: "2", new_value: "published", changed_by_user_id: 1 })]),
   W("X-10", "Master data (CMS)", [S("Cekat CRM · Board Master Data / Love Tags", "POST / PATCH /api/crm/boards/{masterDataBoardId}/items", { list_type: "reach_reasons", code: "after_sales", label_id: "Purna jual", label_en: "After sales", is_active: true, sort_order: 6 }), S("Cekat CRM · Board Settings History", "POST /api/crm/boards/{settingsHistoryBoardId}/items", { object: "master", key: "reach_reasons.after_sales", new_value: "active", changed_by_user_id: 1 })]),
   W("X-03", "Aturan push", [S("Cekat CRM · Board Push Rules", "POST / PATCH /api/crm/boards/{pushRulesBoardId}/items", { push_type: "vip_birthday", min_tier: "FAN", days_before: 14, due_in_days: 14, active: true })]),
-  W("A-06", "Token push device", [S("Cekat Product · Users (CP-03)", "PATCH user push_tokens", { device_id: "a1b2-c3d4", platform: "ios", fcm_token: "fcm_…" }, false)]),
+  W("A-06", "Token push device", [S("Cekat Product · Users (CP-03)", "POST users/{id}/push-tokens", { device_id: "a1b2-c3d4", platform: "ios", fcm_token: "fcm_…" }, false)]),
 ];

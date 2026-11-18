@@ -1,11 +1,14 @@
 {
   "0": "ErdPage.jsx",
   "1": "workplan.js",
-  "3": "apiSpec.js",
+  "3": "crmDatabase.js",
   "4": "UseCaseSvg.jsx",
-  "6": "useApp",
+  "5": "Work.jsx",
+  "6": "Clients.jsx",
+  "7": "screens.js",
   "8": "UseCasePage.jsx",
   "9": "WorkplanPage.jsx",
   "14": "ApiPage.jsx",
-  "16": "CoveragePage.jsx"
+  "16": "CoveragePage.jsx",
+  "17": "Icon"
 }

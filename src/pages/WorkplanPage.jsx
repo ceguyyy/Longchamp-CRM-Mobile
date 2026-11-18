@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Chip } from "@heroui/react";
-import { PARTIES, PARTY_LABEL, PARTY_ORDER, componentRows, apiRows, variableRows, writeRows, jobRows, appRows } from "../data/workplan";
+import { PARTIES, PARTY_LABEL, PARTY_ORDER, componentRows, apiRows, variableRows, writeRows, jobRows, appRows, crmBoardRows, crmFieldRows, n8nRows } from "../data/workplan";
 
 const PARTY_COLOR = { vendor: "default", itdelivery: "accent", product: "warning", existing: "success" };
 const METHOD_COLOR = { GET: "success", POST: "accent", PATCH: "warning", PUT: "warning", DELETE: "danger" };
@@ -49,6 +49,37 @@ const TABS = [
       ["desc", { en: "Description", id: "Deskripsi" }, 360], ["ex", { en: "Example", id: "Contoh" }, 260, mono],
     ],
     filter: { key: "loc", values: ["Header", "Query", "Body", "Response"] },
+  },
+  {
+    key: "crm", owner: "Cekat IT Dev / Delivery", rows: crmBoardRows,
+    title: { en: "CRM as database", id: "CRM as Database" },
+    desc: { en: "Every Cekat CRM board the app uses: new boards IT Delivery creates and existing boards it extends, with columns and the API connection (Cekat API call, Clienteling API endpoints that read and write it, n8n workflows).", id: "Semua board Cekat CRM yang dipakai app: board baru yang dibuat IT Delivery dan board lama yang diperluas, dengan kolom dan koneksi API-nya (panggilan Cekat API, endpoint Clienteling API yang membaca dan menulis, workflow n8n)." },
+    cols: [
+      ["name", "Board", 200], ["status", "Status", 150], ["desc", { en: "Purpose", id: "Fungsi" }, 300], ["count", { en: "Columns", id: "Kolom" }, 70],
+      ["columns", { en: "Columns (Cekat type)", id: "Kolom (tipe Cekat)" }, 420], ["ops", { en: "Connection by API (Cekat)", id: "Koneksi by API (Cekat)" }, 460, pre],
+      ["readers", { en: "Read by", id: "Dibaca oleh" }, 170], ["writers", { en: "Written by", id: "Ditulis oleh" }, 170], ["n8n", "n8n", 140],
+    ],
+    filter: { key: "status", values: ["Baru", "Sudah ada"] },
+  },
+  {
+    key: "crmfields", owner: "Cekat IT Dev / Delivery", rows: crmFieldRows,
+    title: { en: "CRM columns", id: "Kolom CRM" },
+    desc: { en: "Every column of every board: Cekat column type, key, required, example and who writes it.", id: "Setiap kolom di setiap board: tipe kolom Cekat, key, wajib, contoh, dan siapa yang menulis." },
+    cols: [
+      ["board", "Board", 180], ["name", { en: "Column", id: "Kolom" }, 210, code], ["cekat", { en: "Cekat type", id: "Tipe Cekat" }, 130], ["type", { en: "Data type", id: "Tipe data" }, 120],
+      ["key", "Key", 60], ["req", { en: "Required", id: "Wajib" }, 70], ["desc", { en: "Description", id: "Deskripsi" }, 320], ["ex", { en: "Example", id: "Contoh" }, 220, mono],
+      ["writer", { en: "Written by", id: "Ditulis oleh" }, 100], ["dflt", "Default", 90],
+    ],
+  },
+  {
+    key: "n8n", owner: "Cekat IT Dev / Delivery (n8n)", rows: n8nRows,
+    title: { en: "n8n APIs", id: "API n8n" },
+    desc: { en: "APIs and workflows IT Delivery builds in n8n. Only POST webhooks and scheduled triggers.", id: "API dan workflow yang dibangun IT Delivery di n8n. Hanya webhook POST dan trigger terjadwal." },
+    cols: [
+      ["id", "ID", 60], ["method", "Method", 80], ["path", "Path / trigger", 260, code], ["kind", { en: "Type", id: "Jenis" }, 200],
+      ["desc", "Logic", 420], ["example", { en: "API level & example variables", id: "API level & contoh variabel" }, 460, (v) => <pre className="whitespace-pre-wrap text-[11.5px]">{v}</pre>],
+      ["note", { en: "Note", id: "Catatan" }, 220],
+    ],
   },
   {
     key: "writes", owner: "Cekat IT Dev / Delivery", rows: writeRows,

@@ -220,7 +220,7 @@ export default function ApiPage() {
         </Table>
       </Section>
 
-      <Section title="Daftar API" desc={`Base path /v1. ${CONVENTIONS.filterSyntax} SA = Sales Agent, SPV = Supervisor, SAdm = Super Admin.`}>
+      <Section title="Daftar API" desc={`Base path /v1. Hanya GET dan POST. ${CONVENTIONS.filterSyntax} SA = Sales Agent, SPV = Supervisor, SAdm = Super Admin.`}>
         <div className="mb-3 flex flex-wrap items-center gap-2">
           {[["all", "Semua"], ...API_GROUPS.map((g) => [g.id, g.name])].map(([k, l]) => (
             <button key={k} onClick={() => { setGroup(k); const first = ENDPOINTS.find((e) => k === "all" || e.group === k); if (first) setSel(first.id); }} className={`rounded-full px-3 py-1 text-xs font-semibold ${group === k ? "bg-[var(--lc-forest)] text-white" : "border border-[var(--lc-line)] bg-white"}`}>
@@ -291,7 +291,7 @@ export default function ApiPage() {
         </div>
       </Section>
 
-      <Section title="Konvensi API" desc={`Base URL (usulan): ${CONVENTIONS.base}. API tidak menyaring scope sendiri: token user diteruskan ke Cekat dan RBAC ditegakkan CP-02.`}>
+      <Section title="Konvensi API" desc={`Base URL (usulan): ${CONVENTIONS.base}. ${CONVENTIONS.methods} API tidak menyaring scope sendiri: token user diteruskan ke Cekat dan RBAC ditegakkan CP-02.`}>
         <div className="grid gap-6 xl:grid-cols-2">
           <div>
             <VarTable rows={CONVENTIONS.headers} label="Header" />

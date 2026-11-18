@@ -59,9 +59,9 @@ const sequences = [
         reports_to: "Supervisor – Plaza Indonesia", authority: "Basic User", share_with_peers: false,
         scope: { boutique_ids: [3], visible_owner_ids: ["agt_5521"], include_unassigned: true },
       }, { cp: "CP-03" }),
-      M("bff", "crm", "async", L("Upsert App Devices item", "Upsert item App Devices"), "POST /api/crm/boards/{appDevicesBoardId}/items", {
-        device_id: "dev_7f3a9c", cekat_user_id: "agt_5521", platform: "ios", push_token: "fcm:APA91b…", app_version: "1.0.3", last_seen_at: "2026-11-16T09:12:00+07:00",
-      }, { verify: true, note: "System write with workspace api_key — device tokens are for push (IT Dev)." }),
+      M("bff", "cp", "async", L("Save push token on the Cekat user", "Simpan token push di user Cekat"), "POST /users/{id}/push-tokens (new)", {
+        device_id: "dev_7f3a9c", platform: "ios", fcm_token: "fcm:APA91b…", app_version: "1.0.3",
+      }, { cp: "CP-03" }),
       M("bff", "app", "reply", L("Session", "Sesi"), "200", {
         access_token: "ck_usr_…", refresh_token: "ck_ref_…", token_type: "Bearer", expires_in: 3600,
         user: { user_id: 87, cekat_user_id: "agt_5521", full_name: "Andi Pratama", role: "sales_agent", role_label: "Sales Agent", boutique_id: 3, boutique_name: "Plaza Indonesia", reports_to_name: "Rina Wijaya" },
@@ -269,7 +269,7 @@ const sequences = [
     participants: ["user", "app", "bff", "cp", "crm", "wh", "n8n", "fcm"],
     messages: [
       M("user", "app", "sync", L("Reassign to another SA", "Pindahkan ke SA lain")),
-      M("app", "bff", "sync", L("Change assignee", "Ubah assignee"), "PATCH /v1/clients/100245/assignee", { headers: UTOKEN, new_owner_id: "agt_5590", reason: "sa_resigned" }),
+      M("app", "bff", "sync", L("Change assignee", "Ubah assignee"), "POST /v1/customers/100245/owner", { headers: UTOKEN, new_owner_id: "agt_5590", reason: "sa_resigned" }),
       M("bff", "cp", "sync", L("Update assigned_user (RBAC)", "Update assigned_user (RBAC)"), "PATCH /api/crm/boards/{goldenRecordBoardId}/items/100245", { headers: UTOKEN, assigned_user_id: 91 }, { cp: "CP-02" }),
       M("cp", "bff", "reply", L("Forbidden — outside scope", "Ditolak — di luar scope"), "403", { error: "forbidden", reason: "target_owner_not_in_scope" }, { cp: "CP-02" }),
       M("bff", "app", "reply", L("Show error", "Tampilkan error"), "403", { error: "outside_scope" }),
@@ -376,7 +376,7 @@ const sequences = [
     participants: ["user", "app", "bff", "cp", "crm"],
     messages: [
       M("user", "app", "sync", L("Super Admin changes reach-out gap to 21 days and publishes a hero", "Super Admin ubah jeda reach out ke 21 hari dan terbitkan hero")),
-      M("app", "bff", "sync", L("Save settings", "Simpan pengaturan"), "PATCH /v1/admin/settings", { changes: [{ key: "reach_out_min_days", value: 21 }], reason: "Promo Desember" }),
+      M("app", "bff", "sync", L("Save settings", "Simpan pengaturan"), "POST /v1/admin/settings/update", { changes: [{ key: "reach_out_min_days", value: 21 }], reason: "Promo Desember" }),
       M("bff", "cp", "sync", L("Role check: super_admin", "Cek role: super_admin"), "GET users/me", {}, { cp: "CP-03" }),
       M("bff", "crm", "sync", L("Update App Settings item", "Update item App Settings"), "PATCH /api/crm/boards/{appSettingsBoardId}/items/{id}", { values: { value: "21", updated_by_user_id: 1, updated_at: "2026-11-17T10:40:00+07:00" } }, { verify: true, cp: "CP-02" }),
       M("bff", "crm", "sync", L("Settings History item", "Item Settings History"), "POST /api/crm/boards/{settingsHistoryBoardId}/items", { key: "reach_out_min_days", old_value: "30", new_value: "21", changed_by_user_id: 1, reason: "Promo Desember" }, { verify: true }),

@@ -1,17 +1,17 @@
-# Graph Report - longchamp-crm-mobile  (2026-11-17)
+# Graph Report - longchamp-crm-mobile  (2026-11-18)
 
 ## Corpus Check
-- 52 files · ~77,316 words
+- 54 files · ~79,742 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 4 file(s) not represented in the graph (top: (none) 3, .css 1)
 
 ## Summary
-- 409 nodes · 1131 edges · 15 communities (13 shown, 2 thin omitted)
+- 423 nodes · 1161 edges · 18 communities (16 shown, 2 thin omitted)
 - Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 33 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a9494bb2`
+- Built from commit: `622e9089`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -19,9 +19,11 @@
 - ErdPage.jsx
 - workplan.js
 - Work.jsx
-- apiSpec.js
+- crmDatabase.js
 - UseCaseSvg.jsx
-- useApp
+- Work.jsx
+- Clients.jsx
+- screens.js
 - UseCasePage.jsx
 - WorkplanPage.jsx
 - Longchamp CRM Mobile — Solution Design
@@ -31,6 +33,7 @@
 - ApiPage.jsx
 - ActivityPage.jsx
 - CoveragePage.jsx
+- Icon
 
 ## God Nodes (most connected - your core abstractions)
 1. `useApp()` - 56 edges
@@ -39,59 +42,67 @@
 4. `react` - 24 edges
 5. `@heroui/react` - 23 edges
 6. `Icon()` - 20 edges
-7. `ClientProfile()` - 18 edges
-8. `SectionTitle()` - 18 edges
+7. `SectionTitle()` - 18 edges
+8. `ClientProfile()` - 18 edges
 9. `OwnerChip()` - 18 edges
 10. `Home()` - 17 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `Settings()` --calls--> `displayStatus()`  [EXTRACTED]
-  src/mockup/screens/Work.jsx → src/mockup/config.js
-- `Home()` --calls--> `liveContent()`  [EXTRACTED]
-  src/mockup/screens/Home.jsx → src/mockup/config.js
-- `Home()` --calls--> `idrShort()`  [EXTRACTED]
-  src/mockup/screens/Home.jsx → src/mockup/data.js
-- `Performance()` --calls--> `idrShort()`  [EXTRACTED]
-  src/mockup/screens/Work.jsx → src/mockup/data.js
-- `Team()` --calls--> `idrShort()`  [EXTRACTED]
-  src/mockup/screens/Work.jsx → src/mockup/data.js
+- `App()` --calls--> `ApiPage()`  [EXTRACTED]
+  src/App.jsx → src/pages/ApiPage.jsx
+- `App()` --calls--> `WorkplanPage()`  [EXTRACTED]
+  src/App.jsx → src/pages/WorkplanPage.jsx
+- `App()` --calls--> `ErdPage()`  [EXTRACTED]
+  src/App.jsx → src/pages/ErdPage.jsx
+- `ErdPage()` --calls--> `downloadSvg()`  [EXTRACTED]
+  src/pages/ErdPage.jsx → src/utils/downloadSvg.js
+- `Login()` --calls--> `useApp()`  [EXTRACTED]
+  src/mockup/screens/Auth.jsx → src/mockup/core.jsx
 
 ## Import Cycles
 - None detected.
 
-## Communities (15 total, 2 thin omitted)
+## Communities (18 total, 2 thin omitted)
 
 ### Community 0 - "ErdPage.jsx"
 Cohesion: 0.12
 Nodes (20): ERD, layoutErd(), visibleFields(), DOMAIN_COLOR, ErdSvg, KEY_COLOR, DOMAINS, entities (+12 more)
 
 ### Community 1 - "workplan.js"
-Cohesion: 0.13
-Nodes (16): apiRows, appRows, flatten(), GROUP, NATIVE, numbered(), pad(), ROLE (+8 more)
+Cohesion: 0.15
+Nodes (14): apiRows, appRows, flatten(), GROUP, NATIVE, numbered(), pad(), ROLE (+6 more)
 
 ### Community 2 - "Work.jsx"
-Cohesion: 0.08
-Nodes (45): configStore, displayStatus(), liveContent(), state, subs, TODAY, Hero(), Stat() (+37 more)
+Cohesion: 0.07
+Nodes (38): configStore, displayStatus(), liveContent(), state, subs, TODAY, useConfig(), Announcement() (+30 more)
 
-### Community 3 - "apiSpec.js"
-Cohesion: 0.14
-Nodes (10): ALL, API_GROUPS, CONVENTIONS, ENDPOINTS, FIELD, JOBS, LEAD, WEBHOOKS (+2 more)
+### Community 3 - "crmDatabase.js"
+Cohesion: 0.25
+Nodes (9): WRITES, ALIASES, boardName(), camel(), CRM_BOARDS, CRM_FIELD_ROWS, ID_VAR, mentions() (+1 more)
 
 ### Community 4 - "UseCaseSvg.jsx"
 Cohesion: 0.35
 Nodes (9): computeLayout(), DIM, relatedSet(), SOURCE_COLORS, spread(), cls(), IMPL_FILL, StickFigure() (+1 more)
 
-### Community 6 - "useApp"
-Cohesion: 0.10
-Nodes (76): useConfig(), AppBar(), BagArt(), Body(), ContactBar(), Icon(), Initials(), LcButton() (+68 more)
+### Community 5 - "Work.jsx"
+Cohesion: 0.16
+Nodes (27): BagArt(), LcButton(), TierBadge(), idr(), idrShort(), visibleClients(), PushRow(), addToClientWishlist() (+19 more)
+
+### Community 6 - "Clients.jsx"
+Cohesion: 0.15
+Nodes (32): ContactBar(), Pill(), Row(), SectionTitle(), useApp(), loveLabel(), tag(), trackLabel() (+24 more)
+
+### Community 7 - "screens.js"
+Cohesion: 0.28
+Nodes (16): AppBar(), Body(), Initials(), Stat(), Tile(), ALL, FIELD, Profile() (+8 more)
 
 ### Community 8 - "UseCasePage.jsx"
-Cohesion: 0.07
-Nodes (55): @heroui/react, AD, box(), layoutActivity(), wrap(), ActivitySvg, NODE_FILL, OWNER_COLOR (+47 more)
+Cohesion: 0.06
+Nodes (61): react@^19.3.1, @heroui/react, react, App(), Header(), NAV, AD, box() (+53 more)
 
 ### Community 9 - "WorkplanPage.jsx"
-Cohesion: 0.13
-Nodes (13): componentRows, jobRows, PARTY_LABEL, PARTY_ORDER, variableRows, writeRows, downloadCsv(), lbl() (+5 more)
+Cohesion: 0.10
+Nodes (16): componentRows, crmBoardRows, crmFieldRows, jobRows, n8nRows, PARTY_LABEL, PARTY_ORDER, variableRows (+8 more)
 
 ### Community 10 - "Longchamp CRM Mobile — Solution Design"
 Cohesion: 0.18
@@ -99,19 +110,23 @@ Nodes (10): Architecture in one line, Editing the model, Implementors (Cekat sid
 
 ### Community 11 - "core.jsx"
 Cohesion: 0.10
-Nodes (33): react, Announcement(), BlackTile(), BoutiqueArt(), Ctx, FullBody(), MoreSheet(), P (+25 more)
+Nodes (31): BoutiqueArt(), Ctx, FullBody(), Hero(), MENU, MoreSheet(), P, Phone() (+23 more)
 
 ### Community 14 - "ApiPage.jsx"
-Cohesion: 0.23
-Nodes (11): COMPONENTS, PARTIES, TECH_STACK, ApiPage(), EndpointDetail(), METHOD_COLOR, PARTY_COLOR, ROLE_SHORT (+3 more)
+Cohesion: 0.11
+Nodes (20): ALL, API_GROUPS, CONVENTIONS, ENDPOINTS, FIELD, JOBS, LEAD, WEBHOOKS (+12 more)
 
 ### Community 15 - "ActivityPage.jsx"
 Cohesion: 0.10
-Nodes (26): dependencies, @heroui/react@^3.2.7, @heroui/styles@^3.2.7, react@^19.3.1, react-dom@^19.3.1, react-router-dom@^7.18.5, devDependencies, tailwindcss@^4.3.5 (+18 more)
+Nodes (25): dependencies, @heroui/react@^3.2.7, @heroui/styles@^3.2.7, react-dom@^19.3.1, react-router-dom@^7.18.5, devDependencies, tailwindcss@^4.3.5, @tailwindcss/vite@^4.3.5 (+17 more)
 
 ### Community 16 - "CoveragePage.jsx"
-Cohesion: 0.16
-Nodes (12): App(), Header(), NAV, AREAS, COVERAGE, RACI, RACI_PARTIES, T (+4 more)
+Cohesion: 0.27
+Nodes (8): AREAS, COVERAGE, RACI, RACI_PARTIES, CoveragePage(), RACI_STYLE, Refs(), STATUS_COLOR
+
+### Community 17 - "Icon"
+Cohesion: 0.26
+Nodes (11): Icon(), BOUTIQUES, TEMPLATES, Field(), Preview(), STATUS, StatusTag(), TemplateNew() (+3 more)
 
 ## Knowledge Gaps
 - **2 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
@@ -119,17 +134,17 @@ Nodes (12): App(), Header(), NAV, AREAS, COVERAGE, RACI, RACI_PARTIES, T (+4 mor
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `react` connect `core.jsx` to `ErdPage.jsx`, `Work.jsx`, `UseCaseSvg.jsx`, `useApp`, `UseCasePage.jsx`, `WorkplanPage.jsx`, `ApiPage.jsx`, `ActivityPage.jsx`, `CoveragePage.jsx`?**
-  _High betweenness centrality (0.290) - this node is a cross-community bridge._
+- **Why does `react` connect `UseCasePage.jsx` to `ErdPage.jsx`, `Work.jsx`, `UseCaseSvg.jsx`, `Work.jsx`, `Clients.jsx`, `WorkplanPage.jsx`, `core.jsx`, `ApiPage.jsx`, `ActivityPage.jsx`, `Icon`?**
+  _High betweenness centrality (0.279) - this node is a cross-community bridge._
 - **Should `ErdPage.jsx` be split into smaller, more focused modules?**
   _Cohesion score 0.12333333333333334 - nodes in this community are weakly interconnected._
-- **Why does `@heroui/react` connect `UseCasePage.jsx` to `ErdPage.jsx`, `Work.jsx`, `useApp`, `WorkplanPage.jsx`, `core.jsx`, `ApiPage.jsx`, `ActivityPage.jsx`, `CoveragePage.jsx`?**
-  _High betweenness centrality (0.220) - this node is a cross-community bridge._
-- **Should `workplan.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.13157894736842105 - nodes in this community are weakly interconnected._
+- **Why does `@heroui/react` connect `UseCasePage.jsx` to `ErdPage.jsx`, `Work.jsx`, `Work.jsx`, `Clients.jsx`, `WorkplanPage.jsx`, `core.jsx`, `ApiPage.jsx`, `ActivityPage.jsx`, `CoveragePage.jsx`, `Icon`?**
+  _High betweenness centrality (0.211) - this node is a cross-community bridge._
 - **Should `Work.jsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.07755102040816327 - nodes in this community are weakly interconnected._
-- **Should `apiSpec.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.14285714285714285 - nodes in this community are weakly interconnected._
-- **Should `useApp` be split into smaller, more focused modules?**
-  _Cohesion score 0.09873417721518987 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07084785133565621 - nodes in this community are weakly interconnected._
+- **Should `Clients.jsx` be split into smaller, more focused modules?**
+  _Cohesion score 0.14962121212121213 - nodes in this community are weakly interconnected._
+- **Should `UseCasePage.jsx` be split into smaller, more focused modules?**
+  _Cohesion score 0.05903866248693835 - nodes in this community are weakly interconnected._
+- **Should `WorkplanPage.jsx` be split into smaller, more focused modules?**
+  _Cohesion score 0.1038961038961039 - nodes in this community are weakly interconnected._
